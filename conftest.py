@@ -210,6 +210,8 @@ from playwright.sync_api import (
     sync_playwright,
     Locator,
 )
+# import warnings
+# warnings.filterwarnings("ignore", message="The 'py' module is deprecated", category=DeprecationWarning)
 # =========================
 # Show Test Docstring in HTML Report
 # =========================
@@ -232,6 +234,8 @@ def pytest_html_results_table_row(report, cells):
     # short_doc = doc.strip().split("\n")[0][:120]  # show first line (trim long)
     full_doc = html.pre(doc.strip())  # preserve newlines and formatting
     cells.insert(1, html.td(full_doc))
+
+
 
 
 # =========================
@@ -438,6 +442,10 @@ def page(context: BrowserContext) -> Page:
 
 @pytest.fixture
 def new_tab(context: BrowserContext) -> Callable[[Callable[[Page], None]], Page]:
+    """
+
+    :rtype: Callable[[Callable[[Page], None]], Page]
+    """
     def _open(action: Callable[[Page], None]) -> Page:
         global global_pages
         with context.expect_page() as new_page_info:

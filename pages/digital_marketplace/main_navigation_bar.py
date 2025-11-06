@@ -20,3 +20,5 @@ class MainNavigationBar(BasicActionsDM):
 
     def logout(self):
         self.logout_button.click()
+        self.page.context.clear_cookies()
+        self.page.context.clear_permissions()

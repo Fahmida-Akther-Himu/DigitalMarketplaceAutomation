@@ -19,7 +19,7 @@ class OrderManagement(HomePage, BasicActionsDM):
 
         self.icon_expand = page.locator('i[class="far fa-angle-down"]')
         self.order_input = page.locator('#OrderNo')
-        self.search_button = page.locator('button[id="search-orders"]')
+        self.order_search_button = page.locator('button[id="search-orders"]')
         # self.order = page.get_by_role("textbox", name="Order")
         # self.order_input = page.locator("#OrderNo")
 
@@ -46,7 +46,7 @@ class OrderManagement(HomePage, BasicActionsDM):
     def search_order(self, order_no):
         self.order_input.click()
         self.input_in_element(self.order_input, order_no)
-        self.click_on_btn(self.search_button)
+        self.click_on_btn(self.order_search_button)
 
     def order_details_view(self):
         # self.click_on_btn(self.order_view_button.first())
@@ -55,15 +55,15 @@ class OrderManagement(HomePage, BasicActionsDM):
     def vendor_acknowledgment(self):
         self.click_on_btn(self.acknowledge_button)
 
-    # def confirmation_acknowledgment_by_yes(self):
-    #     self.click_on_btn(self.acknowledge_button)
-    #     self.click_on_btn(self.confirm_acknowledge_yes_button)
-    #     self.wait_for_timeout(5000)
-    #     # framework_order_number = self.page.locator("text=Order Details -").text_content()
-    #     # # self.wait_to_load_element(self.order_locator)
-    #     # get_framework_order_number = framework_order_number.split("-")[-1].strip()
-    #     # print(get_framework_order_number)
-    #     # return get_framework_order_number
+        # def confirmation_acknowledgment_by_yes(self):
+        #     self.click_on_btn(self.acknowledge_button)
+        #     self.click_on_btn(self.confirm_acknowledge_yes_button)
+        #     self.wait_for_timeout(5000)
+        #     # framework_order_number = self.page.locator("text=Order Details -").text_content()
+        #     # # self.wait_to_load_element(self.order_locator)
+        #     # get_framework_order_number = framework_order_number.split("-")[-1].strip()
+        #     # print(get_framework_order_number)
+        #     # return get_framework_order_number
 
         framework_order_number = self.page.locator(
             'div.card-body:nth-child(6) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(2) > div:nth-child(1)').text_content()

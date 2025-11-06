@@ -32,6 +32,7 @@ class CheckoutPage(ShoppingCart, BasicActionsDM):
         self.schedule_delete_icon = page.locator('button[class="removeScheduleButton"]')
         self.schedule_edit_button = page.locator('button[class="editScheduleButton"][type="button"]')
         self.update_schedule_button = page.locator('button[id^="updateScheduleButton"][class="button1"]')
+        self.preview_button = page.locator('a.print-order-button', has_text="Preview")
 
     def update_quantity(self, quantity):
         self.schedule_quantity.clear()

@@ -5,7 +5,19 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="efc77538-6955-4d9d-bdef-a94599f47caf" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/pages/digital_marketplace/preview.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/conftest.py" beforeDir="false" afterPath="$PROJECT_DIR$/conftest.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/checkout_page.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/checkout_page.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/framework_information.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/framework_information.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/framework_list.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/framework_list.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/main_navigation_bar.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/main_navigation_bar.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/order_management.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/order_management.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/procurement_home_page.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/procurement_home_page.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/procurement_login_page.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/procurement_login_page.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/receivable_order_list.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/receivable_order_list.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/requisition_creation.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/requisition_creation.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/testcases/marketplace_staging_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/testcases/marketplace_staging_test.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -23,18 +35,18 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
-  "lastFilter": {
-    "state": "OPEN",
-    "assignee": "Fahmida-Akther-Himu"
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;Fahmida-Akther-Himu&quot;
   }
-}]]></component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/Fahmida-Akther-Himu/DigitalMarketplaceAutomation.git",
-    "accountId": "8ed8310d-4a75-45ee-a369-941c88fb31b4"
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/Fahmida-Akther-Himu/DigitalMarketplaceAutomation.git&quot;,
+    &quot;accountId&quot;: &quot;8ed8310d-4a75-45ee-a369-941c88fb31b4&quot;
   }
-}]]></component>
+}</component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 6
 }</component>
@@ -43,22 +55,22 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "DefaultHtmlFileTemplate": "HTML File",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "master",
-    "last_opened_file_path": "C:/Users/fahmida.akther/Documents/Automation Project/DigitalMarketplaceAutomation",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;agreement__amendment&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/fahmida.akther/Documents/Automation Project/DigitalMarketplaceAutomation&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\fahmida.akther\Documents\Automation Project\DigitalMarketplaceAutomation\pages\digital_marketplace" />

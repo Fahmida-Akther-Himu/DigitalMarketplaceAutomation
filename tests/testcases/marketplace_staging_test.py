@@ -73,6 +73,7 @@ from pages.digital_marketplace.order_management import OrderManagement
 from pages.digital_marketplace.receivable_order_list import ReceivableOrderListPage
 from pages.digital_marketplace.item_received_list import ItemReceivedList
 from pages.digital_marketplace.order_details_administration import OrderDetailsAdministration
+from pages.digital_marketplace.preview import Preview
 
 # For validation
 from playwright.sync_api import expect
@@ -154,8 +155,10 @@ def test_1_create_requisition_with_whitelisted_agreement_item(page):
     create_requisition_page.setting_active_framework_list(agreement_info="BPD/2024/FA-93")
     create_requisition_page.agreement_item_selector.nth(0).click()
     create_requisition_page.finalize_item_quantity(item_quantity="100")
-    create_requisition_page.setting_requisition_for_details("[1202010501-01] Furniture and Fixture",
+    create_requisition_page.setting_requisition_for_details("1202010501",
                                                             "Item remarks abc123@")
+    # create_requisition_page.setting_requisition_for_details("[1101010101-02] Petty Cash",
+    #                                                         "Item remarks abc123@")
     create_requisition_page.setting_same_schedule_for_date()
     create_requisition_page.setting_location_for_head_office(address="Gulshan 1, Head Office, Dhaka - 1200")
     create_requisition_page.get_full_page_screenshot('full_page_screenshot_3')
@@ -519,6 +522,35 @@ def test_7_initiate_marketplace_order(page, new_tab):
     checkout_page.get_full_page_screenshot('full_page_screenshot_29')
     checkout_page.wait_for_timeout(5000)
 
+    # # -----
+    # new_tab(lambda p: checkout_page.preview_button.click())
+    # proc_login_page = ProcurementLoginPage(new_tab)
+    # proc_login_page.perform_login(
+    #     given_url=proj_url,
+    #     user_name=proj_user,
+    #     pass_word=proj_pass,
+    #     timeout=60000
+    # )
+    # #----
+    # new_page = new_tab(lambda p: checkout_page.preview_button.click())
+    # checkout_page.get_full_page_screenshot('full_page_screenshot_30')
+    # proc_login_page = ProcurementLoginPage(new_page)
+    # proc_login_page.userName.click()
+    # proc_login_page.input_in_element(self.userName, proj_user)
+    # proc_login_page.passWord.click()
+    # proc_login_page.input_in_element(self.passWord, proj_user)
+    # proc_login_page.signBtn.click()
+    # proc_login_page.wait_for_timeout(2000)
+    # new_page.close()
+
+    # new_page_2 = new_tab(lambda p: checkout_page.preview_button.click())
+    # preview_details = Preview(new_page_2)
+    # preview_details.get_full_page_screenshot('full_page_screenshot_31')
+    # preview_details.icon.click()
+    # preview_details.get_full_page_screenshot('full_page_screenshot_32')
+    # preview_details.wait_for_timeout(5000)
+    # new_page_2.close()
+
     dm_logout = MainNavigationMenu(page)
     dm_logout.perform_logout()
     dm_logout.get_full_page_screenshot('full_page_screenshot_30')
@@ -682,7 +714,7 @@ def test_10_vendor_acknowledges_marketplace_order(page):
     order_details_administration.get_full_page_screenshot('full_page_screenshot_45')
 
     order_list = OrderManagement(page)
-    current_date = datetime.today().strftime("%d-%m-%Y")
+    current_date = datetime.today().strftime("%m-%d-%Y")
     order_list.fill_date_range(start_date=current_date, end_date=current_date)
     order_list.search_order(order_no=framework_order_no)
     order_list.get_full_page_screenshot('full_page_screenshot_46')
@@ -785,7 +817,7 @@ def test_12_receiver_receives_marketplace_item(page):
 
     receivable_order_list_page = ReceivableOrderListPage(page)
     receivable_order_list_page.goto_receivable_order_list()
-    current_date = datetime.today().strftime("%d-%m-%Y")
+    current_date = datetime.today().strftime("%m-%d-%Y")
     receivable_order_list_page.fill_date_range(start_date=current_date, end_date=current_date)
     receivable_order_list_page.search_receivable_order(receivable_order_number=framework_order_no)
     receivable_order_list_page.get_full_page_screenshot('full_page_screenshot_53')
@@ -812,7 +844,7 @@ def test_12_receiver_receives_marketplace_item(page):
     receivable_order_list_page.get_full_page_screenshot('full_page_screenshot_56')
 
     item_receive_list_page = ItemReceivedList(page)
-    current_date = datetime.today().strftime("%d-%m-%Y")
+    current_date = datetime.today().strftime("%m-%d-%Y")
     item_receive_list_page.fill_date_range(start_date=current_date, end_date=current_date)
     item_receive_list_page.search_received_order(received_order_number=framework_order_no)
     item_receive_list_page.searched_received_order(
@@ -870,7 +902,7 @@ def test_13_order_initiator_receives_marketplace_item(page):
 
     receivable_order_list_page = ReceivableOrderListPage(page)
     receivable_order_list_page.goto_receivable_order_list()
-    current_date = datetime.today().strftime("%d-%m-%Y")
+    current_date = datetime.today().strftime("%m-%d-%Y")
     receivable_order_list_page.fill_date_range(start_date=current_date, end_date=current_date)
     receivable_order_list_page.search_receivable_order(receivable_order_number=framework_order_no)
     receivable_order_list_page.get_full_page_screenshot('full_page_screenshot_60')
@@ -899,7 +931,7 @@ def test_13_order_initiator_receives_marketplace_item(page):
     receivable_order_list_page.get_full_page_screenshot('full_page_screenshot_63')
 
     item_receive_list_page = ItemReceivedList(page)
-    current_date = datetime.today().strftime("%d-%m-%Y")
+    current_date = datetime.today().strftime("%m-%d-%Y")
     item_receive_list_page.fill_date_range(start_date=current_date, end_date=current_date)
     item_receive_list_page.search_received_order(received_order_number=framework_order_no)
     item_receive_list_page.searched_received_order(
@@ -914,7 +946,7 @@ def test_13_order_initiator_receives_marketplace_item(page):
 
     receivable_order_list_page = ReceivableOrderListPage(page)
     receivable_order_list_page.goto_receivable_order_list()
-    current_date = datetime.today().strftime("%d-%m-%Y")
+    current_date = datetime.today().strftime("%m-%d-%Y")
     receivable_order_list_page.fill_date_range(start_date=current_date, end_date=current_date)
     receivable_order_list_page.search_receivable_order(receivable_order_number=framework_order_no)
     receivable_order_list_page.get_full_page_screenshot('full_page_screenshot_66')
@@ -941,7 +973,7 @@ def test_13_order_initiator_receives_marketplace_item(page):
     receivable_order_list_page.get_full_page_screenshot('full_page_screenshot_69')
 
     item_receive_list_page = ItemReceivedList(page)
-    current_date = datetime.today().strftime("%d-%m-%Y")
+    current_date = datetime.today().strftime("%m-%d-%Y")
     item_receive_list_page.fill_date_range(start_date=current_date, end_date=current_date)
     item_receive_list_page.search_received_order(received_order_number=framework_order_no)
     item_receive_list_page.searched_received_order(

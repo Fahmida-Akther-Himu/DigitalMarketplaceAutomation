@@ -1,5 +1,6 @@
 from re import search
 
+from pages.digital_marketplace.framework_information import FrameworkInformation
 from utils.basic_actionsdm import BasicActionsDM
 
 
@@ -14,10 +15,23 @@ class FrameworkList(BasicActionsDM):
 
         self.approval_pending_checkbox = page.locator("input[id='isOnAuthorization']")
         self.agreement_expired_checkbox = page.locator("input[id='isOnExpired']")
-        self.agreement_on_live_checkbox = page.locator("input[id='isOnAuthorization']")
-        self.approval_pending_checkbox = page.locator("input[id='isOnAuthorization']")
+        self.agreement_on_live_checkbox = page.locator("input[id='isOnlive']")
+        self.debar_or_banned_checkbox = page.locator("input[id='isDebar']")
 
-    def search_agreement(self, search_agreement):
+        self.hub_selection = page.locator("select[id='hub']")
+        self.fa_no_link = page.locator("a[style='text-decoration: underline;'][onclick^='showDetails']")
+
+        self.agreement_status = page.locator("//table[@id='frameworkListGrid']/tbody/tr[2]/child::td[14]")
+
+    def search_agreement(self, search_framework_agreement):
         self.search_framework_number.click()
-        self.input_in_element(self.search_framework_number, search_agreement)
+        self.search_framework_number.clear()
+        self.input_in_element(self.search_framework_number, search_framework_agreement)
         self.search_icon.click()
+
+    def find_agreement_approver_id(self) -> str:
+        agreement_status_value = self.agreement_status.text_content()
+        print("Agreement status value:", agreement_status_value)
+        agreement_approver_id = agreement_status_value.split('[')[-1].split(']')[0]
+        print("Agreement approver ID(without type cust): " + agreement_approver_id)
+        return agreement_approver_id

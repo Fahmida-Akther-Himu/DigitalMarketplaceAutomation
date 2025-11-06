@@ -29,6 +29,10 @@ class ProcurementHomePage(BasicActionsDM):
         self.vendor_billing_list = page.locator(
             '//div[text()="Bill Payable"]//following-sibling::ul//child::span[text()="Vendor Billing List"]')
 
+        self.framework_agreement = page.locator(
+            '//div[text()="Purchase Order"]//following-sibling::ul//child::span[text()="Framework Agreement(FWA)"]')
+        self.framework_list = page.locator('a.routable[href="#!frameworkAgreement/list"] >> span.menuTxtSpan')
+
     def navigate_to_create_requisition(self):
         self.proc_item_requisition.click()
         # self.get_screen_shot("Selecting Requisition")
@@ -66,3 +70,9 @@ class ProcurementHomePage(BasicActionsDM):
 
     def goto_vendor_billing_list(self):
         self.vendor_billing_list.click()
+
+    def goto_framework_agreement_list(self):
+        self.purchase_order.click()
+        self.framework_agreement.click()
+        self.framework_list.click()
+        self.wait_for_timeout(5000)
