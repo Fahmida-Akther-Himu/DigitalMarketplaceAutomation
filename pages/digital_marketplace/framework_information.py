@@ -26,32 +26,45 @@ class FrameworkInformation(BasicActionsDM):
         self.amendment_button = page.locator('input[type="button"][id="amendment"]')
         self.success_message = page.locator("div#jGrowl div.jGrowl-notification.success div.message")
 
+        self.submit_button = page.locator('input[id="submit-button-invProcurementRequirement"][value="Submit"]')
+        self.edit_button = page.locator('input[id="edit-button-invProcurementRequirement"][value="Edit"]')
+        # self.comment_button = page.locator('textarea[id="comments"]')
+
     def get_vendor_info(self):
+        self.vendor_info.click()
         vendor = self.vendor_info.inner_text()
         vendor_name = vendor.split(":")[0].strip()
         print("Requisition vendor name: " + vendor_name)
         return vendor_name
 
     def get_framework_information(self):
+        self.agreement_date.click()
         framework_agreement_date = self.agreement_date.inner_text()
         print("Framework information: " + framework_agreement_date)
+        self.price_review_date.click()
         framework_price_review_date = self.price_review_date.inner_text()
         print("Framework price review date: " + framework_price_review_date)
+        self.from_date.click()
         framework_from_date = self.from_date.inner_text()
         print("Framework from date: " + framework_from_date)
+        self.to_date.click()
         framework_to_date = self.to_date.inner_text()
         print("Framework to date: " + framework_to_date)
 
     def print_agreement_date(self):
+        self.agreement_date.click()
         print("Agreement date: " + self.agreement_date.inner_text())
 
     def print_price_review_date(self):
+        self.price_review_date.click()
         print("Price review date: " + self.price_review_date.inner_text())
 
     def print_from_date(self):
+        self.from_date.click()
         print("From date: " + self.from_date.inner_text())
 
     def print_to_date(self):
+        self.to_date.click()
         print("To date: " + self.to_date.inner_text())
         self.wait_for_timeout(2000)
 
@@ -71,6 +84,11 @@ class FrameworkInformation(BasicActionsDM):
         self.amendment_button.click()
         text = self.success_message.inner_text()
         print("Amendment confirmation full message:", text)
+
+    def enter_edit_comments(self, edit_comments):
+        self.comments.click()
+        self.comments.clear()
+        self.input_in_element(self.comments, edit_comments)
 
     def print_item_details_1(self):
         rows = self.item_details_info.all()

@@ -4,20 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="efc77538-6955-4d9d-bdef-a94599f47caf" name="Changes" comment="">
+    <list default="true" id="efc77538-6955-4d9d-bdef-a94599f47caf" name="Changes" comment="update new code">
+      <change afterPath="$PROJECT_DIR$/pages/digital_marketplace/framework_agreement_information.py" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/pages/digital_marketplace/preview.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/conftest.py" beforeDir="false" afterPath="$PROJECT_DIR$/conftest.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/checkout_page.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/checkout_page.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/framework_information.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/framework_information.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/framework_list.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/framework_list.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/main_navigation_bar.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/main_navigation_bar.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/order_management.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/order_management.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/procurement_home_page.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/procurement_home_page.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/procurement_login_page.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/procurement_login_page.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/receivable_order_list.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/receivable_order_list.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/requisition_creation.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/requisition_creation.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/testcases/marketplace_staging_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/testcases/marketplace_staging_test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/testcases/amendment.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/testcases/amendment.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -100,9 +93,33 @@
       <workItem from="1753044806905" duration="1095000" />
       <workItem from="1753120714022" duration="639000" />
     </task>
+    <task id="LOCAL-00001" summary="update new code">
+      <option name="closed" value="true" />
+      <created>1762447727580</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1762447727580</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="update new code" />
+    <option name="LAST_COMMIT_MESSAGE" value="update new code" />
   </component>
 </project>

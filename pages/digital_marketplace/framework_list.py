@@ -29,9 +29,19 @@ class FrameworkList(BasicActionsDM):
         self.input_in_element(self.search_framework_number, search_framework_agreement)
         self.search_icon.click()
 
-    def find_agreement_approver_id(self) -> str:
+    def find_agreement_approver_info(self):
         agreement_status_value = self.agreement_status.text_content()
         print("Agreement status value:", agreement_status_value)
+
+    def find_agreement_approver_id(self) -> str:
+        agreement_status_value = self.agreement_status.text_content()
+        # print("Agreement status value:", agreement_status_value)
         agreement_approver_id = agreement_status_value.split('[')[-1].split(']')[0]
         print("Agreement approver ID(without type cust): " + agreement_approver_id)
         return agreement_approver_id
+
+    # def find_approver_id(self) -> str:
+    #     status_value = self.requisition_status.text_content()
+    #     approver_id = status_value.split('[')[-1].split(']')[0]
+    #     print("Approver ID: " + approver_id)
+    #     return approver_id

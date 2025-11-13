@@ -1,10 +1,10 @@
 from dotenv import load_dotenv
-import os
 import re
 import random
 import string
 from conftest import new_tab
 from datetime import datetime, timedelta
+import os
 
 load_dotenv()
 
@@ -32,7 +32,7 @@ from pages.digital_marketplace.framework_information import FrameworkInformation
 from pages.digital_marketplace.framework_order_list import FrameworkOrderListPage
 from pages.digital_marketplace.framework_list import FrameworkList
 from pages.digital_marketplace.framework_agreement_information import FrameworkAgreementInformation
-
+from datetime import datetime
 # For validation
 from playwright.sync_api import expect
 
@@ -61,8 +61,8 @@ def test_1_search_whitelisted_agreement_on_procurement_module(page, new_tab):
     proc_login_page.perform_login(
         given_url=proj_url,
         user_name=agreement_officer,
-        pass_word=proj_pass,
-        timeout=60000
+        pass_word=proj_pass
+        # timeout=60000
     )
 
     proc_dashboard_page = DashboardPage(page)
@@ -74,55 +74,13 @@ def test_1_search_whitelisted_agreement_on_procurement_module(page, new_tab):
     print("Test 1: Framework agreement search")
 
     framework_list = FrameworkList(page)
-    framework_list.get_full_page_screenshot('2. Framework officer go to the framework agreement list')
     framework_list.search_agreement(search_framework_agreement=agreement_number)
-    framework_list.get_full_page_screenshot('3. Framework officer searches the framework agreement number')
+    # framework_list.find_agreement_approver_info()
 
-
-def test_2_get_whitelisted_agreement_information(page, new_tab):
-    framework_list = FrameworkList(page)
-    new_page = new_tab(lambda p: framework_list.fa_no_link.click())
-    framework_list.get_full_page_screenshot('4. Framework officer views the framework agreement details')
-
-    framework_info = FrameworkInformation(new_page)
-    framework_info.get_vendor_info()
-    framework_info.print_agreement_date()
-    framework_info.print_price_review_date()
-    framework_info.print_from_date()
-    framework_info.print_to_date()
-    framework_info.print_framework_item_details()
-    # framework_info.print_item_details_2()
-    framework_info.go_to_framework_list()
-    new_page.close()
-
-
-def test_3_whitelisted_agreement_amendment_identify_reviewer_information(page, new_tab):
-    framework_list = FrameworkList(page)
-    framework_list.search_agreement(search_framework_agreement=agreement_number)
-    new_page = new_tab(lambda p: framework_list.fa_no_link.click())
-
-    framework_info = FrameworkInformation(new_page)
-    framework_info.enter_amendment_comments(amendment_comments=amendment_remarks)
-    framework_info.confirm_agreement_amendment()
-    new_page.close()
-
-    framework_list.search_agreement(search_framework_agreement=agreement_number)
     global agreement_approver
     agreement_approver = str(int(framework_list.find_agreement_approver_id()))
     print("Agreement approver ID:", agreement_approver)
 
-    # m_page = MainNavigationBar(page)
-    # m_page.exit()
-    # m_page.logout()
-    # # m_page.get_full_page_screenshot('full_page_screenshot_7')
-    # m_page.wait_for_timeout(2000)
-
-
-def test_4_agreement_reviewer_review_amended_agreement(page, new_tab):
-    framework_list = FrameworkList(page)
-    # framework_list.search_agreement(search_framework_agreement=agreement_number)
-    # new_page = new_tab(lambda p: framework_list.fa_no_link.click())
-    # framework_info = FrameworkInformation(new_page)
     new_page = new_tab(lambda p: framework_list.fa_no_link.click())
     framework_info = FrameworkInformation(new_page)
     framework_info.enter_edit_comments(edit_comments=edit_remarks)
@@ -132,3 +90,20 @@ def test_4_agreement_reviewer_review_amended_agreement(page, new_tab):
     framework_agreement_information = FrameworkAgreementInformation(new_page)
     framework_agreement_information.select_start_date()
     framework_agreement_information.select_end_date()
+    framework_agreement_information.select_price_review_date()
+    # framework_agreement_information.upload_framework_document(
+    #     '')
+    current_dir = os.getcwd()
+    # print(f"Current directory: {current_dir}")
+    upload_document_location = os.path.join(current_dir, 'utils', 'upload_file.pdf')
+    framework_agreement_information.upload_framework_document(upload_document_location)
+    framework_agreement_information.wait_for_timeout(2000)
+    framework_agreement_information.applicable_for_both.click()
+    # proc_login_page = ProcurementLoginPage(page)
+    # proc_login_page.perform_logout()
+
+    # m_page = MainNavigationBar(page)
+    # m_page.exit()
+    # m_page.logout()
+    # # m_page.get_full_page_screenshot('full_page_screenshot_7')
+    # m_page.wait_for_timeout(2000)
