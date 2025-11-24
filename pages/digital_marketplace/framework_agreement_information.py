@@ -39,6 +39,12 @@ class FrameworkAgreementInformation(BasicActionsDM):
         self.update_and_next_button = page.locator('input[id="save-button-framework"][value="Update & Next >>"]')
         self.table_rows = page.locator("#frameworkDetailsGrid tr.jqgrow")
         self.rows = page.locator("#frameworkDetailsGrid tr.jqgrow")
+        self.editable_unit_price_locator = page.locator('[class="numericUnitPrice"][id^="unitPrice"]')
+
+    def modify_item_unit_price(self, unit_price):
+        self.editable_unit_price_locator.first.click()
+        self.editable_unit_price_locator.first.clear()
+        self.input_in_element(self.editable_unit_price_locator.first, unit_price)
 
     def print_item_details(self):
         rows = self.page.locator("#frameworkDetailsGrid tr.jqgrow")
@@ -62,10 +68,10 @@ class FrameworkAgreementInformation(BasicActionsDM):
         #
         #     print(f"\nRow {i + 1}")
         #     print(f"Item Name: {item_name}\n")
-            # print(f"Specification: {spec}")
-            # print(f"UoM: {uom}")
-            # print(f"Unit Price: {unit_price}")
-            # print(f"MOQ: {moq}")
+        # print(f"Specification: {spec}")
+        # print(f"UoM: {uom}")
+        # print(f"Unit Price: {unit_price}")
+        # print(f"MOQ: {moq}")
 
     def print_table_data(self, only_status=False):
         rows = self.table_rows.all()

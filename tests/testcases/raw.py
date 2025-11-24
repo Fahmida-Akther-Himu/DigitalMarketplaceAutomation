@@ -79,16 +79,42 @@ def test_1_search_whitelisted_agreement_on_procurement_module(page, new_tab):
 
     framework_list = FrameworkList(page)
     framework_list.search_agreement(search_framework_agreement=agreement_number)
-    # framework_list.get_status_info()
-
-    global agreement_reviewer
-    agreement_reviewer = str(int(framework_list.get_status_info()))
-    print("Agreement Reviewer ID:", agreement_reviewer)
 
     new_page = new_tab(lambda p: framework_list.fa_no_link.click())
     framework_info = FrameworkInformation(new_page)
-    framework_info.agreement_date.click()
-    framework_info.wait_for_timeout(5000)
+    framework_info.enter_edit_comments(edit_comments=edit_remarks)
+    framework_info.edit_button.click()
+    framework_info.wait_for_timeout(2000)
+
+    framework_agreement_information = FrameworkAgreementInformation(new_page)
+    # framework_agreement_information.select_start_date()
+    # framework_agreement_information.wait_for_timeout(2000)
+    # framework_agreement_information.select_end_date()
+    # framework_agreement_information.wait_for_timeout(2000)
+    # framework_agreement_information.select_price_review_date()
+    # framework_agreement_information.wait_for_timeout(2000)
+    #
+    # current_dir = os.getcwd()
+    # document_location = os.path.join(current_dir, 'utils', 'upload_file.pdf')
+    # framework_agreement_information.upload_framework_document(document_location)
+    framework_agreement_information.applicable_for_both.click()
+    framework_agreement_information.enter_remarks(remarks=agreement_remarks)
+    framework_agreement_information.print_item_details()
+    framework_agreement_information.wait_for_timeout(2000)
+    framework_agreement_information.modify_item_unit_price(unit_price="50")
+    framework_agreement_information.wait_for_timeout(2000)
+    framework_agreement_information.update_and_next_button.click()
+    #
+    # framework_list.get_status_info()
+
+    # global agreement_reviewer
+    # agreement_reviewer = str(int(framework_list.get_status_info()))
+    # print("Agreement Reviewer ID:", agreement_reviewer)
+    #
+    # new_page = new_tab(lambda p: framework_list.fa_no_link.click())
+    # framework_info = FrameworkInformation(new_page)
+    # framework_info.agreement_date.click()
+    # framework_info.wait_for_timeout(5000)
 
     # framework_agreement_information = FrameworkAgreementInformation(new_page)
     # framework_agreement_information.select_start_date()

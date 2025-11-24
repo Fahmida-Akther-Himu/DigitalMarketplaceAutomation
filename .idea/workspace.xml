@@ -6,12 +6,9 @@
   <component name="ChangeListManager">
     <list default="true" id="efc77538-6955-4d9d-bdef-a94599f47caf" name="Changes" comment="update new code">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/conftest.py" beforeDir="false" afterPath="$PROJECT_DIR$/conftest.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/framework_agreement_information.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/framework_agreement_information.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/framework_list.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/framework_list.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/testcases/amendment.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/testcases/amendment.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/testcases/raw.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/testcases/raw.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/basic_actionsdm.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/basic_actionsdm.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

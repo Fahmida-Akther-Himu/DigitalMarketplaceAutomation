@@ -151,6 +151,6 @@ def test_4_agreement_reviewer_review_amended_agreement(page, new_tab):
     # framework_agreement_information.print_table_data()
     # framework_agreement_information.print_table_data(only_status=True)
     framework_agreement_information.wait_for_timeout(2000)
+    framework_agreement_information.modify_item_unit_price(unit_price="50")
+    framework_agreement_information.wait_for_timeout(2000)
     framework_agreement_information.update_and_next_button.click()
-    # framework_agreement_information.upload_document()
-    # framework_agreement_information.upload_framework_document(file_path='')
