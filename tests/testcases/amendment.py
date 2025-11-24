@@ -1,3 +1,4 @@
+import pytest
 from dotenv import load_dotenv
 import os
 import re
@@ -41,21 +42,24 @@ from rich.traceback import install
 
 install()
 # Procurement global variable
+allowed_chars = string.ascii_letters + string.digits + ' '
 amendment_remarks = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
 edit_remarks = ''.join(random.choices(string.ascii_letters + string.digits + string.ascii_letters, k=15))
-
-challan_num_for_receiver = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
-challan_num_for_order_initiator = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
-challan_num_for_order_initiator_2 = ''.join(random.choices(string.ascii_letters, k=8))
+agreement_remarks = ''.join(random.choices(allowed_chars, k=20))
 
 # Procurement global variable
 agreement_approver = ''
-approver_id_2 = ''
-order_vendor = ''
-# order_approver = ''
-approver_id_3 = ''
+agreement_reviewer = ''
 
 
+# approver_id_2 = ''
+# order_vendor = ''
+# # order_approver = ''
+# approver_id_3 = ''
+# @pytest.mark.reporting(
+#     functional_specification="amendment",
+#     test_description="Framework agreement amendment"
+# )
 def test_1_search_whitelisted_agreement_on_procurement_module(page, new_tab):
     proc_login_page = ProcurementLoginPage(page)
     proc_login_page.perform_login(
@@ -107,9 +111,13 @@ def test_3_whitelisted_agreement_amendment_identify_reviewer_information(page, n
     new_page.close()
 
     framework_list.search_agreement(search_framework_agreement=agreement_number)
-    global agreement_approver
-    agreement_approver = str(int(framework_list.find_agreement_approver_id()))
-    print("Agreement approver ID:", agreement_approver)
+    global agreement_reviewer
+    agreement_reviewer = str(int(framework_list.get_status_info()))
+    print("Agreement Reviewer ID:", agreement_reviewer)
+
+    # global agreement_approver
+    # agreement_approver = str(int(framework_list.get_status_info()))
+    # print("Agreement approver ID:", agreement_approver)
 
     # m_page = MainNavigationBar(page)
     # m_page.exit()
@@ -120,9 +128,6 @@ def test_3_whitelisted_agreement_amendment_identify_reviewer_information(page, n
 
 def test_4_agreement_reviewer_review_amended_agreement(page, new_tab):
     framework_list = FrameworkList(page)
-    # framework_list.search_agreement(search_framework_agreement=agreement_number)
-    # new_page = new_tab(lambda p: framework_list.fa_no_link.click())
-    # framework_info = FrameworkInformation(new_page)
     new_page = new_tab(lambda p: framework_list.fa_no_link.click())
     framework_info = FrameworkInformation(new_page)
     framework_info.enter_edit_comments(edit_comments=edit_remarks)
@@ -131,4 +136,21 @@ def test_4_agreement_reviewer_review_amended_agreement(page, new_tab):
 
     framework_agreement_information = FrameworkAgreementInformation(new_page)
     framework_agreement_information.select_start_date()
+    framework_agreement_information.wait_for_timeout(2000)
     framework_agreement_information.select_end_date()
+    framework_agreement_information.wait_for_timeout(2000)
+    framework_agreement_information.select_price_review_date()
+    framework_agreement_information.wait_for_timeout(2000)
+
+    current_dir = os.getcwd()
+    document_location = os.path.join(current_dir, 'utils', 'upload_file.pdf')
+    framework_agreement_information.upload_framework_document(document_location)
+    framework_agreement_information.applicable_for_both.click()
+    framework_agreement_information.enter_remarks(remarks=agreement_remarks)
+    framework_agreement_information.print_item_details()
+    # framework_agreement_information.print_table_data()
+    # framework_agreement_information.print_table_data(only_status=True)
+    framework_agreement_information.wait_for_timeout(2000)
+    framework_agreement_information.update_and_next_button.click()
+    # framework_agreement_information.upload_document()
+    # framework_agreement_information.upload_framework_document(file_path='')

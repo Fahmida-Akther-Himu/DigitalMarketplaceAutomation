@@ -113,6 +113,16 @@ class BasicActionsDM:
     #     locator.wait_for(state="visible", timeout=5000)
     #     locator.click()
 
+    def upload_attachment_file(self, file_input, file_path, timeout=5000):
+        # Accept both locator and selector
+        if isinstance(file_input, str):
+            file_input = self.page.locator(file_input)
+
+        file_input.wait_for(state="attached", timeout=timeout)
+        file_input.set_input_files(file_path)
+        print(f"File uploaded: {file_path}")
+        return os.path.basename(file_path)
+
     def upload_file(self, container, file_path: str, index: int = 0, timeout: int = 30000):
         """
         Uploads a file using the hidden input inside #selector_fileId_{index}

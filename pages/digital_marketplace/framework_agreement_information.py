@@ -31,6 +31,66 @@ class FrameworkAgreementInformation(BasicActionsDM):
         self.upload_file_input = page.locator("input#faDocInput")
         self.upload_browse_button = page.locator("#selector-faDocInput span.ui-button")
 
+        self.upload_excel_input = page.locator("input#faExcelInput")
+        self.upload_button = page.locator("#selector-faExcelInput span.ui-button")
+
+        self.remarks = page.locator('textarea[id="remarks"][placeholder="Max length 250"]')
+
+        self.update_and_next_button = page.locator('input[id="save-button-framework"][value="Update & Next >>"]')
+        self.table_rows = page.locator("#frameworkDetailsGrid tr.jqgrow")
+        self.rows = page.locator("#frameworkDetailsGrid tr.jqgrow")
+
+    def print_item_details(self):
+        rows = self.page.locator("#frameworkDetailsGrid tr.jqgrow")
+
+        row_count = rows.count()
+        print("Rows: ", row_count)
+        # if row_count == 0:
+        #     print("No items found in the grid.")
+        #     return
+        #
+        # for i in range(row_count):
+        #     row = rows.nth(i)
+        #     # print("Total item count: " + row)
+        #
+        #     item_name = self.page.locator('a[id^="itemLink"]').inner_text().strip()
+        #     # item_name = self.page.locator("td[aria-describedby='frameworkDetailsGrid_itemName']").inner_text().strip()
+        #     # spec = self.row.locator("td[aria-describedby='frameworkDetailsGrid_itemSpecification']").inner_text().strip()
+        #     # uom = self.row.locator("td[aria-describedby='frameworkDetailsGrid_uom']").inner_text().strip()
+        #     # unit_price = self.row.locator("td[aria-describedby='frameworkDetailsGrid_unitPrice']").input_value()
+        #     # moq = self.row.locator("td[aria-describedby='frameworkDetailsGrid_moq']").input_value()
+        #
+        #     print(f"\nRow {i + 1}")
+        #     print(f"Item Name: {item_name}\n")
+            # print(f"Specification: {spec}")
+            # print(f"UoM: {uom}")
+            # print(f"Unit Price: {unit_price}")
+            # print(f"MOQ: {moq}")
+
+    def print_table_data(self, only_status=False):
+        rows = self.table_rows.all()
+
+        if not rows:
+            print("No records found in the table")
+            return
+
+        for idx, row in enumerate(rows, start=1):
+            # Extract all cell texts inside the row
+            cells = row.locator("td").all()
+
+            if only_status:
+                # Example: status cell might be the 'action' column with Reject button
+                # Modify this selector if your status column is different
+                status_cell = row.locator("td[aria-describedby='frameworkDetailsGrid_action']")
+                if status_cell.count() > 0:
+                    print(f"Row {idx} Status:", status_cell.inner_text())
+                else:
+                    print(f"Row {idx} Status: N/A")
+            else:
+                # Print complete row text
+                row_text = row.inner_text().replace("\n", " | ")
+                print(f"Row {idx}: {row_text}")
+
     def select_start_date(self):
         """
                 Selects the current date in the price review date picker.
@@ -129,14 +189,25 @@ class FrameworkAgreementInformation(BasicActionsDM):
         # Optional: wait for picker to close or field to update
         self.wait_for_timeout(1000)
 
-    def upload_framework_document(self, file_path: str):
+    def upload_framework_document(self, file_path):
         print(f"Uploading file from : {file_path}")
         if os.path.exists(file_path):
-            # self.upload_browse_button.click()
-            # uploaded_file_name = self.upload_file(self.upload_file_input, file_path)
-            # print(f"Uploaded file name: {uploaded_file_name}")
-            self.upload_browse_button.click()
-            self.upload_file_input.set_input_files(file_path)
-            print(f"Uploaded file successfully: {os.path.basename(file_path)}")
+            uploaded_file_name = self.upload_attachment_file(self.upload_file_input, file_path)
+            # uploaded_file_name = self.upload_attachment_file(self.upload_browse_button, file_path)
+            print(f"Uploaded file name: {uploaded_file_name}")
         else:
-            print(f"File not found: {file_path}")
+            print(f"File not found at path: {file_path}")
+
+    def upload_excel_document(self, file_path):
+        print(f"Uploading file from : {file_path}")
+        if os.path.exists(file_path):
+            uploaded_excel_file_name = self.upload_attachment_file(self.upload_excel_input, file_path)
+            print(f"Uploaded excel file name: {uploaded_excel_file_name}")
+        else:
+            print(f"Excel file not found at path: {file_path}")
+
+    def enter_remarks(self, remarks):
+        self.remarks.click()
+        self.remarks.clear()
+        self.input_in_element(self.remarks, remarks)
+        self.wait_for_timeout(2000)
