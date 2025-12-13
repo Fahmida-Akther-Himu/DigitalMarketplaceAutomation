@@ -8,8 +8,9 @@ from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 
 class ProcurementLoginPage(BasicActionsDM):
-    def __init__(self, page):
+    def __init__(self, page, logger=None):
         super().__init__(page)
+        self.logger = logger
         # write down all the elements here with locator format
         self.userName = page.get_by_label('Username')
         self.passWord = page.get_by_label('Password')
@@ -29,6 +30,11 @@ class ProcurementLoginPage(BasicActionsDM):
 
         self.exit_button = page.locator("a#btn_login.btn_user")
         self.logout_button = self.page.locator('a:has-text("Logout")')
+
+    ##################### small helper so we can log easily #####################
+    def _log(self, message: str):
+        if self.logger:
+            self.logger.step(message)
 
     def perform_logout(self):
         self.wait_to_load_element(self.exit_button)

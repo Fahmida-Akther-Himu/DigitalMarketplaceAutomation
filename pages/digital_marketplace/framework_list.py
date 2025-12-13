@@ -5,8 +5,9 @@ from utils.basic_actionsdm import BasicActionsDM
 
 
 class FrameworkList(BasicActionsDM):
-    def __init__(self, page):
+    def __init__(self, page, logger=None):
         super().__init__(page)
+        self.logger = logger
         self.page = page
 
         # self.vendor_info = page.locator('//*[@id="proposal-process"]/div[1]/div/div[4]/div/div/div[2]')
@@ -21,6 +22,11 @@ class FrameworkList(BasicActionsDM):
         self.hub_selection = page.locator("select[id='hub']")
         self.fa_no_link = page.locator("a[style='text-decoration: underline;'][onclick^='showDetails']")
         self.status_cell = page.locator("td[aria-describedby='frameworkListGrid_status']")
+
+    ##################### small helper so we can log easily #####################
+    def _log(self, message: str):
+        if self.logger:
+            self.logger.step(message)
 
     def get_status_info(self):
         # unique locator for the status column
@@ -78,98 +84,6 @@ class FrameworkList(BasicActionsDM):
         approver_id = extract_approver_id(status_text)
         print("Approver ID:", approver_id)
 
-        # self.agreement_status = page.locator("//table[@id='frameworkListGrid']/tbody/tr[2]/child::td[14]")
-
-        # self.status_cell = page.locator(
-        #     "#frameworkListGrid tbody tr:first-child td[aria-describedby='frameworkListGrid_status']"
-        # )
-
-    # def get_agreement_status_info(self) -> dict:
-    #     # Wait until at least one row is visible
-    #     self.page.wait_for_selector("#frameworkListGrid tbody tr:first-child td", timeout=60000)
-    #     # Unique locator for status column
-    #     # status_cell = self.page.locator(
-    #     #     "#frameworkListGrid tbody tr:first-child td[aria-describedby='frameworkListGrid_status']"
-    #     # )
-    #     status_cell = self.page.locator("#frameworkListGrid tbody tr").first.locator("td").nth(6)
-    #     self.wait_for_timeout(3000)
-    #
-    #     # Get full raw text
-    #     raw_text = status_cell.inner_text(timeout=30000).strip()
-    #     print("RAW STATUS TEXT:", raw_text)
-    #
-    #     # Split lines
-    #     lines = [line.strip() for line in raw_text.split("\n") if line.strip()]
-    #
-    #     result = {
-    #         "status": None,
-    #         "approver_id": None,
-    #         "name": None,
-    #         "designation": None,
-    #         "pin": None,
-    #         "full_text": raw_text
-    #     }
-    #
-    #     # 1) Extract Status (line 1)
-    #     if len(lines) > 0:
-    #         result["status"] = lines[0]
-    #
-    #     # 2) Extract Approver ID + Name
-    #     # Looks like:  [00260331]-MD. MAHADE HASSAN SHARKAR
-    #     import re
-    #     match = re.search(r"\[(\d+)\]-(.+)", raw_text)
-    #     if match:
-    #         result["approver_id"] = match.group(1).strip()
-    #         result["name"] = match.group(2).strip()
-    #
-    #     # 3) Extract designation (bottom line)
-    #     if len(lines) >= 3:
-    #         result["designation"] = lines[-1]
-    #
-    #     # 4) Extract PIN if present (SU003435 pattern)
-    #     pin_match = re.search(r"\b[A-Z]{2}\d{6}\b", raw_text)
-    #     if pin_match:
-    #         result["pin"] = pin_match.group(0)
-    #
-    #     print("PARSED STATUS INFO:", result)
-    #     return result
-    #
-    # def find_agreement_approver_id(self):
-    #     status_cell = self.page.locator(
-    #         "#frameworkListGrid tbody tr:first-child td[aria-describedby='frameworkListGrid_status']"
-    #     )
-    #
-    #     status_cell.wait_for()  # ensure row is loaded
-    #
-    #     text = status_cell.inner_text().strip()
-    #     print("STATUS TEXT:", text)
-    #
-    #     import re
-    #     match = re.search(r"\[(\d+)\]", text)
-    #     if not match:
-    #         raise ValueError(f"Approver ID not found in status cell: {text}")
-    #
-    #     return match.group(1)
-
-    # def find_agreement_approver_id(self) -> str:
-    #     # Unique locator for status column (first row)
-    #     status_cell = self.page.locator(
-    #         "#frameworkListGrid tbody tr[1] td[aria-describedby='frameworkListGrid_status']"
-    #     )
-    #
-    #     full_text = status_cell.inner_text().strip()
-    #     print("STATUS FULL TEXT:", full_text)
-    #
-    #     # Extract ID in brackets: [00260331]
-    #     match = re.search(r"\[(\d+)\]", full_text)
-    #
-    #     if match:
-    #         approver_id = match.group(1)
-    #         print("EXTRACTED APPROVER ID:", approver_id)
-    #         return approver_id
-    #     else:
-    #         raise ValueError(f"Approver ID not found in status text: {full_text}")
-
     def search_agreement(self, search_framework_agreement):
         self.search_framework_number.click()
         self.search_framework_number.clear()
@@ -180,12 +94,6 @@ class FrameworkList(BasicActionsDM):
         agreement_status_value = self.agreement_status.text_content()
         print("Agreement status value:", agreement_status_value)
 
-    #
-    # def find_agreement_status(self) -> str:
-    #     status_value = self.requisition_status.text_content()
-    #     print("Requisition Status: " + status_value)
-    #     return status_value
-
     def find_agreement_approver_id_2(self) -> str:
         agreement_status_value = self.agreement_status.text_content()
         print("Agreement status value:", agreement_status_value)
@@ -193,16 +101,6 @@ class FrameworkList(BasicActionsDM):
         # approver_id = status_value.split('[')[-1].split(']')[0]
         print("Agreement approver ID(without type cust): " + agreement_approver_id)
         return agreement_approver_id
-
-    #
-    # row = self.page.locator("//table//tr[1]").inner_text()
-    # print("DEBUG ROW TEXT:", row)
-    #
-    # def find_agreement_approver_id_1(self):
-    #     locator = self.page.locator("//table//tr[1]/td[14]")  # Example: 5th column
-    #     approver_text = locator.inner_text().strip()
-    #     print("Approver ID text:", approver_text)
-    #     return approver_text
 
     def find_agreement_approver_id_3(self):
         approver_locator = self.page.locator("//table//tr[1]/td[5]")
@@ -218,9 +116,3 @@ class FrameworkList(BasicActionsDM):
         print("DEBUG Approver ID:", approver)
 
         return approver
-
-    # def find_approver_id(self) -> str:
-    #     status_value = self.requisition_status.text_content()
-    #     approver_id = status_value.split('[')[-1].split(']')[0]
-    #     print("Approver ID: " + approver_id)
-    #     return approver_id

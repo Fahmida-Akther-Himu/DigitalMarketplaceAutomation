@@ -54,10 +54,19 @@ class BasicActionsDM:
         print(actual_text)
         return actual_text
 
+    #
+    # @staticmethod
+    # def wait_to_load_element(self, elem, state="attached"):
+    #     elem.wait_for(state=state)
+
     @staticmethod
     def wait_to_load_element(elem):
         elem.wait_for(state='visible')
         # print('waited for the elem')
+
+    # @staticmethod
+    # def wait_to_load_element(self, elem, state="attached"):
+    #     elem.wait_for(state=state)
 
     @staticmethod
     def click_on_openLoginFormBtn(openLoginFormBtn):

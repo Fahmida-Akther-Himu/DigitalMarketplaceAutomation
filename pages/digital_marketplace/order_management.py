@@ -4,10 +4,10 @@ from utils.basic_actionsdm import BasicActionsDM
 
 
 class OrderManagement(HomePage, BasicActionsDM):
-    def __init__(self, page):
+    def __init__(self, page, logger=None):
         super().__init__(page)
         self.page = page
-
+        self.logger = logger
         self.order_management_menu = page.locator('i[class="nav-icon fas fa-shopping-cart"]')
         self.orders_submenu = page.locator('a[href="/Admin/Order/List"][class="nav-link"]')
         self.vendor_send_backs_submenu = page.locator('a[href="/Admin/Order/VendorSendBackList"]')
@@ -37,6 +37,11 @@ class OrderManagement(HomePage, BasicActionsDM):
         self.edit_review_button = page.locator('a[class="btn btn-success"][onclick^="setLocation"]')
 
         # self.framework_order_no = page.locator('h1[class="float-left"]')
+
+    ##################### small helper so we can log easily #####################
+    def _log(self, message: str):
+        if self.logger:
+            self.logger.step(message)
 
     def goto_administration_order_list(self):
         self.click_on_btn(self.order_management_menu)

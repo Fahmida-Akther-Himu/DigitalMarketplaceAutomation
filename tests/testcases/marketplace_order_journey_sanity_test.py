@@ -3,6 +3,7 @@ import os
 import re
 import random
 import string
+import pytest
 from conftest import new_tab
 from datetime import datetime, timedelta
 
@@ -31,7 +32,7 @@ stg_vendor_pass = os.getenv("test_stg_vendor_pass")
 receiving_pin_1 = os.getenv("test_receiving_pin")
 sso_login_receiver_pin = os.getenv("test_sso_login_receiver_pin")
 order_approver = os.getenv("test_order_approver")
-dm_admin = os.getenv("test_order_admin")
+marketplace_admin = os.getenv("test_order_admin")
 manual_delivery_location_1 = os.getenv("test_delivery_location_1")
 manual_delivery_location_2 = os.getenv("test_delivery_location_2")
 dm_user_gen_password = os.getenv("test_dm_user_gen_password")
@@ -106,6 +107,15 @@ bill_approver_id = ''
 bill_recommender_3 = ''
 
 
+@pytest.mark.reporting(
+    functional_specification="test_1",
+    test_description="""Test Case 1: Login to the ERP Procurement system and create & submit a requisition for white listed agreement item.
+
+    Objective:
+        To validate that a user can successfully log in to the ERP Procurement system,
+        create a requisition using a whitelisted framework agreement item,
+        provide all necessary requisition details, and submit it successfully —
+        generating a unique requisition number for further processing.""")
 def test_1_create_requisition_with_whitelisted_agreement_item(page):
     """
     Test Case 1: Login to the ERP Procurement system and create & submit a requisition for white listed agreement item.
@@ -169,6 +179,14 @@ def test_1_create_requisition_with_whitelisted_agreement_item(page):
     create_requisition_page.get_full_page_screenshot('full_page_screenshot_4')
 
 
+@pytest.mark.reporting(
+    functional_specification="test_1",
+    test_description="""Test Case 2: Identify and capture the first approver of a submitted requisition.
+
+    Objective:
+        To verify that the system correctly retrieves the first-level approver
+        assigned to the newly created requisition, ensuring that workflow routing
+        is functioning as expected.""")
 def test_2_identify_first_approver_for_created_requisition(page):
     """
     Test Case 2: Identify and capture the first approver of a submitted requisition.
@@ -203,6 +221,14 @@ def test_2_identify_first_approver_for_created_requisition(page):
     m_page.wait_for_timeout(2000)
 
 
+@pytest.mark.reporting(
+    functional_specification="test_1",
+    test_description="""Test Case 3: Login as the first approver and approve the submitted requisition in the ERP Procurement system.
+
+    Objective:
+        To verify that the first-level approver can successfully log in to the
+        procurement portal, locate the submitted requisition, and approve it,
+        ensuring that the workflow moves correctly to the next approval stage.""")
 def test_3_login_as_first_approver_and_approve_requisition(page):
     """
     Test Case 3: Login as the first approver and approve the submitted requisition in the ERP Procurement system.
@@ -254,6 +280,14 @@ def test_3_login_as_first_approver_and_approve_requisition(page):
     m_page.wait_for_timeout(2000)
 
 
+@pytest.mark.reporting(
+    functional_specification="test_1",
+    test_description="""Test Case 4: Identify and capture the second-level approver of a submitted requisition in the ERP Procurement system.
+
+    Objective:
+        To verify that the system correctly retrieves the second-level approver
+        for a previously submitted requisition, ensuring that the approval workflow
+        is routed correctly to the next approver.""")
 def test_4_identify_second_approver_for_created_requisition(page):
     """
     Test Case 4: Identify and capture the second-level approver of a submitted requisition in the ERP Procurement system.
@@ -306,6 +340,13 @@ def test_4_identify_second_approver_for_created_requisition(page):
     m_page.wait_for_timeout(2000)
 
 
+@pytest.mark.reporting(
+    functional_specification="test_1",
+    test_description="""Test Case 5: Login as the second-level approver and approve the submitted requisition in the ERP Procurement system.
+
+    Objective:
+        To verify that the second-level approver can successfully log in, locate the requisition,
+        and approve it, ensuring that the approval workflow progresses correctly to the next stage.""")
 def test_5_login_as_second_approver_and_approve_requisition(page):
     """
     Test Case 5: Login as the second-level approver and approve the submitted requisition in the ERP Procurement system.
@@ -355,6 +396,14 @@ def test_5_login_as_second_approver_and_approve_requisition(page):
     m_page.wait_for_timeout(2000)
 
 
+@pytest.mark.reporting(
+    functional_specification="test_1",
+    test_description="""Test Case 6: Verify that the requisition is approved and retrieve vendor information from the ERP Procurement system.
+
+    Objective:
+        To ensure that the requisition submitted and approved in previous steps
+        is correctly reflected as "Approved" in the system, and to capture
+        detailed information including the assigned vendor for documentation and verification.""")
 def test_6_verify_requisition_is_approved(page, new_tab):
     """
     Test Case 6: Verify that the requisition is approved and retrieve vendor information from the ERP Procurement system.
@@ -432,7 +481,14 @@ def test_6_verify_requisition_is_approved(page, new_tab):
 # Marketplace flow
 # Order initiation
 
+@pytest.mark.reporting(
+    functional_specification="test_1",
+    test_description="""Test Case 7: Marketplace order initiation process in the Staging environment.
 
+    Objective:
+        To verify that a marketplace order can be initiated, processed, and confirmed successfully
+        by the order initiator, including selecting vendors, updating cart information, uploading attachments,
+        scheduling delivery, and confirming the order.""")
 def test_7_initiate_marketplace_order(page, new_tab):
     """
     Test Case 7: Marketplace order initiation process in the Staging environment.
@@ -556,6 +612,14 @@ def test_7_initiate_marketplace_order(page, new_tab):
     dm_logout.get_full_page_screenshot('full_page_screenshot_30')
 
 
+@pytest.mark.reporting(
+    functional_specification="test_1",
+    test_description="""Test Case 8: Marketplace order approval process by the designated approver.
+
+    Objective:
+        To verify that a marketplace order can be successfully approved by the
+        second-level approver ('approver_id_2') in the staging environment, ensuring
+        that the order moves correctly through the approval workflow.""")
 def test_8_approve_marketplace_order(page):
     """
     Test Case 8: Marketplace order approval process by the designated approver.
@@ -612,6 +676,13 @@ def test_8_approve_marketplace_order(page):
     dm_logout.perform_logout()
 
 
+@pytest.mark.reporting(
+    functional_specification="test_1",
+    test_description="""Test Case 9: Retrieve vendor credentials for a specific marketplace order.
+
+    Objective:
+        To verify that the admin user can successfully access order details and retrieve
+        the vendor credentials associated with a specific order in the marketplace system.""")
 def test_9_retrieve_vendor_credentials_for_marketplace_order(page):
     """
     Test Case 9: Retrieve vendor credentials for a specific marketplace order.
@@ -621,7 +692,7 @@ def test_9_retrieve_vendor_credentials_for_marketplace_order(page):
         the vendor credentials associated with a specific order in the marketplace system.
 
     Steps:
-        1. Login to the marketplace portal as an admin user ('dm_admin').
+        1. Login to the marketplace portal as an admin user ('marketplace_admin').
         2. Navigate to the "All Orders" page for admin and capture a screenshot.
         3. Search for the order using its reference number ('order_reference_number').
         4. Access the order details page and capture a screenshot.
@@ -635,7 +706,7 @@ def test_9_retrieve_vendor_credentials_for_marketplace_order(page):
     print("Test 9: Find vendor credential for order...")
     login_page = LoginPage(page)
     login_page.perform_login_for_sso_login(
-        user_name=dm_admin,
+        user_name=marketplace_admin,
         pass_word=marketplace_password
     )
     home_page = HomePage(page)
@@ -666,6 +737,14 @@ def test_9_retrieve_vendor_credentials_for_marketplace_order(page):
     dm_logout.logout_from_administration()
 
 
+@pytest.mark.reporting(
+    functional_specification="test_1",
+    test_description="""Test Case 10: Marketplace vendor acknowledgement process.
+
+    Objective:
+        To verify that a vendor can log in to the marketplace portal, acknowledge
+        the assigned order, generate a framework order number, and confirm
+        that the order appears correctly in the order management system.""")
 def test_10_vendor_acknowledges_marketplace_order(page):
     """
     Test Case 10: Marketplace vendor acknowledgement process.
@@ -724,6 +803,14 @@ def test_10_vendor_acknowledges_marketplace_order(page):
     dm_logout.logout_from_administration()
 
 
+@pytest.mark.reporting(
+    functional_specification="test_1",
+    test_description="""Test Case 11: View marketplace framework order details in the procurement system.
+
+    Objective:
+        To verify that a procurement admin can log in, navigate to the framework
+        order list, search for a specific framework order ('framework_order_no'),
+        and view its details in a new tab for validation purposes.""")
 def test_11_login_to_procurement_and_view_marketplace_work_order_details(page, new_tab):
     """
     Test Case 11: View marketplace framework order details in the procurement system.
@@ -777,6 +864,14 @@ def test_11_login_to_procurement_and_view_marketplace_work_order_details(page, n
 
 
 # Item receive by receiver
+@pytest.mark.reporting(
+    functional_specification="test_1",
+    test_description="""Test Case 12: Marketplace item receipt process by the designated receiver.
+
+    Objective:
+        To verify that a receiver can log in to the marketplace portal, access
+        the receivable orders, confirm receipt of items, upload necessary
+        attachments, and validate the received items in the system.""")
 def test_12_receiver_receives_marketplace_item(page):
     """
     Test Case 12: Marketplace item receipt process by the designated receiver.
@@ -861,6 +956,14 @@ def test_12_receiver_receives_marketplace_item(page):
     dm_logout.logout_from_administration()
 
 
+@pytest.mark.reporting(
+    functional_specification="test_1",
+    test_description="""Test Case 13: Marketplace item receipt by order initiator acting as receiver.
+
+    Objective:
+        To verify that the order initiator can act as a receiver to confirm receipt
+        of items in the marketplace portal, including partial receipt scenarios,
+        uploading attachments, and validating received items in the system.""")
 def test_13_order_initiator_receives_marketplace_item(page):
     """
     Test Case 13: Marketplace item receipt by order initiator acting as receiver.
@@ -989,6 +1092,14 @@ def test_13_order_initiator_receives_marketplace_item(page):
     dm_logout.logout_from_administration()
 
 
+@pytest.mark.reporting(
+    functional_specification="test_1",
+    test_description="""Test Case 14: View marketplace item receive details in the procurement system.
+
+    Objective:
+        To verify that a procurement admin can log in, access the item receive list,
+        search for a specific received item ('framework_order_no'), and view its details
+        in the procurement system.""")
 def test_14_login_to_procurement_and_view_marketplace_item_receipt_details(page):
     """
     Test Case 14: View marketplace item receive details in the procurement system.
@@ -1036,6 +1147,13 @@ def test_14_login_to_procurement_and_view_marketplace_item_receipt_details(page)
     m_page.get_full_page_screenshot('full_page_screenshot_76')
 
 
+@pytest.mark.reporting(
+    functional_specification="test_1",
+    test_description="""Test Case 15: Bill creation and submission for Marketplace item receive in procurement system.
+
+    Objective:
+        To verify that a procurement user can create a vendor bill for received Marketplace items,
+        submit the bill, and assign the appropriate recommender for approval in the procurement system.""")
 def test_15_create_and_submit_bill_for_received_marketplace_item(page):
     """
     Test Case 15: Bill creation and submission for Marketplace item receive in procurement system.
@@ -1103,6 +1221,13 @@ def test_15_create_and_submit_bill_for_received_marketplace_item(page):
     bill_list_page.get_full_page_screenshot('full_page_screenshot_86')
 
 
+@pytest.mark.reporting(
+    functional_specification="test_1",
+    test_description="""Test Case 16: Vendor bill approval by first recommender in the procurement system.
+
+    Objective:
+        To verify that the first recommender can review, upload supporting documents,
+        approve a vendor bill, and assign the next approver in the workflow.""")
 def test_16_first_recommender_approves_marketplace_bill(page, new_tab):
     """
     Test Case 16: Vendor bill approval by first recommender in the procurement system.
@@ -1151,6 +1276,13 @@ def test_16_first_recommender_approves_marketplace_bill(page, new_tab):
     m_page.get_full_page_screenshot('full_page_screenshot_90')
 
 
+@pytest.mark.reporting(
+    functional_specification="test_1",
+    test_description="""Test Case 17: Vendor bill approval by second recommender in the procurement system.
+
+    Objective:
+        To verify that the second recommender can review and approve a vendor bill,
+        and the next approver (if any) is correctly assigned in the workflow.""")
 def test_17_second_recommender_approves_marketplace_bill(page, new_tab):
     """
     Test Case 17: Vendor bill approval by second recommender in the procurement system.
@@ -1214,6 +1346,13 @@ def test_17_second_recommender_approves_marketplace_bill(page, new_tab):
     m_page.get_full_page_screenshot('full_page_screenshot_96')
 
 
+@pytest.mark.reporting(
+    functional_specification="test_1",
+    test_description="""Test Case 18: Vendor bill final approval by the approver in the procurement system.
+
+    Objective:
+        To verify that the final approver can review and approve the vendor bill,
+        confirm that the bill status is updated correctly after approval and sent it to HO-FIN.""")
 def test_18_vendor_bill_approver_approval_process_in_procurement(page, new_tab):
     """
     Test Case 18: Vendor bill final approval by the approver in the procurement system.

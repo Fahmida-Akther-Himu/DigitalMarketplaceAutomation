@@ -5,9 +5,9 @@ from utils.basic_actionsdm import BasicActionsDM
 
 class FrameworkInformation(BasicActionsDM):
 
-    def __init__(self, page):
+    def __init__(self, page, logger=None):
         super().__init__(page)
-
+        self.logger = logger
         self.page = page
         self.vendor_info = page.locator('//*[@id="proposal-process"]/div[1]/div/div[4]/div/div/div[2]')
         self.agreement_date = page.locator('//*[@id="proposal-process"]/div[1]/div/div[6]/div[1]/div/div[2]')
@@ -28,7 +28,16 @@ class FrameworkInformation(BasicActionsDM):
 
         self.submit_button = page.locator('input[id="submit-button-invProcurementRequirement"][value="Submit"]')
         self.edit_button = page.locator('input[id="edit-button-invProcurementRequirement"][value="Edit"]')
+        self.approve_button = page.locator('[id="approve"]')
+        self.review_button = page.locator('[id="review"]')
+        self.reject_button = page.locator('[id="reject"]')
+        self.reject_with_noal_button = page.locator('[id="reject5"]')
         # self.comment_button = page.locator('textarea[id="comments"]')
+
+    ##################### small helper so we can log easily #####################
+    def _log(self, message: str):
+        if self.logger:
+            self.logger.step(message)
 
     def get_vendor_info(self):
         self.vendor_info.click()
@@ -75,20 +84,15 @@ class FrameworkInformation(BasicActionsDM):
     def print_framework_item_details(self):
         print("Framework item details: " + self.framework_item_details.inner_text())
 
-    def enter_amendment_comments(self, amendment_comments):
+    def enter_agreement_comments(self, comments):
         self.comments.click()
         self.comments.clear()
-        self.input_in_element(self.comments, amendment_comments)
+        self.input_in_element(self.comments, comments)
 
     def confirm_agreement_amendment(self):
         self.amendment_button.click()
         text = self.success_message.inner_text()
         print("Amendment confirmation full message:", text)
-
-    def enter_edit_comments(self, edit_comments):
-        self.comments.click()
-        self.comments.clear()
-        self.input_in_element(self.comments, edit_comments)
 
     def print_item_details_1(self):
         rows = self.item_details_info.all()
@@ -105,3 +109,10 @@ class FrameworkInformation(BasicActionsDM):
         else:
             for idx, row in enumerate(rows, start=1):
                 print(f"Row {idx}:", row.inner_text())
+
+    def confirm_agreement_approval(self) -> str:
+        self.approve_button.click()
+        self.success_message.wait_for(state="visible", timeout=15000)
+        approval_status_message = self.success_message.text_content()
+        print("Agreement confirmation full message:", approval_status_message)
+        return approval_status_message

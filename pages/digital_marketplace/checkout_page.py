@@ -8,9 +8,10 @@ from datetime import datetime, timedelta
 
 
 class CheckoutPage(ShoppingCart, BasicActionsDM):
-    def __init__(self, page):
+    def __init__(self, page, logger=None):
         super().__init__(page)
         self.page = page
+        self.logger = logger
         # prepare the delivery schedule
         self.schedule_quantity = page.locator('input[type="number"]')
         self.schedule_expected_date = page.locator('input[type="date"][class="todayDate"]')
@@ -33,6 +34,11 @@ class CheckoutPage(ShoppingCart, BasicActionsDM):
         self.schedule_edit_button = page.locator('button[class="editScheduleButton"][type="button"]')
         self.update_schedule_button = page.locator('button[id^="updateScheduleButton"][class="button1"]')
         self.preview_button = page.locator('a.print-order-button', has_text="Preview")
+
+    ##################### small helper so we can log easily #####################
+    def _log(self, message: str):
+        if self.logger:
+            self.logger.step(message)
 
     def update_quantity(self, quantity):
         self.schedule_quantity.clear()

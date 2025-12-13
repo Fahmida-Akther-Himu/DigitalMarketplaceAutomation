@@ -3,8 +3,11 @@ import re
 import random
 import string
 from conftest import new_tab
-from datetime import datetime, timedelta
+# from conftest_1 import new_tab
+# from datetime import datetime, timedelta
 import os
+from datetime import datetime
+import pytest
 
 load_dotenv()
 
@@ -21,6 +24,8 @@ agreement_number = os.getenv("test_agreement_number")
 
 agreement = os.getenv("test_white_listed_agreement")
 proc_admin = os.getenv("test_proc_admin")
+amended_agreement_recommender = os.getenv("test_amended_agreement_recommender")
+amended_agreement_approver = os.getenv("test_amended_agreement_approver")
 # order_reference_number = os.getenv("test_order_reference_number")
 
 # Page models for procurement
@@ -45,28 +50,24 @@ allowed_chars = string.ascii_letters + string.digits + ' '
 amendment_remarks = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
 edit_remarks = ''.join(random.choices(string.ascii_letters + string.digits + string.ascii_letters, k=15))
 agreement_remarks = ''.join(random.choices(allowed_chars, k=20))
-
-# challan_num_for_receiver = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
-# challan_num_for_order_initiator = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
-# challan_num_for_order_initiator_2 = ''.join(random.choices(string.ascii_letters, k=8))
+approval_remarks = ''.join(random.choices(allowed_chars, k=20))
 
 # Procurement global variable
-agreement_approver = ''
 agreement_reviewer = ''
-
-approver_id_2 = ''
-order_vendor = ''
-# order_approver = ''
-approver_id_3 = ''
+agreement_recommender = ''
+agreement_approver = ''
 
 
-def test_1_search_whitelisted_agreement_on_procurement_module(page, new_tab):
+@pytest.mark.reporting(
+    functional_specification="test_1",
+    test_description="Verify that agreement amendment_1")
+def test_2_reviewer_approves_amended_agreement_1(page, new_tab):
     proc_login_page = ProcurementLoginPage(page)
     proc_login_page.perform_login(
         given_url=proj_url,
-        user_name=agreement_officer,
-        pass_word=proj_pass
-        # timeout=60000
+        user_name="175050",
+        pass_word=proj_pass,
+        timeout=60000
     )
 
     proc_dashboard_page = DashboardPage(page)
@@ -82,86 +83,15 @@ def test_1_search_whitelisted_agreement_on_procurement_module(page, new_tab):
 
     new_page = new_tab(lambda p: framework_list.fa_no_link.click())
     framework_info = FrameworkInformation(new_page)
-    framework_info.enter_edit_comments(edit_comments=edit_remarks)
-    framework_info.edit_button.click()
-    framework_info.wait_for_timeout(2000)
+    framework_info.enter_agreement_comments(comments=approval_remarks)
+    framework_info.confirm_agreement_approval()
+    new_page.close()
 
-    framework_agreement_information = FrameworkAgreementInformation(new_page)
-    # framework_agreement_information.select_start_date()
-    # framework_agreement_information.wait_for_timeout(2000)
-    # framework_agreement_information.select_end_date()
-    # framework_agreement_information.wait_for_timeout(2000)
-    # framework_agreement_information.select_price_review_date()
-    # framework_agreement_information.wait_for_timeout(2000)
-    #
-    # current_dir = os.getcwd()
-    # document_location = os.path.join(current_dir, 'utils', 'upload_file.pdf')
-    # framework_agreement_information.upload_framework_document(document_location)
-    framework_agreement_information.applicable_for_both.click()
-    framework_agreement_information.enter_remarks(remarks=agreement_remarks)
-    framework_agreement_information.print_item_details()
-    framework_agreement_information.wait_for_timeout(2000)
-    framework_agreement_information.modify_item_unit_price(unit_price="50")
-    framework_agreement_information.wait_for_timeout(2000)
-    framework_agreement_information.update_and_next_button.click()
-    #
-    # framework_list.get_status_info()
+    framework_list = FrameworkList(page)
+    framework_list.search_agreement(search_framework_agreement=agreement_number)
+    framework_list.get_status_info()
 
-    # global agreement_reviewer
-    # agreement_reviewer = str(int(framework_list.get_status_info()))
-    # print("Agreement Reviewer ID:", agreement_reviewer)
-    #
-    # new_page = new_tab(lambda p: framework_list.fa_no_link.click())
-    # framework_info = FrameworkInformation(new_page)
-    # framework_info.agreement_date.click()
-    # framework_info.wait_for_timeout(5000)
-
-    # framework_agreement_information = FrameworkAgreementInformation(new_page)
-    # framework_agreement_information.select_start_date()
-    # framework_agreement_information.select_end_date()
-    # framework_agreement_information.select_price_review_date()
-    # framework_agreement_information.upload_framework_document(
-    #     '')
-
-    # global agreement_approver
-    # agreement_approver=framework_list.find_agreement_approver_id()
-    # agreement_approver = framework_list.find_agreement_approver_id()
-    # print("DEBUG returned approver value:", agreement_approver)
-    # framework_list.find_agreement_approver_id_1()
-
-    # agreement_approver = str(int(framework_list.find_agreement_approver_id()))
-    # print("Agreement approver ID:", agreement_approver)
-
-    # new_page = new_tab(lambda p: framework_list.fa_no_link.click())
-    # framework_info = FrameworkInformation(new_page)
-    # framework_info.enter_edit_comments(edit_comments=edit_remarks)
-    # framework_info.edit_button.click()
-    # framework_info.wait_for_timeout(2000)
-    #
-    # framework_agreement_information = FrameworkAgreementInformation(new_page)
-    # framework_agreement_information.select_start_date()
-    # framework_agreement_information.select_end_date()
-    # framework_agreement_information.select_price_review_date()
-    # # framework_agreement_information.upload_framework_document(
-    # #     '')
-    # current_dir = os.getcwd()
-    # # print(f"Current directory: {current_dir}")
-    # upload_document_location = os.path.join(current_dir, 'utils', 'upload_file.pdf')
-    # framework_agreement_information.upload_framework_document(upload_document_location)
-    # framework_agreement_information.wait_for_timeout(2000)
-    #
-    # current_dir = os.getcwd()
-    # # print(f"Current directory: {current_dir}")
-    # excel_document_location = os.path.join(current_dir, 'utils', 'Excel_file.excel')
-    # framework_agreement_information.upload_excel_document(excel_document_location)
-    # framework_agreement_information.applicable_for_both.click()
-    # framework_agreement_information.enter_remarks(remarks=agreement_remarks)
-    # framework_agreement_information.wait_for_timeout(5000)
-    # proc_login_page = ProcurementLoginPage(page)
-    # proc_login_page.perform_logout()
-
-    # m_page = MainNavigationBar(page)
-    # m_page.exit()
-    # m_page.logout()
-    # # m_page.get_full_page_screenshot('full_page_screenshot_7')
-    # m_page.wait_for_timeout(2000)
+    m_page = MainNavigationBar(page)
+    m_page.exit()
+    m_page.logout()
+    m_page.wait_for_timeout(2000)
