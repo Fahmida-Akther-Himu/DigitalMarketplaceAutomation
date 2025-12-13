@@ -6,14 +6,16 @@ from utils.basic_actionsdm import BasicActionsDM
 
 
 class ReceivableOrderListPage(OrderManagement, BasicActionsDM):
-    def __init__(self, page):
+    def __init__(self, page, logger=None):
         super().__init__(page)
         self.page = page
+        self.logger = logger
 
         # self.order_management_menu = page.locator('i[class="nav-icon fas fa-shopping-cart"]')
         self.receivable_order_list_submenu = page.locator('a[href="/Admin/Order/ReceivableOrderList"]')
         self.order_input = page.locator('#OrderNo')
-        self.search_button = page.locator('button[id="search-orders"]')
+        # self.search_button = page.locator('button[id="search-orders"]')
+        self.search_button = page.locator("//button[@id='search-orders']")
         self.order_view_button = page.get_by_role("link", name="View")
 
         self.challan_no = page.locator('textarea[id="challanNumber"]')
@@ -29,6 +31,11 @@ class ReceivableOrderListPage(OrderManagement, BasicActionsDM):
 
         self.receiving_attachment_upload_input = page.locator('input[id="itemAttachment"]')
 
+    ##################### small helper so we can log easily #####################
+    def _log(self, message: str):
+        if self.logger:
+            self.logger.step(message)
+
     def goto_receivable_order_list(self):
         # self.click_on_btn(self.order_management_menu)
         self.click_on_btn(self.receivable_order_list_submenu)
@@ -37,7 +44,8 @@ class ReceivableOrderListPage(OrderManagement, BasicActionsDM):
     def search_receivable_order(self, receivable_order_number):
         self.order_input.click()
         self.input_in_element(self.order_input, receivable_order_number)
-        self.click_on_btn(self.search_button)
+        self.wait_for_timeout(2000)
+        self.search_button.click()
 
     def receivable_order_view(self):
         self.order_view_button.first.click()

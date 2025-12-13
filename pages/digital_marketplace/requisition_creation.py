@@ -8,9 +8,9 @@ import datetime
 
 
 class CreateReqPage(ProcurementHomePage, BasicActionsDM):
-    def __init__(self, page):
+    def __init__(self, page, logger=None):
         super().__init__(page)
-
+        self.logger = logger
         # Validating page has been redirected correctly
         self.validation_point = page.get_by_role("heading", name="Create Requisition")
 
@@ -79,6 +79,11 @@ class CreateReqPage(ProcurementHomePage, BasicActionsDM):
         self.requisition_list = page.locator(
             '//div[text()="Requisition"]//following-sibling::ul//child::span[text()="Requisition List"]')
 
+    ##################### small helper so we can log easily #####################
+    def _log(self, message: str):
+        if self.logger:
+            self.logger.step(message)
+
     def validate(self):
         expect(self.validation_point).to_be_visible()
 
@@ -118,20 +123,31 @@ class CreateReqPage(ProcurementHomePage, BasicActionsDM):
 
     def finalize_item_quantity(self, item_quantity):
         self.input_in_element(self.item_qty_selector, item_quantity)
+        self.wait_for_timeout(2500)
 
     def setting_requisition_for_details_1(self, gl_code):
         self.gl_code_dropdown.click()
         self.character_input(self.gl_input, gl_code)
 
-    def setting_requisition_for_details(self, gl_code, item_remarks):
+    def setting_requisition_for_details_10(self, gl_code, item_remarks):
         self.gl_code_dropdown.click()
+        self.wait_for_timeout(5000)
         self.page.get_by_text(gl_code).click()
         self.req_for_remarks_selector.fill(item_remarks)
         self.add_to_grid_button.click()
-        # self.wait_for_timeout(2000)
+
+    def setting_requisition_for_details(self, gl_code, item_remarks):
+        self.gl_code_dropdown.click()
+        self.wait_for_timeout(5000)
+        self.gl_input.click()
+        self.character_input(self.gl_input, gl_code)
+        self.page.get_by_text(gl_code).click()
+        self.req_for_remarks_selector.fill(item_remarks)
+        self.add_to_grid_button.click()
 
     def setting_same_schedule_for_date(self):
         # self.select_same_schedule().click()
+        # self.wait_for_timeout(5000)
         self.click_on_btn(self.select_same_schedule)
         self.click_on_btn(self.date_picker_icon)
         self.click_on_btn(self.today)

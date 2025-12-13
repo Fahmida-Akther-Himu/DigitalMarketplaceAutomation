@@ -1,0 +1,31 @@
+report:
+  title: "BRAC Digital Marketplace Automation Test for framework agreement amendment"
+  report_dir: "artifacts/reports"
+  test_environment: "stgmarketplace.brac.net(Version: v3.2.3) and erpstaging.brac.net"
+
+
+#  title: "BRAC Digital Marketplace Automation(Sanity) Test for complete order journey"
+#  report_dir: "artifacts/reports"
+#  test_environment: "stgmarketplace.brac.net(Version: v3.2.3)"
+
+
+theme:
+  primary_color: "#2E7D32"
+  success_bg: "#E8F5E9"
+  error_bg: "#FFEBEE"
+  warning_bg: "#FFF8E1"
+  info_bg: "#E3F2FD"
+
+display:
+  show_category_filters: false
+  show_categories_in_table: false
+  show_developer: false
+  show_specification_totals: false
+
+# Custom metadata for functional specifications
+# You can define your own feature details here based on your Project.
+# They will be displayed in the report
+functional_specs:
+  test_1: "Framework agreement amendment"
+#  test_2: "Higher Studies Creation Test"
+#  test_3: "All Higher Studies and Training List Test"

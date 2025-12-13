@@ -54,10 +54,19 @@ class BasicActionsDM:
         print(actual_text)
         return actual_text
 
+    #
+    # @staticmethod
+    # def wait_to_load_element(self, elem, state="attached"):
+    #     elem.wait_for(state=state)
+
     @staticmethod
     def wait_to_load_element(elem):
         elem.wait_for(state='visible')
         # print('waited for the elem')
+
+    # @staticmethod
+    # def wait_to_load_element(self, elem, state="attached"):
+    #     elem.wait_for(state=state)
 
     @staticmethod
     def click_on_openLoginFormBtn(openLoginFormBtn):
@@ -112,6 +121,16 @@ class BasicActionsDM:
     # def click_on_btn_1(locator):
     #     locator.wait_for(state="visible", timeout=5000)
     #     locator.click()
+
+    def upload_attachment_file(self, file_input, file_path, timeout=5000):
+        # Accept both locator and selector
+        if isinstance(file_input, str):
+            file_input = self.page.locator(file_input)
+
+        file_input.wait_for(state="attached", timeout=timeout)
+        file_input.set_input_files(file_path)
+        print(f"File uploaded: {file_path}")
+        return os.path.basename(file_path)
 
     def upload_file(self, container, file_path: str, index: int = 0, timeout: int = 30000):
         """

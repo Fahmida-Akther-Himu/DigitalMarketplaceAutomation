@@ -3,8 +3,9 @@ from playwright.sync_api import expect
 
 
 class ProcurementHomePage(BasicActionsDM):
-    def __init__(self, page):
+    def __init__(self, page, logger=None):
         super().__init__(page)
+        self.logger = logger
         # write down all the elements here with locator format
         self.proc_item_requisition = page.locator('//div[text()="Requisition"]')
         self.proc_item_requisition_create_requisition = page.locator(
@@ -28,6 +29,15 @@ class ProcurementHomePage(BasicActionsDM):
             '//div[text()="Bill Payable"]//following-sibling::ul//child::span[text()="Create Vendor Bill Payable"]')
         self.vendor_billing_list = page.locator(
             '//div[text()="Bill Payable"]//following-sibling::ul//child::span[text()="Vendor Billing List"]')
+
+        self.framework_agreement = page.locator(
+            '//div[text()="Purchase Order"]//following-sibling::ul//child::span[text()="Framework Agreement(FWA)"]')
+        self.framework_list = page.locator('a.routable[href="#!frameworkAgreement/list"] >> span.menuTxtSpan')
+
+    ##################### small helper so we can log easily #####################
+    def _log(self, message: str):
+        if self.logger:
+            self.logger.step(message)
 
     def navigate_to_create_requisition(self):
         self.proc_item_requisition.click()
@@ -66,3 +76,9 @@ class ProcurementHomePage(BasicActionsDM):
 
     def goto_vendor_billing_list(self):
         self.vendor_billing_list.click()
+
+    def goto_framework_agreement_list(self):
+        self.purchase_order.click()
+        self.framework_agreement.click()
+        self.framework_list.click()
+        self.wait_for_timeout(5000)
