@@ -90,6 +90,19 @@ BRAC_Digital_Marketplace_METRICS = {
     "durations": [],  # seconds
 }
 
+import re
+
+
+def sanitize_filename(value: str) -> str:
+    """
+        Make a string safe for Windows filenames.
+        """
+    value = value.strip()
+    value = re.sub(r'[<>:"/\\|?*() ]+', "_", value)
+    return value
+
+    # return re.sub(r'[<>:"/\\|?*()]', '_', value)
+
 
 # ========================================================
 
@@ -119,6 +132,17 @@ def load_report_config():
     report_cfg = cfg.get("report", {})
     theme_cfg = cfg.get("theme", {})
 
+    # # Add new lines
+    # raw_title = report_cfg.get("title", default_title)
+    # raw_env = report_cfg.get("test_environment", default_env)
+    #
+    # # 🔒 SANITIZE HERE
+    # title = sanitize_filename(raw_title)
+    # env = sanitize_filename(raw_env)
+    # color = theme_cfg.get("primary_color", default_color)
+    #
+    # return title, env, color
+
     title = report_cfg.get("title", default_title)
     env = report_cfg.get("test_environment", default_env)
     color = theme_cfg.get("primary_color", default_color)
@@ -127,6 +151,11 @@ def load_report_config():
 
 
 REPORT_TITLE, REPORT_ENV, PRIMARY_COLOR = load_report_config()
+
+
+# title, env, PRIMARY_COLOR = load_report_config()
+# REPORT_TITLE = safe_text(title)
+# REPORT_ENV = safe_text(env)
 
 
 # ======================================================================
