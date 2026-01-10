@@ -7,8 +7,6 @@ import pytest
 from conftest import new_tab
 from datetime import datetime, timedelta
 
-# from tests.testcases.test_r import whitelisted_agreement_number
-
 load_dotenv()
 
 # Project URLs
@@ -20,21 +18,11 @@ proj_user = os.getenv("test_user_name")
 proj_pass = os.getenv("test_user_pass")
 requisition_project_name = os.getenv("test_requisition_project_name")
 whitelisted_agreement_number = os.getenv("test_whitelisted_agreement_number")
-blacklisted_agreement_number = os.getenv("test_blacklisted_agreement_number")
 requisition_funding_source = os.getenv("test_requisition_funding_source")
 requisition_funding_remarks = os.getenv("test_requisition_funding_remarks")
 master_item_1 = os.getenv("test_master_item_1")
 master_item_1_full_path = os.getenv("test_master_item_1_full_path")
-
-master_item_2 = os.getenv("test_master_item_2")
-master_item_2_full_path = os.getenv("test_master_item_2_full_path")
-
-master_item_3 = os.getenv("test_master_item_3")
-master_item_3_full_path = os.getenv("test_master_item_3_full_path")
-
 item_gl_code_1 = os.getenv("test_item_gl_code_1")
-item_gl_code_2 = os.getenv("test_item_gl_code_2")
-item_gl_code_3 = os.getenv("test_item_gl_code_3")
 requisition_item_remarks = os.getenv("test_requisition_item_remarks")
 schedule_address = os.getenv("test_schedule_address")
 
@@ -74,7 +62,6 @@ req_num = ''
 approver_id = ''
 approver_id_2 = ''
 order_vendor = ''
-# order_approver = ''
 approver_id_3 = ''
 
 
@@ -83,46 +70,30 @@ approver_id_3 = ''
     test_description="""Create Requisition with Whitelisted, Blacklisted, and Non-Agreement Items.
 
     Objective:
-        To verify that a user can successfully create and submit a requisition containing
-        a combination of:
-        - Whitelisted framework agreement items
-        - Blacklisted framework agreement items
-        - Non-framework (open market) items
-
-        and that the system correctly processes each item type within a single requisition.""")
+        To validate that a user can successfully log in to the ERP Procurement system,
+        create a requisition using a whitelisted framework agreement item,
+        provide all necessary requisition details, and submit it successfully —
+        generating a unique requisition number for further processing.""")
 def test_1_create_requisition_with_whitelisted_blacklisted_and_non_agreement_item(page):
     """
     Test Case 1: Create Requisition with Whitelisted, Blacklisted, and Non-Agreement Items.
 
     Objective:
-        To verify that a user can successfully create and submit a requisition containing
-        a combination of:
-        - Whitelisted framework agreement items
-        - Blacklisted framework agreement items
-        - Non-framework (open market) items
-
-        and that the system correctly processes each item type within a single requisition.
+        To validate that a user can successfully log in to the ERP Procurement system,
+        create a requisition using a whitelisted framework agreement item,
+        provide all necessary requisition details, and submit it successfully —
+        generating a unique requisition number for further processing.
 
     Steps:
-        1. Log in to the ERP Procurement system using valid user credentials.
-        2. Navigate to the Procurement module.
-        3. Open the "Create Requisition" page.
-        4. Enter requisition header details such as project, funding source, and remarks.
-        5. Add a whitelisted framework agreement item:
-            - Select the active whitelisted agreement.
-            - Choose an agreement item and define quantity.
-            - Assign GL code and item remarks.
-        6. Add a blacklisted framework agreement item:
-            - Select the active blacklisted agreement.
-            - Choose an agreement item and define quantity.
-            - Assign GL code and item remarks.
-        7. Add a non-framework (non-agreement) item:
-            - Define item quantity and unit price.
-            - Assign GL code and item remarks.
-        8. Configure delivery schedule and location.
-        9. Submit the requisition.
-        10. Capture and store the generated requisition number.
-        11. Navigate to the requisition list and verify successful creation.
+        1. Login to the procurement portal using valid credentials.
+        2. Navigate to the procurement dashboard.
+        3. Capture a full-page screenshot for verification.
+        4. Go to the "Create Requisition" page.
+        5. Set up requisition details such as department, funding source, and remarks.
+        6. Add items, select active framework agreements, and finalize quantities.
+        7. Add scheduling and location details.
+        8. Submit the requisition and record the generated requisition number.
+        9. Navigate to the requisition list to confirm successful creation.
 
     """
     proc_login_page = ProcurementLoginPage(page)
@@ -158,32 +129,8 @@ def test_1_create_requisition_with_whitelisted_blacklisted_and_non_agreement_ite
     create_requisition_page.setting_requisition_for_details(gl_code=item_gl_code_1,
                                                             item_remarks=requisition_item_remarks)
 
-    # Blacklisted framework agreement information
-    create_requisition_page.setting_requisition_details(item_info_1=master_item_2, item_info_2=master_item_2_full_path)
-
-    create_requisition_page.active_agreement_button.click()
-    create_requisition_page.setting_active_framework_list(agreement_info=blacklisted_agreement_number)
-    create_requisition_page.agreement_item_selector.nth(0).click()
-    # create_requisition_page.count_and_select_active_framework_items()
-    create_requisition_page.finalize_item_quantity(item_quantity="90")
-
-    create_requisition_page.setting_requisition_for_details(gl_code=item_gl_code_2,
-                                                            item_remarks=requisition_item_remarks)
-
-    # Non-framework agreement information
-    create_requisition_page.setting_requisition_details(item_info_1=master_item_3, item_info_2=master_item_3_full_path)
-    create_requisition_page.finalize_item_quantity(item_quantity="50")
-    create_requisition_page.finalize_item_unit_price(unit_price="10")
-
-    create_requisition_page.setting_requisition_for_details(gl_code=item_gl_code_3,
-                                                            item_remarks=requisition_item_remarks)
-
-    # create_requisition_page.setting_requisition_for_details("1202010501",
-    #                                                         "Item remarks abc123@")
-    # create_requisition_page.setting_requisition_for_details("[1101010101-02] Petty Cash",
-    #                                                         "Item remarks abc123@")
     create_requisition_page.setting_same_schedule_for_date()
-    create_requisition_page.setting_location_for_central_store(address=schedule_address)
+    create_requisition_page.setting_location_for_head_office(address=schedule_address)
     create_requisition_page.get_full_page_screenshot('full_page_screenshot_3')
     global req_num
     req_num = create_requisition_page.submit_requisition()
@@ -460,17 +407,14 @@ def test_6_verify_requisition_is_approved(page, new_tab):
     req_status = requisition_list_page.find_requisition_status()
     print("REQ STATUS:", req_status)
     requisition_list_page.get_full_page_screenshot('full_page_screenshot_17')
-    # expect(req_status).to_be_equal("Approved")
-    # requisition_list_page.goto_requisition_details_information()
-    # requisition_list_page.requisition_no.nth(0).click()
-
     new_page = new_tab(lambda p: requisition_list_page.goto_requisition_details_information())
     requisition_list_page.get_full_page_screenshot('full_page_screenshot_18')
+
     req_details = RequisitionDetailsInformation(new_page)
-    # req_details.fa_no_hyperlink.nth(0).click()
     req_details.wait_for_timeout(2000)
     new_page_2 = new_tab(lambda p: req_details.fa_no_hyperlink.nth(0).click())
     req_details.get_full_page_screenshot('full_page_screenshot_19')
+
     framework_info = FrameworkInformation(new_page_2)
 
     global order_vendor
@@ -538,7 +482,6 @@ def test_7_verify_requisition_sync_to_marketplace(page, new_tab):
 
     active_requisition_list = ActiveRequisitionListPage(page)
     active_requisition_list.search_order_requisition_number(requisition_number=req_num)
-
     new_page = new_tab(lambda p: active_requisition_list.goto_active_requisition_product_list())
 
     active_requisition_product_list = ActiveRequisitionProductList(new_page)

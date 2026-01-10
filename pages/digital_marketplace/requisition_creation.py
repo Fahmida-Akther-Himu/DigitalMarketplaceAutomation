@@ -38,6 +38,8 @@ class CreateReqPage(ProcurementHomePage, BasicActionsDM):
 
         # All active framework agreement locator
         self.active_agreement_button = page.locator('#check-agreement-button')
+        # self.fa_agreement_input = page.locator('input[id="faAgreementNo"][class="ui-autocomplete-input"]')
+        # self.fa_agreement_input = page.locator('form#gFormReqFrameworkList input#faAgreementNo')
         self.fa_agreement_input = page.locator('input#faAgreementNo')
         self.find_button = page.locator('//*[@id="find-button-requisitionList"]')
         # self.agreement_item_selector = page.locator("tr.jqgrow")
@@ -82,51 +84,7 @@ class CreateReqPage(ProcurementHomePage, BasicActionsDM):
             '//div[text()="Requisition"]//following-sibling::ul//child::span[text()="Requisition List"]')
 
         self.active_framework_list = page.locator('id="fancybox-content"')
-
-    # def count_and_select_active_framework_items(self):
-    #     """
-    #     If active framework popup is visible,
-    #     count all agreement items and select them one by one.
-    #     """
-    #
-    #     print("Checking active framework list visibility...")
-    #
-    #     # Wait a bit for popup to appear (if triggered)
-    #     self.active_framework_list.wait_for(state="visible", timeout=5000)
-    #
-    #     if not self.active_framework_list.is_visible():
-    #         print("Active framework list is NOT visible")
-    #         return 0
-    #
-    #     print("Active framework list is visible")
-    #
-    #     # 🔹 Scope rows INSIDE the active framework list
-    #     agreement_rows = self.page.active_framework_list.locator("tr.jqgrow")
-    #
-    #     total_rows = agreement_rows.count()
-    #
-    #     if total_rows == 0:
-    #         print("No agreement items found inside active framework list")
-    #         return 0
-    #
-    #     print(f"Total agreement items found: {total_rows}")
-    #
-    #     # 🔹 Iterate and select each row
-    #     for index in range(total_rows):
-    #         row = agreement_rows.nth(index)
-    #
-    #         # Ensure row is visible before interacting
-    #         row.wait_for(state="visible")
-    #
-    #         row_text = row.inner_text()
-    #         print(f"Selecting Row {index + 1}: {row_text}")
-    #
-    #         row.click()
-    #
-    #         if self.logger:
-    #             self.logger.info(f"Selected agreement item {index + 1}")
-    #
-    #     return total_rows
+        self.application_for_selector = page.locator('#applicableForId')
 
     ##################### small helper so we can log easily #####################
     def _log(self, message: str):
@@ -175,8 +133,41 @@ class CreateReqPage(ProcurementHomePage, BasicActionsDM):
 
     def setting_active_framework_list(self, agreement_info):
         self.character_input(self.fa_agreement_input, agreement_info)
-        self.page.get_by_text(agreement_info).click()
+        # self.wait_for_timeout(3000)
+        self.page.get_by_text(agreement_info, exact=True).click()
         self.wait_for_timeout(2500)
+        self.find_button.click()
+
+    def setting_active_framework_list_1(self, agreement_info):
+        popup = self.page.locator(
+            "div.main_container:has(h1:has-text('Active Framework List'))"
+        )
+
+        # Clear and search again (important for 2nd item)
+        fa_input = popup.locator("input#faAgreementNo")
+        fa_input.fill("")
+        fa_input.fill(agreement_info)
+
+        # Click framework from GRID only
+        popup.locator(
+            "#frameworkListGrid td[aria-describedby='frameworkListGrid_agreementNo'] a"
+        ).filter(has_text=agreement_info).first.click()
+
+        popup.locator("#find-button-requisitionList").click()
+
+    def setting_application_for_both(self):
+        self.application_for_selector.click()
+        self.select_from_list_by_value(self.application_for_selector, "3")
+        self.find_button.click()
+
+    def setting_application_for_ho(self):
+        self.application_for_selector.click()
+        self.select_from_list_by_value(self.application_for_selector, "1")
+        self.find_button.click()
+
+    def setting_application_for_hcmp(self):
+        self.application_for_selector.click()
+        self.select_from_list_by_value(self.application_for_selector, "2")
         self.find_button.click()
 
     def finalize_item_quantity(self, item_quantity):

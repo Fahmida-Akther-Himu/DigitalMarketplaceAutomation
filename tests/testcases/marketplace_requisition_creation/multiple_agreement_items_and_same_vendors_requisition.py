@@ -19,22 +19,16 @@ requisition_list_url = proj_url + "/procurementDashboard/myDashboard#!/requisiti
 proj_user = os.getenv("test_user_name")
 proj_pass = os.getenv("test_user_pass")
 requisition_project_name = os.getenv("test_requisition_project_name")
-whitelisted_agreement_number = os.getenv("test_whitelisted_agreement_number")
-blacklisted_agreement_number = os.getenv("test_blacklisted_agreement_number")
+same_vendor_agreement_number_1 = os.getenv("test_same_vendor_agreement_number_1")
+same_vendor_agreement_number_2 = os.getenv("test_same_vendor_agreement_number_2")
 requisition_funding_source = os.getenv("test_requisition_funding_source")
 requisition_funding_remarks = os.getenv("test_requisition_funding_remarks")
 master_item_1 = os.getenv("test_master_item_1")
 master_item_1_full_path = os.getenv("test_master_item_1_full_path")
-
 master_item_2 = os.getenv("test_master_item_2")
 master_item_2_full_path = os.getenv("test_master_item_2_full_path")
-
-master_item_3 = os.getenv("test_master_item_3")
-master_item_3_full_path = os.getenv("test_master_item_3_full_path")
-
 item_gl_code_1 = os.getenv("test_item_gl_code_1")
 item_gl_code_2 = os.getenv("test_item_gl_code_2")
-item_gl_code_3 = os.getenv("test_item_gl_code_3")
 requisition_item_remarks = os.getenv("test_requisition_item_remarks")
 schedule_address = os.getenv("test_schedule_address")
 
@@ -74,56 +68,47 @@ req_num = ''
 approver_id = ''
 approver_id_2 = ''
 order_vendor = ''
-# order_approver = ''
 approver_id_3 = ''
 
 
 @pytest.mark.reporting(
     functional_specification="test_1",
-    test_description="""Create Requisition with Whitelisted, Blacklisted, and Non-Agreement Items.
+    test_description="""Test Case 1: Create Requisition with Multiple Framework Agreements for the Same Vendor.
 
     Objective:
         To verify that a user can successfully create and submit a requisition containing
-        a combination of:
-        - Whitelisted framework agreement items
-        - Blacklisted framework agreement items
-        - Non-framework (open market) items
-
-        and that the system correctly processes each item type within a single requisition.""")
-def test_1_create_requisition_with_whitelisted_blacklisted_and_non_agreement_item(page):
+        multiple items sourced from the same vendor but associated with different
+        framework agreements.
+        """)
+def test_1_create_requisition_with_different_agreement_and_same_vendor_items(page):
     """
-    Test Case 1: Create Requisition with Whitelisted, Blacklisted, and Non-Agreement Items.
+    Test Case 1: Create Requisition with Multiple Framework Agreements for the Same Vendor.
 
     Objective:
         To verify that a user can successfully create and submit a requisition containing
-        a combination of:
-        - Whitelisted framework agreement items
-        - Blacklisted framework agreement items
-        - Non-framework (open market) items
-
-        and that the system correctly processes each item type within a single requisition.
+        multiple items sourced from the same vendor but associated with different
+        framework agreements.
 
     Steps:
-        1. Log in to the ERP Procurement system using valid user credentials.
-        2. Navigate to the Procurement module.
-        3. Open the "Create Requisition" page.
-        4. Enter requisition header details such as project, funding source, and remarks.
-        5. Add a whitelisted framework agreement item:
-            - Select the active whitelisted agreement.
-            - Choose an agreement item and define quantity.
-            - Assign GL code and item remarks.
-        6. Add a blacklisted framework agreement item:
-            - Select the active blacklisted agreement.
-            - Choose an agreement item and define quantity.
-            - Assign GL code and item remarks.
-        7. Add a non-framework (non-agreement) item:
-            - Define item quantity and unit price.
-            - Assign GL code and item remarks.
-        8. Configure delivery schedule and location.
-        9. Submit the requisition.
-        10. Capture and store the generated requisition number.
-        11. Navigate to the requisition list and verify successful creation.
-
+        1. Log in to the Procurement system using valid credentials.
+        2. Navigate to the Procurement dashboard.
+        3. Open the Create Requisition page.
+        4. Enter requisition header information such as project name, funding source,
+           and funding remarks.
+        5. Add the first item:
+            a. Select a master item linked to the first framework agreement.
+            b. Choose the applicable framework agreement.
+            c. Select the agreement item and specify the quantity.
+            d. Assign GL code and item remarks.
+        6. Add the second item:
+            a. Select another master item from the same vendor.
+            b. Choose a different framework agreement.
+            c. Select the agreement item and specify the quantity.
+            d. Assign GL code and item remarks.
+        7. Apply a common delivery schedule.
+        8. Specify a delivery location.
+        9. Submit the requisition and capture the generated requisition number.
+        10. Navigate to the requisition list to verify successful creation.
     """
     proc_login_page = ProcurementLoginPage(page)
     proc_login_page.perform_login(
@@ -147,43 +132,31 @@ def test_1_create_requisition_with_whitelisted_blacklisted_and_non_agreement_ite
     create_requisition_page.setting_requisition_for(project_name=requisition_project_name)
     create_requisition_page.setting_requisition_information(fund_source=requisition_funding_source,
                                                             fund_remarks=requisition_funding_remarks)
-    # Whitelisted framework agreement information
+    # Same vendor first framework agreement item information setting
     create_requisition_page.setting_requisition_details(item_info_1=master_item_1, item_info_2=master_item_1_full_path)
 
     create_requisition_page.active_agreement_button.click()
-    create_requisition_page.setting_active_framework_list(agreement_info=whitelisted_agreement_number)
+    create_requisition_page.setting_active_framework_list(agreement_info=same_vendor_agreement_number_1)
+    create_requisition_page.setting_application_for_ho()
     create_requisition_page.agreement_item_selector.nth(0).click()
     create_requisition_page.finalize_item_quantity(item_quantity="100")
 
     create_requisition_page.setting_requisition_for_details(gl_code=item_gl_code_1,
                                                             item_remarks=requisition_item_remarks)
 
-    # Blacklisted framework agreement information
+    # Same vendor second framework agreement item information setting
     create_requisition_page.setting_requisition_details(item_info_1=master_item_2, item_info_2=master_item_2_full_path)
 
     create_requisition_page.active_agreement_button.click()
-    create_requisition_page.setting_active_framework_list(agreement_info=blacklisted_agreement_number)
+    create_requisition_page.setting_active_framework_list(agreement_info=same_vendor_agreement_number_2)
+    create_requisition_page.setting_application_for_ho()
     create_requisition_page.agreement_item_selector.nth(0).click()
-    # create_requisition_page.count_and_select_active_framework_items()
     create_requisition_page.finalize_item_quantity(item_quantity="90")
-
     create_requisition_page.setting_requisition_for_details(gl_code=item_gl_code_2,
                                                             item_remarks=requisition_item_remarks)
 
-    # Non-framework agreement information
-    create_requisition_page.setting_requisition_details(item_info_1=master_item_3, item_info_2=master_item_3_full_path)
-    create_requisition_page.finalize_item_quantity(item_quantity="50")
-    create_requisition_page.finalize_item_unit_price(unit_price="10")
-
-    create_requisition_page.setting_requisition_for_details(gl_code=item_gl_code_3,
-                                                            item_remarks=requisition_item_remarks)
-
-    # create_requisition_page.setting_requisition_for_details("1202010501",
-    #                                                         "Item remarks abc123@")
-    # create_requisition_page.setting_requisition_for_details("[1101010101-02] Petty Cash",
-    #                                                         "Item remarks abc123@")
     create_requisition_page.setting_same_schedule_for_date()
-    create_requisition_page.setting_location_for_central_store(address=schedule_address)
+    create_requisition_page.setting_location_for_other_location(address=schedule_address)
     create_requisition_page.get_full_page_screenshot('full_page_screenshot_3')
     global req_num
     req_num = create_requisition_page.submit_requisition()
@@ -543,7 +516,10 @@ def test_7_verify_requisition_sync_to_marketplace(page, new_tab):
 
     active_requisition_product_list = ActiveRequisitionProductList(new_page)
     active_requisition_product_list.get_full_page_screenshot('full_page_screenshot_23')
-    active_requisition_product_list.view_product_switch_history()
+    active_requisition_product_list.history_link.nth(0).click()
+    active_requisition_product_list.go_to_product_history()
+    active_requisition_product_list.history_link.nth(1).click()
+    active_requisition_product_list.go_to_product_history()
     active_requisition_product_list.get_full_page_screenshot('full_page_screenshot_24')
     new_page.close()
 

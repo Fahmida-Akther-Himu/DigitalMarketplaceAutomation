@@ -8,7 +8,7 @@ report:
   #  report_dir: "artifacts/reports"
   #  test_environment: "marketplace QA server: qamarketplace.bracits.com(Version: v4.2.3) and ERP procurement QA server: env28.erp.bracits.net"
 
-  title: "BRAC Digital Marketplace Automation(Sanity) Test for requisition creation"
+  title: "BRAC Digital Marketplace Automation Validation Report: Requisition Creation for Multiple Framework Agreements for the Same Vendor"
   report_dir: "artifacts/reports"
   test_environment: "marketplace QA server: stgmarketplace.brac.net(Version_v3.2.3) and ERP procurement QA server - erpstaging.brac.net"
 
