@@ -1,6 +1,7 @@
 import re
+import os
 from operator import index
-
+from playwright.sync_api import Page
 from playwright.sync_api import expect
 from utils.basic_actionsdm import BasicActionsDM
 from pages.digital_marketplace.procurement_home_page import ProcurementHomePage
@@ -52,6 +53,14 @@ class CreateReqPage(ProcurementHomePage, BasicActionsDM):
         # self.gl_input = page.locator("#glInfo_0Div_input")
         self.ref_code_dropdown = page.locator("#refCodeId_0Div_arrow")
         self.ref_code_input = page.locator("#refCodeId_0Div_input")
+        # self.browse_button = page.locator(
+        #     "[class='ui-button ui-widget ui-state-default ui-corner-all'][onclick='$('#selector-member-photo-input input.file').click();']")
+        # self.browse_button = page.locator(
+        #     "button.ui-button:has-text('Browse')"
+        # )
+
+        self.browse_button = page.locator('//*[@id="selector-member-photo-input"]/div/span/span')
+        # self.browse_button = self.page.get_by_role("button", name="Browse")
         self.req_for_remarks_selector = page.locator("#reqDetailsRemarks")
         self.add_to_grid_button = page.locator("input#addToGrid")
         # self.add_to_grid_selector = page.get_by_role("button", name="Add to Grid")
@@ -85,6 +94,102 @@ class CreateReqPage(ProcurementHomePage, BasicActionsDM):
 
         self.active_framework_list = page.locator('id="fancybox-content"')
         self.application_for_selector = page.locator('#applicableForId')
+
+    def upload_requisition_item_document(self, file_path: str) -> bool:
+        try:
+            if not os.path.exists(file_path):
+                raise FileNotFoundError(file_path)
+
+            print(f"Uploading file from : {file_path}")
+
+            # Wait for OS file picker
+            with self.page.expect_file_chooser() as fc_info:
+                self.browse_button.click()
+
+            file_chooser = fc_info.value
+            file_chooser.set_files(file_path)
+
+            # Click Confirm if required
+            confirm_btn = self.page.get_by_role("button", name="Confirm")
+            if confirm_btn.is_visible():
+                confirm_btn.click()
+
+            self.wait_for_timeout(2000)
+            return True
+
+        except Exception as e:
+            print(f"File upload failed: {e}")
+            return False
+
+    # def upload_document_2(self, file_path):
+    #     """
+    #     Upload a document to the bill details page.
+    #     :param file_path: Path to the document file to be uploaded.
+    #     """
+    #     print(f"Uploading file from : {file_path}")
+    #     if os.path.exists(file_path):
+    #         uploaded_file_name = self.upload_file(self.browse_button, file_path)
+    #         print(f"Uploaded file name: {uploaded_file_name}")
+    #     else:
+    #         print(f"File not found at path: {file_path}")
+
+    # def upload_attachment_via_browse(self, file_path: str) -> bool:
+    #     try:
+    #         if not os.path.exists(file_path):
+    #             raise FileNotFoundError(file_path)
+    #
+    #         print(f"Uploading attachment: {file_path}")
+    #
+    #         with self.page.expect_file_chooser() as fc_info:
+    #             self.browse_button.click()
+    #
+    #         file_chooser = fc_info.value
+    #         file_chooser.set_files(file_path)
+    #
+    #         # Optional confirm
+    #         confirm_button = self.page.get_by_role("button", name="Confirm")
+    #         if confirm_button.is_visible():
+    #             confirm_button.click()
+    #
+    #         self.wait_for_timeout(2000)
+    #         return True
+    #
+    #     except Exception as e:
+    #         print(f"Attachment upload failed: {e}")
+    #         return False
+
+    # def upload_attachment_via_browse(self, file_path: str) -> bool:
+    #     """
+    #     Upload a file using the Browse button (file chooser).
+    #     :param file_path: Absolute path to file
+    #     :return: True if upload succeeded
+    #     """
+    #     try:
+    #         if not os.path.exists(file_path):
+    #             raise FileNotFoundError(f"File not found: {file_path}")
+    #
+    #         print(f"Uploading attachment: {file_path}")
+    #
+    #         # Wait for file chooser triggered by Browse button
+    #         with self.page.expect_file_chooser() as fc_info:
+    #             self.browse_button.click()
+    #
+    #         file_chooser = fc_info.value
+    #         file_chooser.set_files(file_path)
+    #
+    #         print("File selected successfully")
+    #
+    #         # Optional: click Confirm / Upload if exists
+    #         confirm_button = self.page.get_by_role("button", name="Confirm")
+    #         if confirm_button.is_visible():
+    #             confirm_button.click()
+    #
+    #         self.wait_for_timeout(2000)
+    #         return True
+    #
+    #     except Exception as e:
+    #         print(f"Attachment upload failed: {e}")
+    #         return False
 
     ##################### small helper so we can log easily #####################
     def _log(self, message: str):
@@ -197,6 +302,19 @@ class CreateReqPage(ProcurementHomePage, BasicActionsDM):
         self.character_input(self.gl_input, gl_code)
         self.page.get_by_text(gl_code).click()
         self.req_for_remarks_selector.fill(item_remarks)
+        self.add_to_grid_button.click()
+
+    def setting_item_gl_code(self, gl_code):
+        self.gl_code_dropdown.click()
+        self.wait_for_timeout(2500)
+        self.gl_input.click()
+        self.character_input(self.gl_input, gl_code)
+        self.page.get_by_text(gl_code).click()
+
+    def setting_item_remarks(self, item_remarks):
+        self.req_for_remarks_selector.fill(item_remarks)
+
+    def add_item_requisition_details_information_list(self):
         self.add_to_grid_button.click()
 
     def setting_same_schedule_for_date(self):
