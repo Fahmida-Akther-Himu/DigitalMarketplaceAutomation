@@ -1021,7 +1021,7 @@ def test_13_order_initiator_receives_marketplace_item(page):
     receivable_order_list_page.input_quantity_to_receive(received_quantity="1")
 
     current_dir = os.getcwd()
-    document_location = os.path.join(current_dir, "utils", "image_png.png")
+    document_location = os.path.join(current_dir, "utils", "PNG_image.png")
     assert receivable_order_list_page.receiving_upload_attachment(document_location), "File upload failed"
 
     receivable_order_list_page.input_received_remarks(

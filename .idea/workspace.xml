@@ -4,13 +4,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="efc77538-6955-4d9d-bdef-a94599f47caf" name="Changes" comment="update new code">
-      <change afterPath="$PROJECT_DIR$/tests/testcases/marketplace_requisition_creation/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/testcases/marketplace_requisition_creation/whitelisted_blacklisted_nonagreement_item_requisition.py" afterDir="false" />
+    <list default="true" id="efc77538-6955-4d9d-bdef-a94599f47caf" name="Changes" comment="Requisition creation testcase add for multiple_agreement_items_and_different_vendors_requisition.py">
+      <change afterPath="$PROJECT_DIR$/pages/digital_marketplace/public_side_framework_agreement_list.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/conftest.py" beforeDir="false" afterPath="$PROJECT_DIR$/conftest.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/home_page.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/home_page.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/requisition_creation.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/requisition_creation.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pytest_html_report.yml" beforeDir="false" afterPath="$PROJECT_DIR$/pytest_html_report.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/testcases/marketplace_order_journey.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/testcases/marketplace_order_journey.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/testcases/marketplace_order_journey_sanity_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/testcases/marketplace_order_journey_sanity_test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/testcases/marketplace_requisition_creation/single_item_requisition.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/testcases/marketplace_requisition_creation/single_item_requisition.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -106,7 +108,47 @@
       <option name="project" value="LOCAL" />
       <updated>1762447727580</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Executed requisition creation test cases for whitelisted, blacklisted, and non-agreement items to ensure proper system behavior and validations.">
+      <option name="closed" value="true" />
+      <created>1767992163142</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1767992163142</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Executed requisition creation test cases for whitelisted, blacklisted, and non-agreement items to ensure proper system behavior and validations.">
+      <option name="closed" value="true" />
+      <created>1767992174601</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1767992174601</updated>
+    </task>
+    <task id="LOCAL-00004" summary="Executed requisition creation test cases single_item_requisition.py, multiple_agreement_items_and_same_vendors_requisition.py and same_agreement_item_and_different_master_items_requisition.py">
+      <option name="closed" value="true" />
+      <created>1768054799317</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1768054799317</updated>
+    </task>
+    <task id="LOCAL-00005" summary="Requisition creation with item remarks and attachment">
+      <option name="closed" value="true" />
+      <created>1768770179995</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1768770179995</updated>
+    </task>
+    <task id="LOCAL-00006" summary="Requisition creation testcase add for multiple_agreement_items_and_different_vendors_requisition.py">
+      <option name="closed" value="true" />
+      <created>1768823611103</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1768823611103</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -125,6 +167,10 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="update new code" />
-    <option name="LAST_COMMIT_MESSAGE" value="update new code" />
+    <MESSAGE value="Executed requisition creation test cases for whitelisted, blacklisted, and non-agreement items to ensure proper system behavior and validations." />
+    <MESSAGE value="Executed requisition creation test cases single_item_requisition.py, multiple_agreement_items_and_same_vendors_requisition.py and same_agreement_item_and_different_master_items_requisition.py" />
+    <MESSAGE value="Requisition creation with item remarks and attachment" />
+    <MESSAGE value="Requisition creation testcase add for multiple_agreement_items_and_different_vendors_requisition.py" />
+    <option name="LAST_COMMIT_MESSAGE" value="Requisition creation testcase add for multiple_agreement_items_and_different_vendors_requisition.py" />
   </component>
 </project>

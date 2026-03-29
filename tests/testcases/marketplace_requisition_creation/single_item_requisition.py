@@ -469,7 +469,8 @@ def test_7_verify_requisition_sync_to_marketplace(page, new_tab):
     print("Test 7: Marketplace requisition is available on the Active Requisition List...")
     login_page = LoginPage(page)
     login_page.navigate_to_url(marketplace_url_qa)
-    login_page.perform_login_for_sso_login(
+    # login_page.perform_login_for_sso_login(
+    login_page.perform_login_for_common_login(
         user_name=proj_user,
         pass_word=marketplace_password
     )

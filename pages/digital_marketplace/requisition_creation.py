@@ -45,7 +45,7 @@ class CreateReqPage(ProcurementHomePage, BasicActionsDM):
         self.find_button = page.locator('//*[@id="find-button-requisitionList"]')
         # self.agreement_item_selector = page.locator("tr.jqgrow")
         self.agreement_item_selector = page.locator("#gview_frameworkListGrid table#frameworkListGrid tbody tr.jqgrow")
-
+        self.get_wishlist_button = page.locator("#check-wishList-button")
         # Elements for "requisition for?"
         self.gl_code_dropdown = page.locator("#glInfo_0Div_arrow")
         self.selected_gl_code = page.locator('//*[@id="glInfo_0Div"]')
