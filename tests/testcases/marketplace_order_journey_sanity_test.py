@@ -1196,7 +1196,8 @@ def test_15_create_and_submit_bill_for_received_marketplace_item(page):
     create_vendor_bill.vendor_bill_payable_information_for_framework_order()
     create_vendor_bill.search_vendor(vendor_name=order_vendor)
     create_vendor_bill.select_order_no(order_num=framework_order_no)
-    create_vendor_bill.select_challan_no(challan_no=challan_num_for_receiver)
+    create_vendor_bill.select_challan_no(challan_no=challan_num_for_order_initiator_2)
+    # create_vendor_bill.select_challan_no(challan_no=challan_num_for_receiver)
 
     global bill_num
     create_vendor_bill.bill_number(bill_no_1=bill_num)

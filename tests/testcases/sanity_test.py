@@ -141,19 +141,18 @@ def test_1_create_requisition_with_whitelisted_agreement_item(page):
     proc_login_page.perform_login(
         given_url=proj_url,
         user_name=proj_user,
-        # pass_word=proj_pass,
-        pass_word="pew!!6vZ",
+        pass_word=proj_pass,
         timeout=60000
     )
 
     proc_dashboard_page = DashboardPage(page)
     proc_dashboard_page.goto_procurement()
-    # proc_dashboard_page.wait_for_timeout(30000)
     proc_dashboard_page.get_full_page_screenshot('full_page_screenshot_1')
 
     proc_home_page = ProcurementHomePage(page)
-    # proc_home_page.wait_for_timeout(30000)
+    proc_home_page.wait_for_timeout(30000)
     proc_home_page.navigate_to_create_requisition()
+    # proc_home_page.wait_for_timeout(30000)
     proc_home_page.get_full_page_screenshot('full_page_screenshot_2')
 
     print("Test 1: Creating requisition...")
@@ -209,6 +208,7 @@ def test_2_identify_first_approver_for_created_requisition(page):
     """
     print("Test 2: Finding approver of the requisition...")
     requisition_list_page = RequisitionList(page)
+    requisition_list_page.wait_for_timeout(30000)
     requisition_list_page.get_full_page_screenshot('full_page_screenshot_5')
     requisition_list_page.search_requisition(req_num)
 
@@ -258,17 +258,15 @@ def test_3_login_as_first_approver_and_approve_requisition(page):
     proc_login_page.perform_login(
         given_url=proj_url,
         user_name=approver_id,
-        # pass_word=proj_pass,
-        pass_word="EPh9*p%*",
+        pass_word=proj_pass,
         timeout=60000
     )
 
-    # proc_dashboard_page = DashboardPage(page)
-    # proc_dashboard_page.menu_click_procurement_hyperlink()
     proc_dashboard_page = DashboardPage(page)
-    proc_dashboard_page.goto_procurement()
+    proc_dashboard_page.menu_click_procurement_hyperlink()
 
     proc_home_page = ProcurementHomePage(page)
+    # proc_home_page.wait_for_timeout(30000)
     proc_home_page.navigate_to_requisition_approve_list()
 
     requisition_approve_list_page = RequisitionApproveList(page)
@@ -319,13 +317,13 @@ def test_4_identify_second_approver_for_created_requisition(page):
         given_url=proj_url,
         user_name=proj_user,
         pass_word=proj_pass,
-        # pass_word=proj_pass,
         timeout=60000
     )
     proc_dashboard_page = DashboardPage(page)
     proc_dashboard_page.goto_procurement()
 
     proc_home_page = ProcurementHomePage(page)
+    proc_home_page.wait_for_timeout(30000)
     proc_home_page.navigate_to_requisition_list()
 
     requisition_list_page = RequisitionList(page)
@@ -379,14 +377,14 @@ def test_5_login_as_second_approver_and_approve_requisition(page):
     proc_login_page.perform_login(
         given_url=proj_url,
         user_name=approver_id_2,
-        # pass_word=proj_pass,
-        pass_word="UBkLW#3$",
+        pass_word=proj_pass,
         timeout=60000  # Increased timeout for login
     )
     proc_dashboard_page = DashboardPage(page)
     proc_dashboard_page.goto_procurement()
 
     proc_home_page = ProcurementHomePage(page)
+    proc_home_page.wait_for_timeout(30000)
     proc_home_page.navigate_to_requisition_approve_list()
 
     requisition_approve_list_page = RequisitionApproveList(page)
@@ -448,6 +446,7 @@ def test_6_verify_requisition_is_approved(page, new_tab):
     proc_dashboard_page.goto_procurement()
 
     proc_home_page = ProcurementHomePage(page)
+    proc_home_page.wait_for_timeout(30000)
     proc_home_page.navigate_to_requisition_list()
 
     requisition_list_page = RequisitionList(page)
@@ -844,9 +843,7 @@ def test_11_login_to_procurement_and_view_marketplace_work_order_details(page, n
     proc_login_page.perform_login(
         given_url=proj_url,
         user_name=proc_admin,
-        # user_name=153860,
-        pass_word="%X64NNf8",
-        # pass_word=proj_pass,
+        pass_word=proj_pass,
         timeout=60000
     )
 
@@ -1102,336 +1099,330 @@ def test_13_order_initiator_receives_marketplace_item(page):
     dm_logout.logout_from_administration()
 
 
-@pytest.mark.reporting(
-    functional_specification="test_1",
-    test_description="""Test Case 14: View marketplace item receive details in the procurement system.
-
-    Objective:
-        To verify that a procurement admin can log in, access the item receive list,
-        search for a specific received item ('framework_order_no'), and view its details
-        in the procurement system.""")
-def test_14_login_to_procurement_and_view_marketplace_item_receipt_details(page):
-    """
-    Test Case 14: View marketplace item receive details in the procurement system.
-
-    Objective:
-        To verify that a procurement admin can log in, access the item receive list,
-        search for a specific received item ('framework_order_no'), and view its details
-        in the procurement system.
-
-    Steps:
-        1. Login to the procurement portal as a procurement admin ('proc_admin').
-        2. Navigate to the procurement dashboard and capture a screenshot.
-        3. Access the "Item Receive List" page and capture a screenshot.
-        4. Search for the specific item receive order using 'framework_order_no'.
-        5. Capture a screenshot showing the search results.
-        6. Open the item receive details view and capture a screenshot.
-        7. Log out from the procurement system and capture a final screenshot.
-     """
-    print("Test 14: Marketplace item receive details view in procurement system...")
-    proc_login_page = ProcurementLoginPage(page)
-    proc_login_page.perform_login(
-        given_url=proj_url,
-        user_name=proc_admin,
-        # user_name=153860,
-        pass_word="%X64NNf8",
-        # pass_word=proj_pass,
-        timeout=60000
-    )
-
-    proc_dashboard_page = DashboardPage(page)
-    proc_dashboard_page.goto_procurement()
-    proc_dashboard_page.get_full_page_screenshot('full_page_screenshot_72')
-
-    proc_home_page = ProcurementHomePage(page)
-    proc_home_page.goto_item_receive_list()
-    proc_home_page.get_full_page_screenshot('full_page_screenshot_73')
-
-    proc_item_receive_list_page = ProcItemReceiveListPage(page)
-    proc_item_receive_list_page.search_item_receive_order(receivable_item=framework_order_no)
-    proc_item_receive_list_page.get_full_page_screenshot('full_page_screenshot_74')
-    proc_item_receive_list_page.item_receive_details_view()
-    proc_item_receive_list_page.get_full_page_screenshot('full_page_screenshot_75')
-
-    m_page = MainNavigationBar(page)
-    m_page.exit()
-    m_page.logout()
-    m_page.get_full_page_screenshot('full_page_screenshot_76')
+# @pytest.mark.reporting(
+#     functional_specification="test_1",
+#     test_description="""Test Case 14: View marketplace item receive details in the procurement system.
+#
+#     Objective:
+#         To verify that a procurement admin can log in, access the item receive list,
+#         search for a specific received item ('framework_order_no'), and view its details
+#         in the procurement system.""")
+# def test_14_login_to_procurement_and_view_marketplace_item_receipt_details(page):
+#     """
+#     Test Case 14: View marketplace item receive details in the procurement system.
+#
+#     Objective:
+#         To verify that a procurement admin can log in, access the item receive list,
+#         search for a specific received item ('framework_order_no'), and view its details
+#         in the procurement system.
+#
+#     Steps:
+#         1. Login to the procurement portal as a procurement admin ('proc_admin').
+#         2. Navigate to the procurement dashboard and capture a screenshot.
+#         3. Access the "Item Receive List" page and capture a screenshot.
+#         4. Search for the specific item receive order using 'framework_order_no'.
+#         5. Capture a screenshot showing the search results.
+#         6. Open the item receive details view and capture a screenshot.
+#         7. Log out from the procurement system and capture a final screenshot.
+#      """
+#     print("Test 14: Marketplace item receive details view in procurement system...")
+#     proc_login_page = ProcurementLoginPage(page)
+#     proc_login_page.perform_login(
+#         given_url=proj_url,
+#         user_name=proc_admin,
+#         pass_word=proj_pass,
+#         timeout=60000
+#     )
+#
+#     proc_dashboard_page = DashboardPage(page)
+#     proc_dashboard_page.goto_procurement()
+#     proc_dashboard_page.get_full_page_screenshot('full_page_screenshot_72')
+#
+#     proc_home_page = ProcurementHomePage(page)
+#     proc_home_page.goto_item_receive_list()
+#     proc_home_page.get_full_page_screenshot('full_page_screenshot_73')
+#
+#     proc_item_receive_list_page = ProcItemReceiveListPage(page)
+#     proc_item_receive_list_page.search_item_receive_order(receivable_item=framework_order_no)
+#     proc_item_receive_list_page.get_full_page_screenshot('full_page_screenshot_74')
+#     proc_item_receive_list_page.item_receive_details_view()
+#     proc_item_receive_list_page.get_full_page_screenshot('full_page_screenshot_75')
+#
+#     m_page = MainNavigationBar(page)
+#     m_page.exit()
+#     m_page.logout()
+#     m_page.get_full_page_screenshot('full_page_screenshot_76')
 
 
-@pytest.mark.reporting(
-    functional_specification="test_1",
-    test_description="""Test Case 15: Bill creation and submission for Marketplace item receive in procurement system.
+# @pytest.mark.reporting(
+#     functional_specification="test_1",
+#     test_description="""Test Case 15: Bill creation and submission for Marketplace item receive in procurement system.
+#
+#     Objective:
+#         To verify that a procurement user can create a vendor bill for received Marketplace items,
+#         submit the bill, and assign the appropriate recommender for approval in the procurement system.""")
+# def test_15_create_and_submit_bill_for_received_marketplace_item(page):
+#     """
+#     Test Case 15: Bill creation and submission for Marketplace item receive in procurement system.
+#
+#     Objective:
+#         To verify that a procurement user can create a vendor bill for received Marketplace items,
+#         submit the bill, and assign the appropriate recommender for approval in the procurement system.
+#
+#     Steps:
+#         1. Login to the procurement portal as bill creator ('bill_creator').
+#         2. Navigate to the procurement dashboard and capture a screenshot.
+#         3. Access the "Bill Payable" section and capture a screenshot.
+#         4. Create a vendor bill for a specific framework order ('framework_order_no').
+#         5. Search for the vendor ('order_vendor') and select the corresponding order number and challan number ('challan_num_for_receiver').
+#         6. Set the global bill number ('bill_num'), bill date, and bill receive date.
+#         7. Select all items and assign the second recommender ('00009026') for approval.
+#         8. Capture screenshots at key steps and submit the bill.
+#         9. Confirm submission and capture a screenshot.
+#         10. Navigate to the bill list, search for the submitted bill, and identify the first recommender ('bill_recommender1').
+#         11. Capture a screenshot of the bill details.
+#     """
+#     print("Test 15: Bill creation and submission flow for Marketplace item receive in procurement system...")
+#     proc_login_page = ProcurementLoginPage(page)
+#     proc_login_page.perform_login(
+#         given_url=proj_url,
+#         user_name=bill_creator,
+#         pass_word=proj_pass,
+#         timeout=60000
+#     )
+#
+#     proc_dashboard_page = DashboardPage(page)
+#     proc_dashboard_page.goto_procurement()
+#     proc_dashboard_page.get_full_page_screenshot('full_page_screenshot_80')
+#
+#     proc_home_page = ProcurementHomePage(page)
+#     proc_home_page.goto_bill_payable()
+#     proc_home_page.get_full_page_screenshot('full_page_screenshot_81')
+#
+#     create_vendor_bill = CreateVendorBillPayable(page)
+#     create_vendor_bill.vendor_bill_payable_information_for_framework_order()
+#     create_vendor_bill.search_vendor(vendor_name=order_vendor)
+#     create_vendor_bill.select_order_no(order_num=framework_order_no)
+#     # create_vendor_bill.select_challan_no(challan_no=challan_num_for_receiver)
+#     # create_vendor_bill.select_challan_no(challan_no=challan_num_for_order_initiator)
+#     create_vendor_bill.select_challan_no(challan_no=challan_num_for_order_initiator_2)
+#
+#     global bill_num
+#     create_vendor_bill.bill_number(bill_no_1=bill_num)
+#     create_vendor_bill.bill_date_with_text(create_vendor_bill.select_date())
+#     create_vendor_bill.bill_receive_date_with_text(create_vendor_bill.select_date())
+#     create_vendor_bill.select_all_items()
+#     create_vendor_bill.Bill_recommender2_selecting(recommender="00009026")
+#     create_vendor_bill.get_full_page_screenshot('full_page_screenshot_82')
+#     create_vendor_bill.submit_bill()
+#     create_vendor_bill.get_full_page_screenshot('full_page_screenshot_83')
+#     create_vendor_bill.confirm_submission()
+#     create_vendor_bill.wait_for_timeout(5000)
+#     create_vendor_bill.get_full_page_screenshot('full_page_screenshot_84')
+#
+#     bill_list_page = BillList(page)
+#     bill_list_page.go_to_billing_list()
+#     bill_list_page.get_full_page_screenshot('full_page_screenshot_85')
+#     bill_list_page.search_bill(bill_num)
+#     global bill_recommender_1
+#     bill_recommender_1 = str(int(bill_list_page.find_approver_id(bill_num)))
+#     print(f"Bill Recommender 1: {bill_recommender_1}")
+#     bill_list_page.get_full_page_screenshot('full_page_screenshot_86')
 
-    Objective:
-        To verify that a procurement user can create a vendor bill for received Marketplace items,
-        submit the bill, and assign the appropriate recommender for approval in the procurement system.""")
-def test_15_create_and_submit_bill_for_received_marketplace_item(page):
-    """
-    Test Case 15: Bill creation and submission for Marketplace item receive in procurement system.
-
-    Objective:
-        To verify that a procurement user can create a vendor bill for received Marketplace items,
-        submit the bill, and assign the appropriate recommender for approval in the procurement system.
-
-    Steps:
-        1. Login to the procurement portal as bill creator ('bill_creator').
-        2. Navigate to the procurement dashboard and capture a screenshot.
-        3. Access the "Bill Payable" section and capture a screenshot.
-        4. Create a vendor bill for a specific framework order ('framework_order_no').
-        5. Search for the vendor ('order_vendor') and select the corresponding order number and challan number ('challan_num_for_receiver').
-        6. Set the global bill number ('bill_num'), bill date, and bill receive date.
-        7. Select all items and assign the second recommender ('00009026') for approval.
-        8. Capture screenshots at key steps and submit the bill.
-        9. Confirm submission and capture a screenshot.
-        10. Navigate to the bill list, search for the submitted bill, and identify the first recommender ('bill_recommender1').
-        11. Capture a screenshot of the bill details.
-    """
-    print("Test 15: Bill creation and submission flow for Marketplace item receive in procurement system...")
-    proc_login_page = ProcurementLoginPage(page)
-    proc_login_page.perform_login(
-        given_url=proj_url,
-        user_name=bill_creator,
-        pass_word=proj_pass,
-        timeout=60000
-    )
-
-    proc_dashboard_page = DashboardPage(page)
-    proc_dashboard_page.goto_procurement()
-    proc_dashboard_page.get_full_page_screenshot('full_page_screenshot_80')
-
-    proc_home_page = ProcurementHomePage(page)
-    proc_home_page.goto_bill_payable()
-    proc_home_page.get_full_page_screenshot('full_page_screenshot_81')
-
-    create_vendor_bill = CreateVendorBillPayable(page)
-    create_vendor_bill.vendor_bill_payable_information_for_framework_order()
-    create_vendor_bill.search_vendor(vendor_name=order_vendor)
-    create_vendor_bill.select_order_no(order_num=framework_order_no)
-    # create_vendor_bill.select_challan_no(challan_no=challan_num_for_receiver)
-    create_vendor_bill.select_challan_no(challan_no=challan_num_for_order_initiator)
-    # create_vendor_bill.select_challan_no(challan_no=challan_num_for_order_initiator_2)
-
-    global bill_num
-    create_vendor_bill.bill_number(bill_no_1=bill_num)
-    create_vendor_bill.bill_date_with_text(create_vendor_bill.select_date())
-    create_vendor_bill.bill_receive_date_with_text(create_vendor_bill.select_date())
-    create_vendor_bill.select_all_items()
-    create_vendor_bill.Bill_recommender2_selecting(recommender="00009026")
-    create_vendor_bill.get_full_page_screenshot('full_page_screenshot_82')
-    create_vendor_bill.submit_bill()
-    create_vendor_bill.get_full_page_screenshot('full_page_screenshot_83')
-    create_vendor_bill.confirm_submission()
-    create_vendor_bill.wait_for_timeout(5000)
-    create_vendor_bill.get_full_page_screenshot('full_page_screenshot_84')
-
-    bill_list_page = BillList(page)
-    bill_list_page.go_to_billing_list()
-    bill_list_page.get_full_page_screenshot('full_page_screenshot_85')
-    bill_list_page.search_bill(bill_num)
-    global bill_recommender_1
-    bill_recommender_1 = str(int(bill_list_page.find_approver_id(bill_num)))
-    print(f"Bill Recommender 1: {bill_recommender_1}")
-    bill_list_page.get_full_page_screenshot('full_page_screenshot_86')
-
-
-@pytest.mark.reporting(
-    functional_specification="test_1",
-    test_description="""Test Case 16: Vendor bill approval by first recommender in the procurement system.
-
-    Objective:
-        To verify that the first recommender can review, upload supporting documents,
-        approve a vendor bill, and assign the next approver in the workflow.""")
-def test_16_first_recommender_approves_marketplace_bill(page, new_tab):
-    """
-    Test Case 16: Vendor bill approval by first recommender in the procurement system.
-
-    Objective:
-        To verify that the first recommender can review, upload supporting documents,
-        approve a vendor bill, and assign the next approver in the workflow.
-
-    Steps:
-        1. Open the vendor bill list and locate the bill ('bill_num').
-        2. Open the bill details in a new tab.
-        3. Upload the necessary supporting document for the bill.
-        4. Select the bill type ("Regular") and capture a screenshot.
-        5. Approve the bill and capture a screenshot of the approval.
-        6. Close the bill detail tab and return to the main bill list.
-        7. Search for the bill to identify the next approver ('bill_recommender_2') and capture a screenshot.
-        8. Exit and log out from the procurement system, capturing a final screenshot.
-    """
-    print("Test 16: Vendor bill recommender1 approval...")
-    bill_list_page = BillList(page)
-    new_page = new_tab(lambda p: bill_list_page.click_on_bill_num(bill_num))
-
-    bill_detail_page = BillDetails(new_page)
-    current_dir = os.getcwd()
-    # print(f"Current directory: {current_dir}")
-    document_location = os.path.join(current_dir, 'utils', 'upload_file.pdf')
-    bill_detail_page.upload_document(document_location)
-    # print(f"Document directory: {document_location}")
-    #  Continuing rest of the test
-    bill_detail_page.select_bill_type("Regular")
-    bill_detail_page.get_full_page_screenshot('full_page_screenshot_87')
-    bill_detail_page.approve_bill()
-    bill_detail_page.get_full_page_screenshot('full_page_screenshot_88')
-    new_page.close()
-
-    bill_list_page = BillList(page)
-    bill_list_page.search_bill(bill_num)
-    global bill_recommender_2
-    bill_recommender_2 = str(int(bill_list_page.find_approver_id(bill_num)))
-    print(f"Bill Recommender 2: {bill_recommender_2}")
-    bill_list_page.get_full_page_screenshot('full_page_screenshot_89')
-
-    m_page = MainNavigationBar(page)
-    m_page.exit()
-    m_page.logout()
-    m_page.get_full_page_screenshot('full_page_screenshot_90')
-
-
-@pytest.mark.reporting(
-    functional_specification="test_1",
-    test_description="""Test Case 17: Vendor bill approval by second recommender in the procurement system.
-
-    Objective:
-        To verify that the second recommender can review and approve a vendor bill,
-        and the next approver (if any) is correctly assigned in the workflow.""")
-def test_17_second_recommender_approves_marketplace_bill(page, new_tab):
-    """
-    Test Case 17: Vendor bill approval by second recommender in the procurement system.
-
-    Objective:
-        To verify that the second recommender can review and approve a vendor bill,
-        and the next approver (if any) is correctly assigned in the workflow.
-
-    Steps:
-        1. Login to the procurement portal as the second recommender ('bill_recommender2').
-        2. Navigate to the procurement dashboard and capture a screenshot.
-        3. Access the vendor billing list and capture a screenshot.
-        4. Search for the specific bill ('bill_num') and open the bill details in a new tab.
-        5. Approve the bill and capture a screenshot of the approval.
-        6. Close the bill detail tab and return to the bill list.
-        7. Search for the bill to identify the next approver ('bill_recommender_3') and capture a screenshot.
-        8. Exit and log out from the procurement system, capturing a final screenshot.
-    """
-    print("Test 17: Vendor bill recommender2 approval...")
-    proc_login_page = ProcurementLoginPage(page)
-    proc_login_page.perform_login(
-        given_url=proj_url,
-        user_name=bill_recommender_2,
-        # user_name=9026,
-        pass_word="EPh9*p%*",
-        # pass_word=proj_pass,
-        timeout=60000
-    )
-
-    proc_dashboard_page = DashboardPage(page)
-    proc_dashboard_page.goto_procurement()
-    proc_dashboard_page.get_full_page_screenshot('full_page_screenshot_91')
-
-    proc_home_page = ProcurementHomePage(page)
-    proc_home_page.bill_payable.click()
-    proc_home_page.goto_vendor_billing_list()
-    proc_home_page.get_full_page_screenshot('full_page_screenshot_92')
-
-    bill_list_page = BillList(page)
-    bill_list_page.search_bill(bill_num)
-    new_page = new_tab(lambda p: bill_list_page.click_on_bill_num(bill_num))
-
-    bill_detail_page = BillDetails(new_page)
-    bill_detail_page.approve_bill()
-    bill_detail_page.get_full_page_screenshot('full_page_screenshot_93')
-    new_page.close()
-
-    bill_list_page = BillList(page)
-    page.reload()
-    # bill_list_page.wait_for_timeout(5000)
-    #     bill_list_page.navigate_to_url(bill_payable_url)
-    bill_list_page.search_bill(bill_num)
-    bill_list_page.wait_for_timeout(5000)
-    bill_list_page.get_full_page_screenshot('full_page_screenshot_94')
-    global bill_recommender_3
-    bill_recommender_3 = str(int(bill_list_page.find_approver_id(bill_num)))
-    print(f"Bill Approver : {bill_recommender_3}")
-    bill_list_page.get_full_page_screenshot('full_page_screenshot_95')
-
-    m_page = MainNavigationBar(page)
-    m_page.exit()
-    m_page.logout()
-    m_page.get_full_page_screenshot('full_page_screenshot_96')
-
-
-@pytest.mark.reporting(
-    functional_specification="test_1",
-    test_description="""Test Case 18: Vendor bill final approval by the approver in the procurement system.
-
-    Objective:
-        To verify that the final approver can review and approve the vendor bill,
-        confirm that the bill status is updated correctly after approval and sent it to HO-FIN.""")
-def test_18_vendor_bill_approver_approval_process_in_procurement(page, new_tab):
-    """
-    Test Case 18: Vendor bill final approval by the approver in the procurement system.
-
-    Objective:
-        To verify that the final approver can review and approve the vendor bill,
-        and confirm that the bill status is updated correctly after approval.
-
-    Steps:
-        1. Login to the procurement portal as the final approver (`bill_approver_id3`).
-        2. Navigate to the procurement dashboard and capture a screenshot.
-        3. Access the vendor billing list and capture a screenshot.
-        4. Search for the specific bill (`bill_num`) and open the bill details in a new tab.
-        5. Wait for page readiness, capture a screenshot, and approve the bill.
-        6. Capture a screenshot of the approved bill and close the bill detail tab.
-        7. Return to the main bill list, reload the page, and capture a screenshot.
-        8. Search for the bill to verify the final status and capture a screenshot.
-        9. Exit and log out from the procurement system, capturing a final screenshot.
-        10. Marketplace item received bill for challan number 'challan_num_for_receiver' sent to the HO FIN from the procurement system.
-    """
-    print("Test 18: Vendor bill approver approval...")
-    proc_login_page = ProcurementLoginPage(page)
-    proc_login_page.perform_login(
-        given_url=proj_url,
-        user_name=bill_recommender_3,
-        # user_name=bill_recommender_3,
-        pass_word="UBkLW#3$",
-        # pass_word=proj_pass,
-        timeout=60000
-    )
-
-    proc_dashboard_page = DashboardPage(page)
-    proc_dashboard_page.goto_procurement()
-    proc_dashboard_page.get_full_page_screenshot('full_page_screenshot_97')
-
-    proc_home_page = ProcurementHomePage(page)
-    proc_home_page.bill_payable.click()
-    proc_home_page.goto_vendor_billing_list()
-    proc_home_page.get_full_page_screenshot('full_page_screenshot_98')
-
-    bill_list_page = BillList(page)
-    bill_list_page.search_bill(bill_num)
-    bill_list_page.get_full_page_screenshot('full_page_screenshot_99')
-    new_page = new_tab(lambda p: bill_list_page.click_on_bill_num(bill_num))
-
-    bill_detail_page = BillDetails(new_page)
-    bill_detail_page.wait_for_timeout(5000)
-    bill_detail_page.get_full_page_screenshot('full_page_screenshot_100')
-    bill_detail_page.approve_bill()
-    bill_detail_page.get_full_page_screenshot('full_page_screenshot_101')
-    new_page.close()
-
-    bill_list_page = BillList(page)
-    page.reload()
-    bill_list_page.wait_for_timeout(5000)
-    bill_list_page.get_full_page_screenshot('full_page_screenshot_102')
-    bill_list_page.search_bill(bill_num)
-    bill_list_page.wait_for_timeout(5000)
-    bill_status = bill_list_page.find_bill_status(bill_num)
-    print("Bill STATUS:", bill_status)
-    bill_list_page.get_full_page_screenshot('full_page_screenshot_103')
-
-    m_page = MainNavigationBar(page)
-    m_page.exit()
-    m_page.logout()
-    m_page.get_full_page_screenshot('full_page_screenshot_104')
+#
+# @pytest.mark.reporting(
+#     functional_specification="test_1",
+#     test_description="""Test Case 16: Vendor bill approval by first recommender in the procurement system.
+#
+#     Objective:
+#         To verify that the first recommender can review, upload supporting documents,
+#         approve a vendor bill, and assign the next approver in the workflow.""")
+# def test_16_first_recommender_approves_marketplace_bill(page, new_tab):
+#     """
+#     Test Case 16: Vendor bill approval by first recommender in the procurement system.
+#
+#     Objective:
+#         To verify that the first recommender can review, upload supporting documents,
+#         approve a vendor bill, and assign the next approver in the workflow.
+#
+#     Steps:
+#         1. Open the vendor bill list and locate the bill ('bill_num').
+#         2. Open the bill details in a new tab.
+#         3. Upload the necessary supporting document for the bill.
+#         4. Select the bill type ("Regular") and capture a screenshot.
+#         5. Approve the bill and capture a screenshot of the approval.
+#         6. Close the bill detail tab and return to the main bill list.
+#         7. Search for the bill to identify the next approver ('bill_recommender_2') and capture a screenshot.
+#         8. Exit and log out from the procurement system, capturing a final screenshot.
+#     """
+#     print("Test 16: Vendor bill recommender1 approval...")
+#     bill_list_page = BillList(page)
+#     new_page = new_tab(lambda p: bill_list_page.click_on_bill_num(bill_num))
+#
+#     bill_detail_page = BillDetails(new_page)
+#     current_dir = os.getcwd()
+#     # print(f"Current directory: {current_dir}")
+#     document_location = os.path.join(current_dir, 'utils', 'upload_file.pdf')
+#     bill_detail_page.upload_document(document_location)
+#     # print(f"Document directory: {document_location}")
+#     #  Continuing rest of the test
+#     bill_detail_page.select_bill_type("Regular")
+#     bill_detail_page.get_full_page_screenshot('full_page_screenshot_87')
+#     bill_detail_page.approve_bill()
+#     bill_detail_page.get_full_page_screenshot('full_page_screenshot_88')
+#     new_page.close()
+#
+#     bill_list_page = BillList(page)
+#     bill_list_page.search_bill(bill_num)
+#     global bill_recommender_2
+#     bill_recommender_2 = str(int(bill_list_page.find_approver_id(bill_num)))
+#     print(f"Bill Recommender 2: {bill_recommender_2}")
+#     bill_list_page.get_full_page_screenshot('full_page_screenshot_89')
+#
+#     m_page = MainNavigationBar(page)
+#     m_page.exit()
+#     m_page.logout()
+#     m_page.get_full_page_screenshot('full_page_screenshot_90')
+#
+#
+# @pytest.mark.reporting(
+#     functional_specification="test_1",
+#     test_description="""Test Case 17: Vendor bill approval by second recommender in the procurement system.
+#
+#     Objective:
+#         To verify that the second recommender can review and approve a vendor bill,
+#         and the next approver (if any) is correctly assigned in the workflow.""")
+# def test_17_second_recommender_approves_marketplace_bill(page, new_tab):
+#     """
+#     Test Case 17: Vendor bill approval by second recommender in the procurement system.
+#
+#     Objective:
+#         To verify that the second recommender can review and approve a vendor bill,
+#         and the next approver (if any) is correctly assigned in the workflow.
+#
+#     Steps:
+#         1. Login to the procurement portal as the second recommender ('bill_recommender2').
+#         2. Navigate to the procurement dashboard and capture a screenshot.
+#         3. Access the vendor billing list and capture a screenshot.
+#         4. Search for the specific bill ('bill_num') and open the bill details in a new tab.
+#         5. Approve the bill and capture a screenshot of the approval.
+#         6. Close the bill detail tab and return to the bill list.
+#         7. Search for the bill to identify the next approver ('bill_recommender_3') and capture a screenshot.
+#         8. Exit and log out from the procurement system, capturing a final screenshot.
+#     """
+#     print("Test 17: Vendor bill recommender2 approval...")
+#     proc_login_page = ProcurementLoginPage(page)
+#     proc_login_page.perform_login(
+#         given_url=proj_url,
+#         user_name=bill_recommender_2,
+#         pass_word=proj_pass,
+#         timeout=60000
+#     )
+#
+#     proc_dashboard_page = DashboardPage(page)
+#     proc_dashboard_page.goto_procurement()
+#     proc_dashboard_page.get_full_page_screenshot('full_page_screenshot_91')
+#
+#     proc_home_page = ProcurementHomePage(page)
+#     proc_home_page.bill_payable.click()
+#     proc_home_page.goto_vendor_billing_list()
+#     proc_home_page.get_full_page_screenshot('full_page_screenshot_92')
+#
+#     bill_list_page = BillList(page)
+#     bill_list_page.search_bill(bill_num)
+#     new_page = new_tab(lambda p: bill_list_page.click_on_bill_num(bill_num))
+#
+#     bill_detail_page = BillDetails(new_page)
+#     bill_detail_page.approve_bill()
+#     bill_detail_page.get_full_page_screenshot('full_page_screenshot_93')
+#     new_page.close()
+#
+#     bill_list_page = BillList(page)
+#     page.reload()
+#     # bill_list_page.wait_for_timeout(5000)
+#     #     bill_list_page.navigate_to_url(bill_payable_url)
+#     bill_list_page.search_bill(bill_num)
+#     bill_list_page.wait_for_timeout(5000)
+#     bill_list_page.get_full_page_screenshot('full_page_screenshot_94')
+#     global bill_recommender_3
+#     bill_recommender_3 = str(int(bill_list_page.find_approver_id(bill_num)))
+#     print(f"Bill Approver : {bill_recommender_3}")
+#     bill_list_page.get_full_page_screenshot('full_page_screenshot_95')
+#
+#     m_page = MainNavigationBar(page)
+#     m_page.exit()
+#     m_page.logout()
+#     m_page.get_full_page_screenshot('full_page_screenshot_96')
+#
+#
+# @pytest.mark.reporting(
+#     functional_specification="test_1",
+#     test_description="""Test Case 18: Vendor bill final approval by the approver in the procurement system.
+#
+#     Objective:
+#         To verify that the final approver can review and approve the vendor bill,
+#         confirm that the bill status is updated correctly after approval and sent it to HO-FIN.""")
+# def test_18_vendor_bill_approver_approval_process_in_procurement(page, new_tab):
+#     """
+#     Test Case 18: Vendor bill final approval by the approver in the procurement system.
+#
+#     Objective:
+#         To verify that the final approver can review and approve the vendor bill,
+#         and confirm that the bill status is updated correctly after approval.
+#
+#     Steps:
+#         1. Login to the procurement portal as the final approver (`bill_approver_id3`).
+#         2. Navigate to the procurement dashboard and capture a screenshot.
+#         3. Access the vendor billing list and capture a screenshot.
+#         4. Search for the specific bill (`bill_num`) and open the bill details in a new tab.
+#         5. Wait for page readiness, capture a screenshot, and approve the bill.
+#         6. Capture a screenshot of the approved bill and close the bill detail tab.
+#         7. Return to the main bill list, reload the page, and capture a screenshot.
+#         8. Search for the bill to verify the final status and capture a screenshot.
+#         9. Exit and log out from the procurement system, capturing a final screenshot.
+#         10. Marketplace item received bill for challan number 'challan_num_for_receiver' sent to the HO FIN from the procurement system.
+#     """
+#     print("Test 18: Vendor bill approver approval...")
+#     proc_login_page = ProcurementLoginPage(page)
+#     proc_login_page.perform_login(
+#         given_url=proj_url,
+#         user_name=bill_recommender_3,
+#         pass_word=proj_pass,
+#         timeout=60000
+#     )
+#
+#     proc_dashboard_page = DashboardPage(page)
+#     proc_dashboard_page.goto_procurement()
+#     proc_dashboard_page.get_full_page_screenshot('full_page_screenshot_97')
+#
+#     proc_home_page = ProcurementHomePage(page)
+#     proc_home_page.bill_payable.click()
+#     proc_home_page.goto_vendor_billing_list()
+#     proc_home_page.get_full_page_screenshot('full_page_screenshot_98')
+#
+#     bill_list_page = BillList(page)
+#     bill_list_page.search_bill(bill_num)
+#     bill_list_page.get_full_page_screenshot('full_page_screenshot_99')
+#     new_page = new_tab(lambda p: bill_list_page.click_on_bill_num(bill_num))
+#
+#     bill_detail_page = BillDetails(new_page)
+#     bill_detail_page.wait_for_timeout(5000)
+#     bill_detail_page.get_full_page_screenshot('full_page_screenshot_100')
+#     bill_detail_page.approve_bill()
+#     bill_detail_page.get_full_page_screenshot('full_page_screenshot_101')
+#     new_page.close()
+#
+#     bill_list_page = BillList(page)
+#     page.reload()
+#     bill_list_page.wait_for_timeout(5000)
+#     bill_list_page.get_full_page_screenshot('full_page_screenshot_102')
+#     bill_list_page.search_bill(bill_num)
+#     bill_list_page.wait_for_timeout(5000)
+#     bill_status = bill_list_page.find_bill_status(bill_num)
+#     print("Bill STATUS:", bill_status)
+#     bill_list_page.get_full_page_screenshot('full_page_screenshot_103')
+#
+#     m_page = MainNavigationBar(page)
+#     m_page.exit()
+#     m_page.logout()
+#     m_page.get_full_page_screenshot('full_page_screenshot_104')

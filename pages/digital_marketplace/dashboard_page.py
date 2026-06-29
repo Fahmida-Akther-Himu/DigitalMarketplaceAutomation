@@ -48,7 +48,12 @@ class DashboardPage(BasicActionsDM):
 
     def goto_procurement(self) -> None:
         self.click_on_btn(self.myDashboardItem_procurement)
-        # self.wait_for_timeout(2000)
+        # self.wait_for_timeout(5000)
+
+    # def goto_procurement(self):
+    #     self.click_on_btn(self.myDashboardItem_procurement, timeout=15000, no_wait_after=True)
+    #     self.page.wait_for_timeout(3000)
 
     def menu_click_procurement_hyperlink(self):
         self.click_on_btn(self.click_procurement_hyperlink)
+        # self.wait_for_timeout(5000)
