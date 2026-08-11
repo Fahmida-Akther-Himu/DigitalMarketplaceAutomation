@@ -1,11 +1,10 @@
 from dotenv import load_dotenv
 import os
-import re
 import random
 import string
 import pytest
 from conftest import new_tab
-from datetime import datetime, timedelta
+from datetime import datetime
 
 load_dotenv()
 
@@ -63,21 +62,16 @@ from pages.digital_marketplace.home_page import HomePage
 from pages.digital_marketplace.shopping_cart import ShoppingCart
 from pages.digital_marketplace.checkout_page import CheckoutPage
 from pages.digital_marketplace.main_navigation_menu import MainNavigationMenu
-from pages.digital_marketplace.active_requisition_list import ActiveRequisitionListPage
-from pages.digital_marketplace.active_requisition_product_list import ActiveRequisitionProductList
-from pages.digital_marketplace.pending_approval_orders import PendingApprovalOrders
+from pages.digital_marketplace.public_side.my_account.pending_approval_orders import PendingApprovalOrders
 from pages.digital_marketplace.customers import Customers
-from pages.digital_marketplace.product_switch_history import ProductSwitchHistory
 from pages.digital_marketplace.vendor_dashboard import VendorDashboard
 from pages.digital_marketplace.all_order_for_admin import AllOrderForAdminPage
 from pages.digital_marketplace.order_management import OrderManagement
 from pages.digital_marketplace.receivable_order_list import ReceivableOrderListPage
 from pages.digital_marketplace.item_received_list import ItemReceivedList
 from pages.digital_marketplace.order_details_administration import OrderDetailsAdministration
-from pages.digital_marketplace.preview import Preview
 
 # For validation
-from playwright.sync_api import expect
 
 # Import for beautiful reporting
 from rich.traceback import install

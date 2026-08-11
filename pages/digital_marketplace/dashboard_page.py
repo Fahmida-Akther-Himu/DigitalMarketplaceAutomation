@@ -1,4 +1,5 @@
 from utils.basic_actionsdm import BasicActionsDM
+from playwright.sync_api import expect
 
 
 class DashboardPage(BasicActionsDM):
@@ -34,6 +35,26 @@ class DashboardPage(BasicActionsDM):
         self.add_banner = page.locator('#modals')
         self.close_modal = page.locator('button[class="close-button"][data-close-button=""]')
         self.click_procurement_hyperlink = page.locator('a[href="/procurementDashboard/myDashboard"]')
+        # Table of Authority menu
+        self.table_of_authority = page.locator(
+            '//div[normalize-space()="Table Of Authority"]'
+        )
+
+        # Authority Delegation submenu
+        self.authority_delegation = page.locator(
+            '//span[normalize-space()="Authority Delegation"]'
+        )
+
+        # Create Delegation of Authority
+        # Delegation Of Authority
+        self.delegation_of_authority = page.locator(
+            '//span[@class="menuTxtSpan" and normalize-space()="Delegation Of Authority"]/parent::a'
+        )
+
+        # Delegation Of Authority List
+        self.delegation_of_authority_list = page.locator(
+            '//span[@class="menuTxtSpan" and normalize-space()="Delegation Of Authority List"]/parent::a'
+        )
 
     ##################### small helper so we can log easily #####################
     def _log(self, message: str):
@@ -48,12 +69,33 @@ class DashboardPage(BasicActionsDM):
 
     def goto_procurement(self) -> None:
         self.click_on_btn(self.myDashboardItem_procurement)
-        # self.wait_for_timeout(5000)
-
-    # def goto_procurement(self):
-    #     self.click_on_btn(self.myDashboardItem_procurement, timeout=15000, no_wait_after=True)
-    #     self.page.wait_for_timeout(3000)
 
     def menu_click_procurement_hyperlink(self):
         self.click_on_btn(self.click_procurement_hyperlink)
-        # self.wait_for_timeout(5000)
+
+    def navigate_to_delegation_of_authority(self):
+        self._log("Opening Table of Authority menu")
+        self.table_of_authority.click()
+
+        self._log("Opening Authority Delegation submenu")
+        self.authority_delegation.click()
+
+        self._log("Opening Delegation of Authority page")
+        self.delegation_of_authority.click()
+
+        expect(
+            self.page.get_by_role(
+                "heading",
+                name="Create Delegation Of Authority"
+            )
+        ).to_be_visible(timeout=10000)
+
+    def navigate_to_delegation_of_authority_list(self):
+        self._log("Opening Table of Authority menu")
+        self.table_of_authority.click()
+
+        self._log("Opening Authority Delegation submenu")
+        self.authority_delegation.click()
+
+        self._log("Opening Delegation of Authority List")
+        self.delegation_of_authority_list.click()

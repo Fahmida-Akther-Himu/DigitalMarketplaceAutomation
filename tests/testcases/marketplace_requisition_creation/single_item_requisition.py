@@ -16,6 +16,10 @@ requisition_list_url = proj_url + "/procurementDashboard/myDashboard#!/requisiti
 # Procurement information
 proj_user = os.getenv("test_user_name")
 proj_pass = os.getenv("test_user_pass")
+
+# proj_env = os.getenv("test_env")
+# proj_user = os.getenv("test_user")
+
 requisition_project_name = os.getenv("test_requisition_project_name")
 whitelisted_agreement_number = os.getenv("test_whitelisted_agreement_number")
 requisition_funding_source = os.getenv("test_requisition_funding_source")
@@ -48,6 +52,7 @@ from pages.digital_marketplace.home_page import HomePage
 from pages.digital_marketplace.active_requisition_list import ActiveRequisitionListPage
 from pages.digital_marketplace.active_requisition_product_list import ActiveRequisitionProductList
 from pages.digital_marketplace.main_navigation_menu import MainNavigationMenu
+from pages.erp_procurement.reset_hub_page import ResetHubPage
 
 # For validation
 from playwright.sync_api import expect
@@ -74,7 +79,7 @@ approver_id_3 = ''
         create a requisition using a whitelisted framework agreement item,
         provide all necessary requisition details, and submit it successfully —
         generating a unique requisition number for further processing.""")
-def test_1_create_requisition_with_whitelisted_blacklisted_and_non_agreement_item(page):
+def test_1_create_requisition_with_whitelisted_blacklisted_and_non_agreement_item(page, logger):
     """
     Test Case 1: Create Requisition with Whitelisted, Blacklisted, and Non-Agreement Items.
 
@@ -147,7 +152,7 @@ def test_1_create_requisition_with_whitelisted_blacklisted_and_non_agreement_ite
         To verify that the system correctly retrieves the first-level approver
         assigned to the newly created requisition, ensuring that workflow routing
         is functioning as expected.""")
-def test_2_identify_first_approver_for_created_requisition(page):
+def test_2_identify_first_approver_for_created_requisition(page, logger):
     """
     Test Case 2: Identify and capture the first approver of a submitted requisition.
 
@@ -215,9 +220,23 @@ def test_3_login_as_first_approver_and_approve_requisition(page):
     proc_login_page.perform_login(
         given_url=proj_url,
         user_name=approver_id,
-        pass_word=proj_pass,
+        # pass_word=proj_pass,
+        pass_word="iB@r4tw4",
         timeout=60000
     )
+
+    # reset_page = ResetHubPage(page)
+    #
+    # link = reset_page.generate_reset_link(
+    #     env=proj_env,
+    #     username=approver_id,
+    # )
+    #
+    # print("Generated Link:" + link)
+    # reset_page.open_generated_link(link)
+    # assert isinstance(link, str) and link.startswith("http")
+    #
+    # logger.step(f" 📥 Logging in as user: {approver_id}")
 
     proc_dashboard_page = DashboardPage(page)
     proc_dashboard_page.menu_click_procurement_hyperlink()
@@ -248,7 +267,7 @@ def test_3_login_as_first_approver_and_approve_requisition(page):
         To verify that the system correctly retrieves the second-level approver
         for a previously submitted requisition, ensuring that the approval workflow
         is routed correctly to the next approver.""")
-def test_4_identify_second_approver_for_created_requisition(page):
+def test_4_identify_second_approver_for_created_requisition(page, logger):
     """
     Test Case 4: Identify and capture the second-level approver of a submitted requisition in the ERP Procurement system.
 
@@ -275,6 +294,20 @@ def test_4_identify_second_approver_for_created_requisition(page):
         pass_word=proj_pass,
         timeout=60000
     )
+    #
+    # reset_page = ResetHubPage(page)
+    #
+    # link = reset_page.generate_reset_link(
+    #     env=proj_env,
+    #     username=proj_user,
+    # )
+    #
+    # print("Generated Link:" + link)
+    # reset_page.open_generated_link(link)
+    # assert isinstance(link, str) and link.startswith("http")
+
+    logger.step(f" 📥 Logging in as user: {proj_user}")
+
     proc_dashboard_page = DashboardPage(page)
     proc_dashboard_page.goto_procurement()
 
@@ -307,7 +340,7 @@ def test_4_identify_second_approver_for_created_requisition(page):
     Objective:
         To verify that the second-level approver can successfully log in, locate the requisition,
         and approve it, ensuring that the approval workflow progresses correctly to the next stage.""")
-def test_5_login_as_second_approver_and_approve_requisition(page):
+def test_5_login_as_second_approver_and_approve_requisition(page, logger):
     """
     Test Case 5: Login as the second-level approver and approve the submitted requisition in the ERP Procurement system.
 
@@ -332,9 +365,24 @@ def test_5_login_as_second_approver_and_approve_requisition(page):
     proc_login_page.perform_login(
         given_url=proj_url,
         user_name=approver_id_2,
-        pass_word=proj_pass,
+        # pass_word=proj_pass,
+        pass_word="pbLK#88A",
         timeout=60000  # Increased timeout for login
     )
+
+    # reset_page = ResetHubPage(page)
+    #
+    # link = reset_page.generate_reset_link(
+    #     env=proj_env,
+    #     username=approver_id_2,
+    # )
+    #
+    # print("Generated Link:" + link)
+    # reset_page.open_generated_link(link)
+    # assert isinstance(link, str) and link.startswith("http")
+
+    logger.step(f" 📥 Logging in as user: {approver_id_2}")
+
     proc_dashboard_page = DashboardPage(page)
     proc_dashboard_page.goto_procurement()
 
@@ -364,7 +412,7 @@ def test_5_login_as_second_approver_and_approve_requisition(page):
         To ensure that the requisition submitted and approved in previous steps
         is correctly reflected as "Approved" in the system, and to capture
         detailed information including the assigned vendor for documentation and verification.""")
-def test_6_verify_requisition_is_approved(page, new_tab):
+def test_6_verify_requisition_is_approved(page, new_tab, logger):
     """
     Test Case 6: Verify that the requisition is approved and retrieve vendor information from the ERP Procurement system.
 
@@ -396,6 +444,20 @@ def test_6_verify_requisition_is_approved(page, new_tab):
         pass_word=proj_pass,
         timeout=60000
     )
+
+    # reset_page = ResetHubPage(page)
+    #
+    # link = reset_page.generate_reset_link(
+    #     env=proj_env,
+    #     username=proj_user,
+    # )
+    #
+    # print("Generated Link:" + link)
+    # reset_page.open_generated_link(link)
+    # assert isinstance(link, str) and link.startswith("http")
+
+    logger.step(f" 📥 Logging in as user: {proj_user}")
+
     proc_dashboard_page = DashboardPage(page)
     proc_dashboard_page.goto_procurement()
 

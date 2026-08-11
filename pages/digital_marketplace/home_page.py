@@ -28,8 +28,8 @@ class HomePage(BasicActionsDM):
                                                     has_text="Pending Approval Orders")
         self.welcome_locator = page.locator("div.topic-block-title >> h2")
         self.all_framework_agreements = page.locator("a[href='/FrameworkAgreementList']")
-        ##################### small helper so we can log easily #####################
 
+    ##################### small helper so we can log easily #####################
     def _log(self, message: str):
         if self.logger:
             self.logger.step(message)
