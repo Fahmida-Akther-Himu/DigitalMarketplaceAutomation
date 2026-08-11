@@ -1,11 +1,10 @@
 from dotenv import load_dotenv
 import os
-import re
 import random
 import string
 import pytest
 from conftest import new_tab
-from datetime import datetime, timedelta
+from datetime import datetime
 
 load_dotenv()
 
@@ -63,21 +62,16 @@ from pages.digital_marketplace.home_page import HomePage
 from pages.digital_marketplace.shopping_cart import ShoppingCart
 from pages.digital_marketplace.checkout_page import CheckoutPage
 from pages.digital_marketplace.main_navigation_menu import MainNavigationMenu
-from pages.digital_marketplace.active_requisition_list import ActiveRequisitionListPage
-from pages.digital_marketplace.active_requisition_product_list import ActiveRequisitionProductList
-from pages.digital_marketplace.pending_approval_orders import PendingApprovalOrders
+from pages.digital_marketplace.public_side.my_account.pending_approval_orders import PendingApprovalOrders
 from pages.digital_marketplace.customers import Customers
-from pages.digital_marketplace.product_switch_history import ProductSwitchHistory
 from pages.digital_marketplace.vendor_dashboard import VendorDashboard
 from pages.digital_marketplace.all_order_for_admin import AllOrderForAdminPage
 from pages.digital_marketplace.order_management import OrderManagement
 from pages.digital_marketplace.receivable_order_list import ReceivableOrderListPage
 from pages.digital_marketplace.item_received_list import ItemReceivedList
 from pages.digital_marketplace.order_details_administration import OrderDetailsAdministration
-from pages.digital_marketplace.preview import Preview
 
 # For validation
-from playwright.sync_api import expect
 
 # Import for beautiful reporting
 from rich.traceback import install
@@ -1021,7 +1015,7 @@ def test_13_order_initiator_receives_marketplace_item(page):
     receivable_order_list_page.input_quantity_to_receive(received_quantity="1")
 
     current_dir = os.getcwd()
-    document_location = os.path.join(current_dir, "utils", "image_png.png")
+    document_location = os.path.join(current_dir, "utils", "PNG_image.png")
     assert receivable_order_list_page.receiving_upload_attachment(document_location), "File upload failed"
 
     receivable_order_list_page.input_received_remarks(
@@ -1196,7 +1190,8 @@ def test_15_create_and_submit_bill_for_received_marketplace_item(page):
     create_vendor_bill.vendor_bill_payable_information_for_framework_order()
     create_vendor_bill.search_vendor(vendor_name=order_vendor)
     create_vendor_bill.select_order_no(order_num=framework_order_no)
-    create_vendor_bill.select_challan_no(challan_no=challan_num_for_receiver)
+    create_vendor_bill.select_challan_no(challan_no=challan_num_for_order_initiator_2)
+    # create_vendor_bill.select_challan_no(challan_no=challan_num_for_receiver)
 
     global bill_num
     create_vendor_bill.bill_number(bill_no_1=bill_num)

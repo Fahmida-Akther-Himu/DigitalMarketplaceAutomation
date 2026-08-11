@@ -1,0 +1,674 @@
+from dotenv import load_dotenv
+import os
+import re
+import random
+import string
+import pytest
+from conftest import new_tab
+from datetime import datetime, timedelta
+
+load_dotenv()
+
+# Project URLs
+proj_url = os.getenv("test_url")
+requisition_list_url = proj_url + "/procurementDashboard/myDashboard#!/requisition/list"
+
+# Procurement information
+proj_user = os.getenv("test_user_name")
+proj_pass = os.getenv("test_user_pass")
+requisition_project_name = os.getenv("test_requisition_project_name")
+whitelisted_agreement_number = os.getenv("test_whitelisted_agreement_number")
+
+requisition_funding_source = os.getenv("test_requisition_funding_source")
+requisition_funding_remarks = os.getenv("test_requisition_funding_remarks")
+master_item_1 = os.getenv("test_master_item_1")
+master_item_1_full_path = os.getenv("test_master_item_1_full_path")
+master_item_2 = os.getenv("test_master_item_2")
+master_item_2_full_path = os.getenv("test_master_item_2_full_path")
+master_item_3 = os.getenv("test_master_item_3")
+master_item_3_full_path = os.getenv("test_master_item_3_full_path")
+master_item_4 = os.getenv("test_master_item_4")
+master_item_4_full_path = os.getenv("test_master_item_4_full_path")
+master_item_5 = os.getenv("test_master_item_5")
+master_item_5_full_path = os.getenv("test_master_item_5_full_path")
+master_item_6 = os.getenv("test_master_item_6")
+master_item_6_full_path = os.getenv("test_master_item_6_full_path")
+master_item_7 = os.getenv("test_master_item_7")
+master_item_7_full_path = os.getenv("test_master_item_7_full_path")
+master_item_8 = os.getenv("test_master_item_8")
+master_item_8_full_path = os.getenv("test_master_item_8_full_path")
+
+item_gl_code_1 = os.getenv("test_item_gl_code_1")
+item_gl_code_2 = os.getenv("test_item_gl_code_2")
+item_gl_code_3 = os.getenv("test_item_gl_code_3")
+item_gl_code_4 = os.getenv("test_item_gl_code_4")
+item_gl_code_5 = os.getenv("test_item_gl_code_5")
+item_gl_code_6 = os.getenv("test_item_gl_code_6")
+item_gl_code_7 = os.getenv("test_item_gl_code_7")
+item_gl_code_8 = os.getenv("test_item_gl_code_8")
+remarks = os.getenv("test_remarks")
+requisition_item_remarks = os.getenv("test_requisition_item_remarks")
+schedule_address = os.getenv("test_schedule_address")
+
+marketplace_url_qa = os.getenv("test_marketplace_url_qa")
+marketplace_password = os.getenv("test_marketplace_password")
+
+# Page models for procurement
+from pages.digital_marketplace.procurement_login_page import ProcurementLoginPage
+from pages.digital_marketplace.dashboard_page import DashboardPage
+from pages.digital_marketplace.procurement_home_page import ProcurementHomePage
+from pages.digital_marketplace.requisition_creation import CreateReqPage
+from pages.digital_marketplace.requisition_list import RequisitionList
+from pages.digital_marketplace.main_navigation_bar import MainNavigationBar
+from pages.digital_marketplace.requisition_approve_list import RequisitionApproveList
+from pages.digital_marketplace.requisition_details_information import RequisitionDetailsInformation
+from pages.digital_marketplace.framework_information import FrameworkInformation
+from pages.digital_marketplace.framework_order_list import FrameworkOrderListPage
+from pages.digital_marketplace.proc_item_receive_list import ProcItemReceiveListPage
+
+# Page models for marketplace
+from pages.digital_marketplace.login_page import LoginPage
+from pages.digital_marketplace.home_page import HomePage
+from pages.digital_marketplace.active_requisition_list import ActiveRequisitionListPage
+from pages.digital_marketplace.active_requisition_product_list import ActiveRequisitionProductList
+from pages.digital_marketplace.main_navigation_menu import MainNavigationMenu
+
+# For validation
+from playwright.sync_api import expect
+
+# Import for beautiful reporting
+from rich.traceback import install
+
+install()
+
+# Procurement global variable
+req_num = ''
+approver_id = ''
+approver_id_2 = ''
+order_vendor = ''
+approver_id_3 = ''
+
+
+@pytest.mark.reporting(
+    functional_specification="test_1",
+    test_description="""
+    Test Case 1: Create and Submit Requisition with Multiple Items and Attachments
+
+    Objective:
+        To verify that a user can successfully create and submit a requisition
+        containing multiple line items sourced from the same whitelisted
+        framework agreement, where each item has:
+            - A valid master item selection
+            - A defined quantity
+            - An assigned GL code
+            - Item-level remarks
+            - A valid document attachment of various supported file formats
+
+        The test also validates that the system correctly handles multiple
+        item additions, attachment uploads, scheduling, and final requisition
+        submission without errors.
+        """)
+def test_1_create_and_submit_requisition_with_multiple_items_and_attachments(page):
+    """
+    Test Case 1: Create and Submit Requisition with Multiple Items and Attachments
+
+    Objective:
+        To verify that a user can successfully create and submit a requisition
+        containing multiple line items sourced from the same whitelisted
+        framework agreement, where each item has:
+            - A valid master item selection
+            - A defined quantity
+            - An assigned GL code
+            - Item-level remarks
+            - A valid document attachment of various supported file formats
+
+        The test also validates that the system correctly handles multiple
+        item additions, attachment uploads, scheduling, and final requisition
+        submission without errors.
+
+    Steps:
+        1. Log in to the Procurement application using valid credentials.
+        2. Navigate to the Procurement dashboard.
+        3. Open the "Create Requisition" page.
+        4. Enter requisition header information including:
+            - Project name
+            - Funding source
+            - Funding remarks
+        5. Add the first requisition item by:
+            - Selecting the master item
+            - Opening the active framework agreement popup
+            - Searching and selecting the whitelisted framework agreement
+            - Selecting an agreement item
+            - Entering the item quantity
+            - Assigning a GL code
+            - Uploading a PDF attachment
+            - Adding item-level remarks
+            - Adding the item to the requisition list
+        6. Repeat Step 5 for multiple additional items using:
+            - The same framework agreement
+            - Different master items
+            - Different GL codes
+            - Different quantities
+            - Different attachment file types (JPG, PNG, Excel, PPTX, DOCX, ZIP)
+            - Unique item-level remarks
+        7. Configure a common delivery schedule for all requisition items.
+        8. Set the delivery location for Head Office.
+        9. Capture a full-page screenshot for verification.
+        10. Submit the requisition.
+        11. Capture the generated requisition number.
+        12. Navigate to the requisition list page.
+        13. Verify that the newly created requisition appears in the list.
+    """
+    proc_login_page = ProcurementLoginPage(page)
+    proc_login_page.perform_login(
+        given_url=proj_url,
+        user_name=proj_user,
+        pass_word=proj_pass,
+        timeout=60000
+    )
+
+    proc_dashboard_page = DashboardPage(page)
+    proc_dashboard_page.goto_procurement()
+    proc_dashboard_page.get_full_page_screenshot('full_page_screenshot_1')
+
+    proc_home_page = ProcurementHomePage(page)
+    proc_home_page.navigate_to_create_requisition()
+    proc_home_page.get_full_page_screenshot('full_page_screenshot_2')
+
+    print("Test 1: Creating requisition...")
+    create_requisition_page = CreateReqPage(page)
+    # c_page.validate()
+    create_requisition_page.setting_requisition_for(project_name=requisition_project_name)
+    create_requisition_page.setting_requisition_information(fund_source=requisition_funding_source,
+                                                            fund_remarks=requisition_funding_remarks)
+    # For adding 1st item: Same vendor first framework agreement item information setting
+    create_requisition_page.setting_requisition_details(item_info_1=master_item_1, item_info_2=master_item_1_full_path)
+
+    create_requisition_page.active_agreement_button.click()
+    create_requisition_page.setting_active_framework_list(agreement_info=whitelisted_agreement_number)
+    create_requisition_page.agreement_item_selector.nth(0).click()
+    create_requisition_page.finalize_item_quantity(item_quantity="100")
+    create_requisition_page.setting_item_gl_code(gl_code=item_gl_code_1)
+
+    current_dir = os.getcwd()
+    document_path = os.path.join(current_dir, 'utils', 'upload_file.pdf')
+    create_requisition_page.upload_requisition_item_document(document_path)
+    create_requisition_page.wait_for_timeout(2000)
+    create_requisition_page.setting_item_remarks(item_remarks="Upload PDF file and automation test remarks 1")
+    create_requisition_page.add_item_requisition_details_information_list()
+    create_requisition_page.wait_for_timeout(2000)
+    # item 2 add
+    create_requisition_page.setting_requisition_details(item_info_1=master_item_2, item_info_2=master_item_2_full_path)
+
+    create_requisition_page.active_agreement_button.click()
+    create_requisition_page.setting_active_framework_list(agreement_info=whitelisted_agreement_number)
+    create_requisition_page.agreement_item_selector.nth(1).click()
+    create_requisition_page.finalize_item_quantity(item_quantity="100")
+    create_requisition_page.setting_item_gl_code(gl_code=item_gl_code_2)
+
+    current_dir = os.getcwd()
+    document_path = os.path.join(current_dir, 'utils', 'JPG_image.jpg')
+    create_requisition_page.upload_requisition_item_document(document_path)
+    create_requisition_page.wait_for_timeout(2000)
+    create_requisition_page.setting_item_remarks(item_remarks="Upload JPG file and automation test remarks 2")
+    create_requisition_page.add_item_requisition_details_information_list()
+    create_requisition_page.wait_for_timeout(2000)
+    # item 3 add
+    create_requisition_page.setting_requisition_details(item_info_1=master_item_3, item_info_2=master_item_3_full_path)
+    create_requisition_page.active_agreement_button.click()
+    create_requisition_page.setting_active_framework_list(agreement_info=whitelisted_agreement_number)
+    create_requisition_page.agreement_item_selector.nth(2).click()
+    create_requisition_page.finalize_item_quantity(item_quantity="50")
+    create_requisition_page.setting_item_gl_code(gl_code=item_gl_code_3)
+
+    current_dir = os.getcwd()
+    document_path = os.path.join(current_dir, 'utils', 'PNG_image.png')
+    create_requisition_page.upload_requisition_item_document(document_path)
+    create_requisition_page.wait_for_timeout(2000)
+    create_requisition_page.setting_item_remarks(item_remarks="Upload PNG file and automation test remarks 3")
+    create_requisition_page.add_item_requisition_details_information_list()
+    create_requisition_page.wait_for_timeout(2000)
+    # item 4 add
+    create_requisition_page.setting_requisition_details(item_info_1=master_item_4, item_info_2=master_item_4_full_path)
+
+    create_requisition_page.active_agreement_button.click()
+    create_requisition_page.setting_active_framework_list(agreement_info=whitelisted_agreement_number)
+    create_requisition_page.agreement_item_selector.nth(2).click()
+    create_requisition_page.finalize_item_quantity(item_quantity="50")
+    create_requisition_page.setting_item_gl_code(gl_code=item_gl_code_4)
+
+    current_dir = os.getcwd()
+    document_path = os.path.join(current_dir, 'utils', 'Excel_file.excel')
+    create_requisition_page.upload_requisition_item_document(document_path)
+    create_requisition_page.wait_for_timeout(2000)
+    create_requisition_page.setting_item_remarks(item_remarks="Upload PNG file and automation test remarks 4")
+    create_requisition_page.add_item_requisition_details_information_list()
+    create_requisition_page.wait_for_timeout(2000)
+    # item 5 add
+    create_requisition_page.setting_requisition_details(item_info_1=master_item_5, item_info_2=master_item_5_full_path)
+    create_requisition_page.active_agreement_button.click()
+    create_requisition_page.setting_active_framework_list(agreement_info=whitelisted_agreement_number)
+    create_requisition_page.agreement_item_selector.nth(4).click()
+    create_requisition_page.finalize_item_quantity(item_quantity="50")
+    create_requisition_page.setting_item_gl_code(gl_code=item_gl_code_5)
+
+    current_dir = os.getcwd()
+    document_path = os.path.join(current_dir, 'utils', 'PPTX_file.pptx')
+    create_requisition_page.upload_requisition_item_document(document_path)
+    create_requisition_page.wait_for_timeout(2000)
+    create_requisition_page.setting_item_remarks(item_remarks="Upload PPTX file and automation test remarks 5")
+    create_requisition_page.add_item_requisition_details_information_list()
+    create_requisition_page.wait_for_timeout(2000)
+    # item 6 add
+    create_requisition_page.setting_requisition_details(item_info_1=master_item_6, item_info_2=master_item_6_full_path)
+    create_requisition_page.active_agreement_button.click()
+    create_requisition_page.setting_active_framework_list(agreement_info=whitelisted_agreement_number)
+    create_requisition_page.agreement_item_selector.nth(5).click()
+    create_requisition_page.finalize_item_quantity(item_quantity="50")
+    create_requisition_page.setting_item_gl_code(gl_code=item_gl_code_6)
+
+    current_dir = os.getcwd()
+    document_path = os.path.join(current_dir, 'utils', 'DOCX_file.docx')
+    create_requisition_page.upload_requisition_item_document(document_path)
+    create_requisition_page.wait_for_timeout(2000)
+    create_requisition_page.setting_item_remarks(item_remarks="Upload DOCX file and automation test remarks 6")
+    create_requisition_page.add_item_requisition_details_information_list()
+    create_requisition_page.wait_for_timeout(2000)
+    # item 7 add
+    create_requisition_page.setting_requisition_details(item_info_1=master_item_7, item_info_2=master_item_7_full_path)
+    create_requisition_page.active_agreement_button.click()
+    create_requisition_page.setting_active_framework_list(agreement_info=whitelisted_agreement_number)
+    create_requisition_page.agreement_item_selector.nth(5).click()
+    create_requisition_page.finalize_item_quantity(item_quantity="50")
+    create_requisition_page.setting_item_gl_code(gl_code=item_gl_code_7)
+
+    current_dir = os.getcwd()
+    document_path = os.path.join(current_dir, 'utils', 'Zip.zip')
+    create_requisition_page.upload_requisition_item_document(document_path)
+    create_requisition_page.wait_for_timeout(2000)
+    create_requisition_page.setting_item_remarks(item_remarks="Upload ZIP file and automation test remarks 7")
+    create_requisition_page.add_item_requisition_details_information_list()
+    create_requisition_page.wait_for_timeout(2000)
+    # item 8 add
+    create_requisition_page.setting_requisition_details(item_info_1=master_item_8, item_info_2=master_item_8_full_path)
+
+    create_requisition_page.active_agreement_button.click()
+    create_requisition_page.setting_active_framework_list(agreement_info=whitelisted_agreement_number)
+    create_requisition_page.agreement_item_selector.nth(2).click()
+    create_requisition_page.finalize_item_quantity(item_quantity="200")
+    create_requisition_page.setting_item_gl_code(gl_code=item_gl_code_8)
+    create_requisition_page.wait_for_timeout(2000)
+    create_requisition_page.setting_item_remarks(item_remarks=remarks)
+    create_requisition_page.add_item_requisition_details_information_list()
+    create_requisition_page.wait_for_timeout(2000)
+    create_requisition_page.setting_same_schedule_for_date()
+    create_requisition_page.setting_location_for_head_office(address=schedule_address)
+    create_requisition_page.get_full_page_screenshot('full_page_screenshot_3')
+    global req_num
+    req_num = create_requisition_page.submit_requisition()
+    print("REQ NUM:", req_num)
+    create_requisition_page.navigate_to_requisition_list()
+    create_requisition_page.get_full_page_screenshot('full_page_screenshot_4')
+
+
+@pytest.mark.reporting(
+    functional_specification="test_1",
+    test_description="""Test Case 2: Identify and capture the first approver of a submitted requisition.
+
+        Objective:
+            To verify that the system correctly retrieves the first-level approver
+            assigned to the newly created requisition, ensuring that workflow routing
+            is functioning as expected.""")
+def test_2_identify_first_approver_for_created_requisition(page):
+    """
+    Test Case 2: Identify and capture the first approver of a submitted requisition.
+
+    Objective:
+        To verify that the system correctly retrieves the first-level approver
+        assigned to the newly created requisition, ensuring that workflow routing
+        is functioning as expected.
+
+    Steps:
+        1. Access the Requisition List page.
+        2. Capture a full-page screenshot for documentation.
+        3. Search for the recently submitted requisition using its requisition number ('req_num').
+        4. Retrieve and store the approver ID of the first-level approver.
+        5. Capture another screenshot showing the approver information.
+        6. Log out from the current session to complete the test flow.
+    """
+    print("Test 2: Finding approver of the requisition...")
+    requisition_list_page = RequisitionList(page)
+    requisition_list_page.get_full_page_screenshot('full_page_screenshot_5')
+    requisition_list_page.search_requisition(req_num)
+
+    global approver_id
+    approver_id = str(int(requisition_list_page.find_approver_id()))
+    print("APPROVER ID:", approver_id)
+    requisition_list_page.get_full_page_screenshot('full_page_screenshot_6')
+
+    m_page = MainNavigationBar(page)
+    m_page.exit()
+    m_page.logout()
+    m_page.get_full_page_screenshot('full_page_screenshot_7')
+    m_page.wait_for_timeout(2000)
+
+
+@pytest.mark.reporting(
+    functional_specification="test_1",
+    test_description="""Test Case 3: Login as the first approver and approve the submitted requisition in the ERP Procurement system.
+
+        Objective:
+            To verify that the first-level approver can successfully log in to the
+            procurement portal, locate the submitted requisition, and approve it,
+            ensuring that the workflow moves correctly to the next approval stage.""")
+def test_3_login_as_first_approver_and_approve_requisition(page):
+    """
+    Test Case 3: Login as the first approver and approve the submitted requisition in the ERP Procurement system.
+
+    Objective:
+        To verify that the first-level approver can successfully log in to the
+        procurement portal, locate the submitted requisition, and approve it,
+        ensuring that the workflow moves correctly to the next approval stage.
+
+    Steps:
+        1. Login to the procurement portal as the first-level approver using the 'approver_id'.
+        2. Navigate to the procurement dashboard.
+        3. Access the "Requisition Approve List" page.
+        4. Capture a full-page screenshot for documentation.
+        5. Search for the requisition using its requisition number ('req_num').
+        6. Select the requisition from the list.
+        7. Approve the requisition.
+        8. Capture a screenshot showing the approved requisition.
+        9. Wait briefly to ensure actions are completed.
+        10. Log out from the session and capture a final screenshot.
+    """
+    print("Test 3: Logging in as first approver and approving requisition...")
+    proc_login_page = ProcurementLoginPage(page)
+    proc_login_page.perform_login(
+        given_url=proj_url,
+        user_name=approver_id,
+        pass_word=proj_pass,
+        timeout=60000
+    )
+
+    proc_dashboard_page = DashboardPage(page)
+    proc_dashboard_page.menu_click_procurement_hyperlink()
+
+    proc_home_page = ProcurementHomePage(page)
+    proc_home_page.navigate_to_requisition_approve_list()
+
+    requisition_approve_list_page = RequisitionApproveList(page)
+    requisition_approve_list_page.get_full_page_screenshot('full_page_screenshot_8')
+    requisition_approve_list_page.search_requisition(req_num)
+    requisition_approve_list_page.select_requisition()
+    requisition_approve_list_page.approve_requisition()
+    requisition_approve_list_page.get_full_page_screenshot('full_page_screenshot_9')
+    requisition_approve_list_page.wait_for_timeout(2000)
+
+    m_page = MainNavigationBar(page)
+    m_page.exit()
+    m_page.logout()
+    m_page.get_full_page_screenshot('full_page_screenshot_10')
+    m_page.wait_for_timeout(2000)
+
+
+@pytest.mark.reporting(
+    functional_specification="test_1",
+    test_description="""Test Case 4: Identify and capture the second-level approver of a submitted requisition in the ERP Procurement system.
+
+        Objective:
+            To verify that the system correctly retrieves the second-level approver
+            for a previously submitted requisition, ensuring that the approval workflow
+            is routed correctly to the next approver.""")
+def test_4_identify_second_approver_for_created_requisition(page):
+    """
+    Test Case 4: Identify and capture the second-level approver of a submitted requisition in the ERP Procurement system.
+
+    Objective:
+        To verify that the system correctly retrieves the second-level approver
+        for a previously submitted requisition, ensuring that the approval workflow
+        is routed correctly to the next approver.
+
+    Steps:
+        1. Login to the procurement portal using the procurement user credentials.
+        2. Navigate to the procurement dashboard.
+        3. Access the "Requisition List" page.
+        4. Search for the submitted requisition using its requisition number ('req_num').
+        5. Capture a full-page screenshot for verification purposes.
+        6. Retrieve and store the approver ID of the second-level approver in 'approver_id_2'.
+        7. Capture a screenshot showing the approver information.
+        8. Log out from the session and capture a final screenshot.
+    """
+    print("Test 4: Finding approver of the requisition again...")
+    proc_login_page = ProcurementLoginPage(page)
+    proc_login_page.perform_login(
+        given_url=proj_url,
+        user_name=proj_user,
+        pass_word=proj_pass,
+        timeout=60000
+    )
+    proc_dashboard_page = DashboardPage(page)
+    proc_dashboard_page.goto_procurement()
+
+    proc_home_page = ProcurementHomePage(page)
+    proc_home_page.navigate_to_requisition_list()
+
+    requisition_list_page = RequisitionList(page)
+    requisition_list_page.search_requisition(req_num)
+    requisition_list_page.get_full_page_screenshot('full_page_screenshot_11')
+
+    global approver_id_2
+    # global approver_id_2, order_approver
+    # global order_approver
+    # order_approver = requisition_list_page.find_approver_id()
+    approver_id_2 = str(int(requisition_list_page.find_approver_id()))
+    print("APPROVER ID 2:", approver_id_2)
+    requisition_list_page.get_full_page_screenshot('full_page_screenshot_12')
+
+    m_page = MainNavigationBar(page)
+    m_page.exit()
+    m_page.logout()
+    m_page.get_full_page_screenshot('full_page_screenshot_13')
+    m_page.wait_for_timeout(2000)
+
+
+@pytest.mark.reporting(
+    functional_specification="test_1",
+    test_description="""Test Case 5: Login as the second-level approver and approve the submitted requisition in the ERP Procurement system.
+
+        Objective:
+            To verify that the second-level approver can successfully log in, locate the requisition,
+            and approve it, ensuring that the approval workflow progresses correctly to the next stage.""")
+def test_5_login_as_second_approver_and_approve_requisition(page):
+    """
+    Test Case 5: Login as the second-level approver and approve the submitted requisition in the ERP Procurement system.
+
+    Objective:
+        To verify that the second-level approver can successfully log in, locate the requisition,
+        and approve it, ensuring that the approval workflow progresses correctly to the next stage.
+
+    Steps:
+        1. Login to the procurement portal using the second-level approver credentials ('approver_id_2').
+        2. Navigate to the procurement dashboard.
+        3. Access the "Requisition Approve List" page.
+        4. Capture a full-page screenshot for documentation purposes.
+        5. Search for the submitted requisition using its requisition number ('req_num').
+        6. Select the requisition from the list.
+        7. Approve the requisition.
+        8. Capture a screenshot showing the approved requisition.
+        9. Wait briefly to ensure all actions are completed.
+        10. Log out from the session and capture a final screenshot.
+    """
+    print("Test 5: Logging in as second approver and approving requisition...")
+    proc_login_page = ProcurementLoginPage(page)
+    proc_login_page.perform_login(
+        given_url=proj_url,
+        user_name=approver_id_2,
+        pass_word=proj_pass,
+        timeout=60000  # Increased timeout for login
+    )
+    proc_dashboard_page = DashboardPage(page)
+    proc_dashboard_page.goto_procurement()
+
+    proc_home_page = ProcurementHomePage(page)
+    proc_home_page.navigate_to_requisition_approve_list()
+
+    requisition_approve_list_page = RequisitionApproveList(page)
+    requisition_approve_list_page.get_full_page_screenshot('full_page_screenshot_14')
+    requisition_approve_list_page.search_requisition(req_num)
+    requisition_approve_list_page.select_requisition()
+    requisition_approve_list_page.approve_requisition()
+    requisition_approve_list_page.get_full_page_screenshot('full_page_screenshot_15')
+    requisition_approve_list_page.wait_for_timeout(2000)
+
+    m_page = MainNavigationBar(page)
+    m_page.exit()
+    m_page.logout()
+    m_page.get_full_page_screenshot('full_page_screenshot_16')
+    m_page.wait_for_timeout(2000)
+
+
+@pytest.mark.reporting(
+    functional_specification="test_1",
+    test_description="""Test Case 6: Verify that the requisition is approved and retrieve vendor information from the ERP Procurement system.
+
+        Objective:
+            To ensure that the requisition submitted and approved in previous steps
+            is correctly reflected as "Approved" in the system, and to capture
+            detailed information including the assigned vendor for documentation and verification.""")
+def test_6_verify_requisition_is_approved(page, new_tab):
+    """
+    Test Case 6: Verify that the requisition is approved and retrieve vendor information from the ERP Procurement system.
+
+    Objective:
+        To ensure that the requisition submitted and approved in previous steps
+        is correctly reflected as "Approved" in the system, and to capture
+        detailed information including the assigned vendor for documentation and verification.
+
+    Steps:
+        1. Login to the procurement portal using the procurement user credentials.
+        2. Navigate to the procurement dashboard.
+        3. Access the "Requisition List" page.
+        4. Search for the submitted requisition using its requisition number ('req_num').
+        5. Capture a screenshot of the requisition list and verify the requisition status.
+        6. Open the requisition details page in a new tab.
+        7. Capture a screenshot of the requisition details.
+        8. Open the first FA (Framework Agreement) hyperlink in another new tab.
+        9. Retrieve vendor information from the framework information page and store it in 'order_vendor'.
+        10. Capture a screenshot of the framework information page.
+        11. Close all newly opened tabs and return to the main page.
+        12. Wait briefly to ensure all actions are completed.
+        13. Log out from the session and capture a final screenshot.
+    """
+    print("Test 6: Checking requisition status after approval...")
+    proc_login_page = ProcurementLoginPage(page)
+    proc_login_page.perform_login(
+        given_url=proj_url,
+        user_name=proj_user,
+        pass_word=proj_pass,
+        timeout=60000
+    )
+    proc_dashboard_page = DashboardPage(page)
+    proc_dashboard_page.goto_procurement()
+
+    proc_home_page = ProcurementHomePage(page)
+    proc_home_page.navigate_to_requisition_list()
+
+    requisition_list_page = RequisitionList(page)
+    requisition_list_page.search_requisition(req_num)
+    req_status = requisition_list_page.find_requisition_status()
+    print("REQ STATUS:", req_status)
+    requisition_list_page.get_full_page_screenshot('full_page_screenshot_17')
+    # expect(req_status).to_be_equal("Approved")
+    # requisition_list_page.goto_requisition_details_information()
+    # requisition_list_page.requisition_no.nth(0).click()
+
+    new_page = new_tab(lambda p: requisition_list_page.goto_requisition_details_information())
+    requisition_list_page.get_full_page_screenshot('full_page_screenshot_18')
+    req_details = RequisitionDetailsInformation(new_page)
+    # req_details.fa_no_hyperlink.nth(0).click()
+    req_details.wait_for_timeout(2000)
+    new_page_2 = new_tab(lambda p: req_details.fa_no_hyperlink.nth(0).click())
+    req_details.get_full_page_screenshot('full_page_screenshot_19')
+    framework_info = FrameworkInformation(new_page_2)
+
+    global order_vendor
+    order_vendor = framework_info.get_vendor_info()
+    framework_info.wait_for_timeout(2000)
+    framework_info.get_full_page_screenshot('full_page_screenshot_20')
+    new_page_2.close()
+
+    req_details.wait_for_timeout(2000)
+    new_page.close()
+
+    requisition_list_page = RequisitionList(page)
+    requisition_list_page.wait_for_timeout(5000)
+
+    m_page = MainNavigationBar(page)
+    m_page.exit()
+    m_page.logout()
+    m_page.get_full_page_screenshot('full_page_screenshot_21')
+
+
+# # Marketplace flow
+
+@pytest.mark.reporting(
+    functional_specification="test_1",
+    test_description="""Test Case 7: Marketplace order initiation process in the Staging environment.
+
+        Objective:
+            To verify that a marketplace order can be initiated, processed, and confirmed successfully
+            by the order initiator, including selecting vendors, updating cart information, uploading attachments,
+            scheduling delivery, and confirming the order.""")
+def test_7_verify_requisition_sync_to_marketplace(page, new_tab):
+    """
+    Test Case 7: Verify Requisition Synchronization to Marketplace (Staging Environment).
+
+    Objective:
+        To validate that a successfully approved requisition in the ERP Procurement
+        system is correctly synchronized and visible in the Marketplace staging
+        environment under the Active Requisition list.
+
+    Steps:
+        1. Navigate to the Marketplace staging URL.
+        2. Log in using SSO credentials.
+        3. Verify successful login by checking the welcome message.
+        4. Capture a full-page screenshot of the Marketplace home page.
+        5. Navigate to the Active Requisition List.
+        6. Search for the requisition using the requisition number.
+        7. Open the Active Requisition Product List in a new tab.
+        8. Capture screenshots of the product list and product switch history.
+        9. Close the product list tab.
+        10. Exit the Marketplace module and log out.
+    """
+    print("Test 7: Marketplace requisition is available on the Active Requisition List...")
+    login_page = LoginPage(page)
+    login_page.navigate_to_url(marketplace_url_qa)
+    login_page.perform_login_for_sso_login(
+        user_name=proj_user,
+        pass_word=marketplace_password
+    )
+
+    home_page = HomePage(page)
+    home_page.verify_welcome_message()
+    home_page.get_full_page_screenshot('full_page_screenshot_22')
+    home_page.wait_for_timeout(2000)
+    home_page.go_to_active_requisition_list()
+
+    active_requisition_list = ActiveRequisitionListPage(page)
+    active_requisition_list.search_order_requisition_number(requisition_number=req_num)
+
+    new_page = new_tab(lambda p: active_requisition_list.goto_active_requisition_product_list())
+
+    active_requisition_product_list = ActiveRequisitionProductList(new_page)
+    active_requisition_product_list.get_full_page_screenshot('full_page_screenshot_23')
+    active_requisition_product_list.history_link.nth(0).click()
+    active_requisition_product_list.go_to_product_history()
+    active_requisition_product_list.history_link.nth(1).click()
+    active_requisition_product_list.go_to_product_history()
+    active_requisition_product_list.get_full_page_screenshot('full_page_screenshot_24')
+    new_page.close()
+
+    dm_logout = MainNavigationMenu(page)
+    dm_logout.perform_logout()
+    dm_logout.get_full_page_screenshot('full_page_screenshot_25')

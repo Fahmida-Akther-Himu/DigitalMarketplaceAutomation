@@ -44,11 +44,6 @@ class ProcurementHomePage(BasicActionsDM):
         # self.get_screen_shot("Selecting Requisition")
         self.proc_item_requisition_create_requisition.click()
 
-        # self.get_screen_shot("Selecting Create Requisition")
-        # self.page.wait_for_timeout(5000)
-        # self.get_screen_shot("Create Requisition Page")
-        # expect(self.page.get_by_role("heading", name="Create Requisition")).to_be_visible()
-
     def navigate_to_requisition_list(self):
         self.proc_item_requisition.click()
         self.requisition_list.click()

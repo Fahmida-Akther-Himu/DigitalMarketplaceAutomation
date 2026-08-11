@@ -1,5 +1,5 @@
 import re
-
+from itertools import count
 from utils.basic_actionsdm import BasicActionsDM
 from pages.digital_marketplace.home_page import HomePage
 
@@ -20,10 +20,8 @@ class PendingApprovalOrders(HomePage, BasicActionsDM):
 
         # Go to pending approval order details
         self.details_button = page.get_by_role("button", name="Details")
-        # self.approve_order_button = page.locator('a[id="approve-order-btn"]')
-        # self.details_button = page.get_by_role("button", name="Details")
-        self.approve_order_button = page.get_by_role("link", name="Approve Order")
-        # self.approve_order_button = page.locator('a[id="approve-order-btn"]')
+        self.approve_order_button = page.locator('a[id="approve-order-btn"]')
+        # self.approve_order_button = page.get_by_role("link", name="Approve Order")
 
         self.yes_button = page.locator('button[onclick="yes(event)"]')
         # self.yes_button = page.get_by_role("button", name="YES")
@@ -50,8 +48,6 @@ class PendingApprovalOrders(HomePage, BasicActionsDM):
         # Select approve button for multiselect approval
         self.click_multiselect_approve = page.locator('button[id="pendingApprovalOrder-selected"]')
         self.pending_order_toggle_button = page.locator('button[class="toggle-button collapsed-button btn"]')
-
-        # self.wait_for_timeout(2000)
 
     ##################### small helper so we can log easily #####################
     def _log(self, message: str):
@@ -212,3 +208,17 @@ class PendingApprovalOrders(HomePage, BasicActionsDM):
         self.wait_for_timeout(5000)
         self.order_3.uncheck()
         self.wait_for_timeout(2000)
+
+    def get_pending_approval_order_count(self, pending_approval_order_count):
+        text = self.pending_approval_orders.inner_text().strip()
+
+        match = re.search(r"\((\d+)\)", text)
+
+        if not match:
+            raise AssertionError(
+                f"Pending Approval Order count not found in text: {text}"
+            )
+
+        pending_approval_order_count = int(match.group(1))
+        print(f"Pending Approval Order Count: {pending_approval_order_count}")
+        return pending_approval_order_count

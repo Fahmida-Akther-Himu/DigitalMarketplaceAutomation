@@ -27,11 +27,15 @@ class HomePage(BasicActionsDM):
         self.pending_approval_orders = page.locator("a[href='/customer/pendingApprovalOrders']",
                                                     has_text="Pending Approval Orders")
         self.welcome_locator = page.locator("div.topic-block-title >> h2")
+        self.all_framework_agreements = page.locator("a[href='/FrameworkAgreementList']")
 
     ##################### small helper so we can log easily #####################
     def _log(self, message: str):
         if self.logger:
             self.logger.step(message)
+
+    def go_to_all_framework_agreements_list(self):
+        self.click_on_btn(self.all_framework_agreements)
 
     def verify_welcome_message(self):
         # expect(self.welcome_locator).to_have_text("Welcome to BRAC Digital Marketplace")

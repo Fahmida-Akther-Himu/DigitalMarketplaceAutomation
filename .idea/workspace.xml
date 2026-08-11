@@ -4,54 +4,27 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="efc77538-6955-4d9d-bdef-a94599f47caf" name="Changes" comment="update new code">
-      <change afterPath="$PROJECT_DIR$/conftest_1.py" afterDir="false" />
+    <list default="true" id="efc77538-6955-4d9d-bdef-a94599f47caf" name="Changes" comment="product added to user's wishlist">
+      <change afterPath="$PROJECT_DIR$/pages/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/pages/erp_procurement/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/pages/erp_procurement/reset_hub_page.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/conftest.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/active_requisition_list.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/active_requisition_list.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/active_requisition_product_list.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/active_requisition_product_list.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/all_order_for_admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/all_order_for_admin.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/bill_details.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/bill_details.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/bill_list.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/bill_list.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/checkout_page.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/checkout_page.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/create_vendor_bill_payable.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/create_vendor_bill_payable.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/customers.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/customers.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/dashboard_page.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/dashboard_page.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/framework_agreement_information.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/framework_agreement_information.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/framework_information.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/framework_information.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/framework_list.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/framework_list.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/framework_order_list.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/framework_order_list.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/home_page.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/home_page.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/item_received_list.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/item_received_list.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/login_page.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/login_page.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/main_navigation_bar.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/main_navigation_bar.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/main_navigation_menu.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/main_navigation_menu.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/navigation_menu.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/navigation_menu.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/order_details_administration.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/order_details_administration.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/order_list_public_side.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/order_list_public_side.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/order_management.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/order_management.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/orders_public_store.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/orders_public_store.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/pending_approval_orders.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/pending_approval_orders.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/preview.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/preview.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/proc_item_receive_list.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/proc_item_receive_list.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/order_list_public_side.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/public_side/my_account/order_list_public_side.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/orders_public_store.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/public_side/my_account/orders_public_store.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/pending_approval_orders.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/public_side/my_account/pending_approval_orders.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/procurement_home_page.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/procurement_home_page.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/procurement_login_page.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/procurement_login_page.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/procurement_page_navigation_bar.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/procurement_page_navigation_bar.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/product_switch_history.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/product_switch_history.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/receivable_order_list.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/receivable_order_list.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/requisition_approve_list.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/requisition_approve_list.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/requisition_creation.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/requisition_creation.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/requisition_details_information.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/requisition_details_information.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/requisition_list.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/requisition_list.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/shopping_cart.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/shopping_cart.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/vendor_dashboard.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/vendor_dashboard.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pytest_html_report.yml" beforeDir="false" afterPath="$PROJECT_DIR$/pytest_html_report.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/testcases/amendment.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/testcases/amendment.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/testcases/marketplace_staging_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/testcases/marketplace_order_journey_sanity_test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/testcases/fractional_order_journey.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/testcases/fractional_order_journey.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/testcases/marketplace_order_journey.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/testcases/marketplace_order_journey.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/testcases/marketplace_order_journey_sanity_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/testcases/marketplace_order_journey_sanity_test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/testcases/marketplace_requisition_creation/single_item_requisition.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/testcases/marketplace_requisition_creation/single_item_requisition.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/testcases/order_initiaton.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/testcases/order_initiaton.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/testcases/raw.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/testcases/raw.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/basic_actionsdm.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/basic_actionsdm.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/testcases/sanity_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/testcases/sanity_test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/testcases/test_r.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/testcases/test_r.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -96,8 +69,8 @@
     &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;agreement__amendment&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/fahmida.akther/Documents/Automation Project/DigitalMarketplaceAutomation&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;requisition__creation&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/fahmida.akther/Documents/Automation Project/DigitalMarketplaceAutomation/pages/digital_marketplace/public_side/my_account&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
@@ -108,9 +81,15 @@
 }</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\fahmida.akther\Documents\Automation Project\DigitalMarketplaceAutomation\pages\digital_marketplace\public_side\my_account" />
       <recent name="C:\Users\fahmida.akther\Documents\Automation Project\DigitalMarketplaceAutomation\pages\digital_marketplace" />
       <recent name="C:\Users\fahmida.akther\Documents\Automation Project\DigitalMarketplaceAutomation" />
       <recent name="C:\Users\fahmida.akther\Documents\Automation Project\DigitalMarketplaceAutomation\utils" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\fahmida.akther\Documents\Automation Project\DigitalMarketplaceAutomation\pages\digital_marketplace\public_side\my_account" />
+      <recent name="C:\Users\fahmida.akther\Documents\Automation Project\DigitalMarketplaceAutomation\tests\testcases\requisition_creation" />
+      <recent name="C:\Users\fahmida.akther\Documents\Automation Project\DigitalMarketplaceAutomation\tests\testcases" />
     </key>
   </component>
   <component name="SharedIndexes">
@@ -143,7 +122,63 @@
       <option name="project" value="LOCAL" />
       <updated>1762447727580</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Executed requisition creation test cases for whitelisted, blacklisted, and non-agreement items to ensure proper system behavior and validations.">
+      <option name="closed" value="true" />
+      <created>1767992163142</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1767992163142</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Executed requisition creation test cases for whitelisted, blacklisted, and non-agreement items to ensure proper system behavior and validations.">
+      <option name="closed" value="true" />
+      <created>1767992174601</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1767992174601</updated>
+    </task>
+    <task id="LOCAL-00004" summary="Executed requisition creation test cases single_item_requisition.py, multiple_agreement_items_and_same_vendors_requisition.py and same_agreement_item_and_different_master_items_requisition.py">
+      <option name="closed" value="true" />
+      <created>1768054799317</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1768054799317</updated>
+    </task>
+    <task id="LOCAL-00005" summary="Requisition creation with item remarks and attachment">
+      <option name="closed" value="true" />
+      <created>1768770179995</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1768770179995</updated>
+    </task>
+    <task id="LOCAL-00006" summary="Requisition creation testcase add for multiple_agreement_items_and_different_vendors_requisition.py">
+      <option name="closed" value="true" />
+      <created>1768823611103</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1768823611103</updated>
+    </task>
+    <task id="LOCAL-00007" summary="product added to user's wishlist">
+      <option name="closed" value="true" />
+      <created>1774787067428</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1774787067428</updated>
+    </task>
+    <task id="LOCAL-00008" summary="product added to user's wishlist">
+      <option name="closed" value="true" />
+      <created>1782723132932</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1782723132932</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -162,6 +197,11 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="update new code" />
-    <option name="LAST_COMMIT_MESSAGE" value="update new code" />
+    <MESSAGE value="Executed requisition creation test cases for whitelisted, blacklisted, and non-agreement items to ensure proper system behavior and validations." />
+    <MESSAGE value="Executed requisition creation test cases single_item_requisition.py, multiple_agreement_items_and_same_vendors_requisition.py and same_agreement_item_and_different_master_items_requisition.py" />
+    <MESSAGE value="Requisition creation with item remarks and attachment" />
+    <MESSAGE value="Requisition creation testcase add for multiple_agreement_items_and_different_vendors_requisition.py" />
+    <MESSAGE value="product added to user's wishlist" />
+    <option name="LAST_COMMIT_MESSAGE" value="product added to user's wishlist" />
   </component>
 </project>

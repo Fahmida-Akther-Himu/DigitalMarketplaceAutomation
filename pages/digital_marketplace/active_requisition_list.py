@@ -31,6 +31,7 @@ class ActiveRequisitionListPage(HomePage, BasicActionsDM):
     def search_order_requisition_number(self, requisition_number):
         self.input_in_element(self.order_requisition_number, requisition_number)
         self.search_button.click()
+        print("Searching requisition number " + requisition_number)
 
     def goto_active_requisition_product_list(self):
         self.click_on_btn(self.requisition_hyperlink)
