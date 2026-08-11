@@ -9,9 +9,10 @@ from playwright.sync_api import expect
 class ActiveRequisitionListPage(HomePage, BasicActionsDM):
     # def __init__(self, driver):
     #     super(ActiveRequisitionListPage, self).__init__(driver)
-    def __init__(self, page):
+    def __init__(self, page, logger=None):
         super().__init__(page)
         self.page = page
+        self.logger = logger
         self.order_requisition_number = page.locator('input[id="searchOrderInput"]')
         self.search_button = page.locator('button[class="button"]')
 
@@ -22,9 +23,15 @@ class ActiveRequisitionListPage(HomePage, BasicActionsDM):
         self.add_to_cart_button = page.locator('button[id="addToCartBtn-7323"]')
         self.close_button = page.locator('.close')
 
+    ##################### small helper so we can log easily #####################
+    def _log(self, message: str):
+        if self.logger:
+            self.logger.step(message)
+
     def search_order_requisition_number(self, requisition_number):
         self.input_in_element(self.order_requisition_number, requisition_number)
         self.search_button.click()
+        print("Searching requisition number " + requisition_number)
 
     def goto_active_requisition_product_list(self):
         self.click_on_btn(self.requisition_hyperlink)
@@ -34,7 +41,6 @@ class ActiveRequisitionListPage(HomePage, BasicActionsDM):
     def goto_active_requisition_product_list_stg(self):
         self.navigate_to_url(
             "https://stgmarketplace.brac.net/Requisition/ActiveRequisitionProductList?requisitionId=3568")
-
 
     def requisition_item_add_shopping_cart(self):
         self.click_on_btn(self.add_to_cart_button)

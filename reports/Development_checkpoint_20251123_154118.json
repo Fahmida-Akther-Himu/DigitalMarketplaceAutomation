@@ -1,0 +1,28 @@
+{
+  "specs": {},
+  "functional_spec_count": {},
+  "testsuites": [
+    {
+      "cases": [
+        {
+          "classname": "tests.testcases.amendment",
+          "name": "test_1_search_whitelisted_agreement_on_procurement_module",
+          "developer": "-",
+          "test_description": "",
+          "status": "Failed",
+          "logs": "<ul style='list-style-type: none; padding: 0;'></ul>",
+          "details": "Message: playwright._impl._errors.TargetClosedError: Locator.wait_for: Target page, context or browser has been closed\nCall log:\n  - waiting for get_by_label(\"Username\") to be visible\nDetails: page = <Page url='https://erpstaging.brac.net/'>, new_tab = <function new_tab.<locals>._open at 0x0000022411ADB420>\n\n    def test_1_search_whitelisted_agreement_on_procurement_module(page, new_tab):\n        proc_login_page = ProcurementLoginPage(page)\n>       proc_login_page.perform_login(\n            given_url=proj_url,\n            user_name=agreement_officer,\n            pass_word=proj_pass,\n            timeout=60000\n        )\n\ntests\\testcases\\amendment.py:62: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \npages\\digital_marketplace\\procurement_login_page.py:56: in perform_login\n    self.userName.wait_for(state=\"visible\", timeout=timeout)\nvenv\\Lib\\site-packages\\playwright\\sync_api\\_generated.py:18005: in wait_for\n    self._sync(self._impl_obj.wait_for(timeout=timeout, state=state))\nvenv\\Lib\\site-packages\\playwright\\_impl\\_locator.py:692: in wait_for\n    await self._frame.wait_for_selector(\nvenv\\Lib\\site-packages\\playwright\\_impl\\_frame.py:369: in wait_for_selector\n    await self._channel.send(\nvenv\\Lib\\site-packages\\playwright\\_impl\\_connection.py:69: in send\n    return await self._connection.wrap_api_call(\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <playwright._impl._connection.Connection object at 0x0000022411AF02F0>, cb = <function Channel.send.<locals>.<lambda> at 0x00000224120BB560>, is_internal = False, title = None\n\n    async def wrap_api_call(\n        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None\n    ) -> Any:\n        if self._api_zone.get():\n            return await cb()\n        task = asyncio.current_task(self._loop)\n        st: List[inspect.FrameInfo] = getattr(\n            task, \"__pw_stack__\", None\n        ) or inspect.stack(0)\n    \n        parsed_st = _extract_stack_trace_information_from_stack(st, is_internal, title)\n        self._api_zone.set(parsed_st)\n        try:\n            return await cb()\n        except Exception as error:\n>           raise rewrite_error(error, f\"{parsed_st['apiName']}: {error}\") from None\nE           playwright._impl._errors.TargetClosedError: Locator.wait_for: Target page, context or browser has been closed\nE           Call log:\nE             - waiting for get_by_label(\"Username\") to be visible\n\nvenv\\Lib\\site-packages\\playwright\\_impl\\_connection.py:559: TargetClosedError",
+          "functional_specifications": [],
+          "categories": []
+        }
+      ]
+    }
+  ],
+  "test_environment": "Development",
+  "timestamp": "23 Nov 2025, 15:41",
+  "img_url": "https://icon.icepanel.io/Technology/svg/pytest.svg",
+  "test_status": "complete",
+  "report_title": "pytest HTML Report",
+  "category_count": {},
+  "all_categories": []
+}

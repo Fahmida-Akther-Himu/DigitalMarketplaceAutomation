@@ -8,10 +8,10 @@ from playwright.sync_api import expect
 
 
 class ActiveRequisitionProductList(HomePage, BasicActionsDM):
-    def __init__(self, page):
+    def __init__(self, page, logger=None):
         super().__init__(page)
         self.page = page
-
+        self.logger = logger
         # self.product_history = page.locator('a[href*="requisitionProductId={product_id}"]')
         self.history_link = page.locator('a[href^="/Requisition/History?requisitionProductId="]')
         # Staging use
@@ -21,6 +21,13 @@ class ActiveRequisitionProductList(HomePage, BasicActionsDM):
 
         self.close_button = page.locator('.close')
         self.shopping_cart = page.locator('a[class="ico-cart"]')
+
+        self.back_to_product_history = page.locator('a[href^="/Requisition/ActiveRequisitionProductList?"]')
+
+    ##################### small helper so we can log easily #####################
+    def _log(self, message: str):
+        if self.logger:
+            self.logger.step(message)
 
     def requisition_item_add_shopping_cart(self):
         self.click_on_btn(self.add_to_cart_button)
@@ -32,6 +39,9 @@ class ActiveRequisitionProductList(HomePage, BasicActionsDM):
     def view_product_switch_history(self):
         self.click_on_btn(self.history_link)
         self.wait_for_timeout(2000)
+
+    def go_to_product_history(self):
+        self.click_on_btn(self.back_to_product_history)
 
     # Finds the row with the given requisition ID in the Active Requisition List.
     # If the Total Budget equals the Remaining Budget, click the requisition link.

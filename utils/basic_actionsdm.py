@@ -54,10 +54,19 @@ class BasicActionsDM:
         print(actual_text)
         return actual_text
 
+    #
+    # @staticmethod
+    # def wait_to_load_element(self, elem, state="attached"):
+    #     elem.wait_for(state=state)
+
     @staticmethod
     def wait_to_load_element(elem):
         elem.wait_for(state='visible')
         # print('waited for the elem')
+
+    # @staticmethod
+    # def wait_to_load_element(self, elem, state="attached"):
+    #     elem.wait_for(state=state)
 
     @staticmethod
     def click_on_openLoginFormBtn(openLoginFormBtn):
@@ -65,6 +74,11 @@ class BasicActionsDM:
 
     @staticmethod
     def click_on_btn(btn):
+        btn.click()
+
+    @staticmethod
+    def click_on_btn(btn, timeout: Optional[int] = 10000):
+        btn.wait_for(state='visible', timeout=timeout)
         btn.click()
 
     @staticmethod
@@ -103,15 +117,22 @@ class BasicActionsDM:
         # Click on the first matching option
         self.page.get_by_text(text).click()
 
-    @staticmethod
-    def click_on_btn(btn, timeout: Optional[int] = 5000):
-        btn.wait_for(state='visible', timeout=timeout)
-        btn.click()
+
 
     # @staticmethod
     # def click_on_btn_1(locator):
     #     locator.wait_for(state="visible", timeout=5000)
     #     locator.click()
+
+    def upload_attachment_file(self, file_input, file_path, timeout=5000):
+        # Accept both locator and selector
+        if isinstance(file_input, str):
+            file_input = self.page.locator(file_input)
+
+        file_input.wait_for(state="attached", timeout=timeout)
+        file_input.set_input_files(file_path)
+        print(f"File uploaded: {file_path}")
+        return os.path.basename(file_path)
 
     def upload_file(self, container, file_path: str, index: int = 0, timeout: int = 30000):
         """

@@ -1,6 +1,7 @@
 import re
+import os
 from operator import index
-
+from playwright.sync_api import Page
 from playwright.sync_api import expect
 from utils.basic_actionsdm import BasicActionsDM
 from pages.digital_marketplace.procurement_home_page import ProcurementHomePage
@@ -8,9 +9,9 @@ import datetime
 
 
 class CreateReqPage(ProcurementHomePage, BasicActionsDM):
-    def __init__(self, page):
+    def __init__(self, page, logger=None):
         super().__init__(page)
-
+        self.logger = logger
         # Validating page has been redirected correctly
         self.validation_point = page.get_by_role("heading", name="Create Requisition")
 
@@ -40,27 +41,26 @@ class CreateReqPage(ProcurementHomePage, BasicActionsDM):
         self.active_agreement_button = page.locator('#check-agreement-button')
         self.fa_agreement_input = page.locator('input#faAgreementNo')
         self.find_button = page.locator('//*[@id="find-button-requisitionList"]')
-        self.agreement_item_selector = page.locator("tr.jqgrow")
+        # self.agreement_item_selector = page.locator("tr.jqgrow")
+        self.agreement_item_selector = page.locator("#gview_frameworkListGrid table#frameworkListGrid tbody tr.jqgrow")
+
+        self.get_wishlist_button = page.locator("#check-wishList-button")
 
         # Elements for "requisition for?"
         self.gl_code_dropdown = page.locator("#glInfo_0Div_arrow")
         self.selected_gl_code = page.locator('//*[@id="glInfo_0Div"]')
-        self.gl_input = page.locator("#glInfo_0Div_input")
+        self.gl_input = page.locator("div[id^='glInfo_'] input[id$='_input']")
         self.ref_code_dropdown = page.locator("#refCodeId_0Div_arrow")
         self.ref_code_input = page.locator("#refCodeId_0Div_input")
+
+        self.browse_button = page.locator('//*[@id="selector-member-photo-input"]/div/span/span')
+
         self.req_for_remarks_selector = page.locator("#reqDetailsRemarks")
         self.add_to_grid_button = page.locator("input#addToGrid")
-        # self.add_to_grid_selector = page.get_by_role("button", name="Add to Grid")
-
-        # self.schedule_selector = page.get_by_role("checkbox", name="Same schedule")
-        # self.date_selector = page.locator("#defaultDeliveryDate")
-        # self.delivery_location_selector = page.locator("#defaultDeliveryStoreId")
-        # self.delivery_location_details_selector = page.locator("#defaultDeliveryPlace")
 
         # Same schedule selector
         self.select_same_schedule = page.locator('//*[@id="useDefault"]')
         self.date_picker_icon = page.locator("img.ui-datepicker-trigger")
-        # self.date_picker_icon = page.locator('xpath=//*[@alt="Select date"]')
         self.today = page.locator(".ui-datepicker-calendar .ui-state-highlight")
         self.delivery_store_select = page.locator("#defaultDeliveryStoreId")
         self.location_input = page.locator("#defaultDeliveryPlace")
@@ -78,6 +78,40 @@ class CreateReqPage(ProcurementHomePage, BasicActionsDM):
         self.requisition_list_page = page.locator('/html/body/div[1]/div/div[5]/div[1]/div/ul/li[11]/ul/li[3]/a')
         self.requisition_list = page.locator(
             '//div[text()="Requisition"]//following-sibling::ul//child::span[text()="Requisition List"]')
+
+        self.active_framework_list = page.locator('id="fancybox-content"')
+        self.application_for_selector = page.locator('#applicableForId')
+
+    def upload_requisition_item_document(self, file_path: str) -> bool:
+        try:
+            if not os.path.exists(file_path):
+                raise FileNotFoundError(file_path)
+
+            print(f"Uploading file from : {file_path}")
+
+            # Wait for OS file picker
+            with self.page.expect_file_chooser() as fc_info:
+                self.browse_button.click()
+
+            file_chooser = fc_info.value
+            file_chooser.set_files(file_path)
+
+            # Click Confirm if required
+            confirm_btn = self.page.get_by_role("button", name="Confirm")
+            if confirm_btn.is_visible():
+                confirm_btn.click()
+
+            self.wait_for_timeout(2000)
+            return True
+
+        except Exception as e:
+            print(f"File upload failed: {e}")
+            return False
+
+    ##################### small helper so we can log easily #####################
+    def _log(self, message: str):
+        if self.logger:
+            self.logger.step(message)
 
     def validate(self):
         expect(self.validation_point).to_be_visible()
@@ -98,6 +132,7 @@ class CreateReqPage(ProcurementHomePage, BasicActionsDM):
         self.page.get_by_text(fund_source, exact=True).click()
         self.fund_source_remarks_selector.fill(fund_remarks)
 
+    # Item details for single item selection
     def setting_requisition_details(self, item_info_1, item_info_2):
         self.item_info_selector.click()
         self.item_info_selector.fill(item_info_1)
@@ -112,12 +147,54 @@ class CreateReqPage(ProcurementHomePage, BasicActionsDM):
 
     def setting_active_framework_list(self, agreement_info):
         self.character_input(self.fa_agreement_input, agreement_info)
-        self.page.get_by_text(agreement_info).click()
+        # self.wait_for_timeout(3000)
+        self.page.get_by_text(agreement_info, exact=True).click()
         self.wait_for_timeout(2500)
-        # self.find_button.click()
+        self.find_button.click()
+
+    def setting_requisition_details_item_selection(self, item_information):
+        self.item_info_selector.click()
+        self.character_input(self.item_info_selector, item_information)
+        # self.item_info_selector.fill(item_information)
+        # self.wait_for_timeout(2500)
+        self.page.get_by_text(item_information).click()
+        self.wait_for_timeout(2500)
+
+    def setting_active_framework_list_1(self, agreement_info):
+        popup = self.page.locator(
+            "div.main_container:has(h1:has-text('Active Framework List'))"
+        )
+
+        # Clear and search again (important for 2nd item)
+        fa_input = popup.locator("input#faAgreementNo")
+        fa_input.fill("")
+        fa_input.fill(agreement_info)
+
+        # Click framework from GRID only
+        popup.locator(
+            "#frameworkListGrid td[aria-describedby='frameworkListGrid_agreementNo'] a"
+        ).filter(has_text=agreement_info).first.click()
+
+        popup.locator("#find-button-requisitionList").click()
+
+    def setting_application_for_both(self):
+        self.application_for_selector.click()
+        self.select_from_list_by_value(self.application_for_selector, "3")
+        self.find_button.click()
+
+    def setting_application_for_ho(self):
+        self.application_for_selector.click()
+        self.select_from_list_by_value(self.application_for_selector, "1")
+        self.find_button.click()
+
+    def setting_application_for_hcmp(self):
+        self.application_for_selector.click()
+        self.select_from_list_by_value(self.application_for_selector, "2")
+        self.find_button.click()
 
     def finalize_item_quantity(self, item_quantity):
         self.input_in_element(self.item_qty_selector, item_quantity)
+        self.wait_for_timeout(2500)
 
     def setting_requisition_for_details_1(self, gl_code):
         self.gl_code_dropdown.click()
@@ -125,13 +202,32 @@ class CreateReqPage(ProcurementHomePage, BasicActionsDM):
 
     def setting_requisition_for_details(self, gl_code, item_remarks):
         self.gl_code_dropdown.click()
+        self.wait_for_timeout(5000)
+        self.gl_input.click()
+        self.character_input(self.gl_input, gl_code)
         self.page.get_by_text(gl_code).click()
         self.req_for_remarks_selector.fill(item_remarks)
         self.add_to_grid_button.click()
-        # self.wait_for_timeout(2000)
+
+    def finalize_item_unit_price(self, unit_price):
+        self.item_unit_price_selector.click()
+        self.item_unit_price_selector.clear()
+        self.input_in_element(self.item_unit_price_selector, unit_price)
+
+    def setting_item_gl_code(self, gl_code):
+        self.gl_code_dropdown.click()
+        self.wait_for_timeout(2500)
+        self.gl_input.click()
+        self.character_input(self.gl_input, gl_code)
+        self.page.get_by_text(gl_code).click()
+
+    def setting_item_remarks(self, item_remarks):
+        self.req_for_remarks_selector.fill(item_remarks)
+
+    def add_item_requisition_details_information_list(self):
+        self.add_to_grid_button.click()
 
     def setting_same_schedule_for_date(self):
-        # self.select_same_schedule().click()
         self.click_on_btn(self.select_same_schedule)
         self.click_on_btn(self.date_picker_icon)
         self.click_on_btn(self.today)
@@ -170,3 +266,10 @@ class CreateReqPage(ProcurementHomePage, BasicActionsDM):
         self.wait_to_load_element(self.requisition_number)
         value = self.requisition_number.text_content()
         return value.split(' ')[-1]
+
+    def setting_requisition_for_details_2(self, gl_code, item_remarks):
+        self.gl_code_dropdown.click()
+        self.wait_for_timeout(5000)
+        self.page.get_by_text(gl_code).click()
+        self.req_for_remarks_selector.fill(item_remarks)
+        self.add_to_grid_button.click()

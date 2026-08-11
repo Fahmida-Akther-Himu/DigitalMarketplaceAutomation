@@ -1,40 +1,38 @@
 import re
-
+from itertools import count
 from utils.basic_actionsdm import BasicActionsDM
 from pages.digital_marketplace.home_page import HomePage
 
-from playwright.sync_api import expect
 
-
-class OrderListPublicSide(HomePage, BasicActionsDM):
-    def __init__(self, page):
+class PendingApprovalOrders(HomePage, BasicActionsDM):
+    def __init__(self, page, logger=None):
         super().__init__(page)
         self.page = page
+        self.logger = logger
         #   Write down all the elements here with locator format
-        # Goto order list page
+        # Goto pending order approval menu/page
         self.pending_approval_orders = page.locator("a[href='/customer/pendingApprovalOrders']",
                                                     has_text="Pending Approval Orders")
 
         # Search order reference number
         self.search_order_number = page.get_by_placeholder('Order Reference Number')
-        self.search_button = page.locator('button[class="button"][type="submit"]')
+        self.pending_order_search_button = page.locator('button[class="button"][type="submit"]')
 
         # Go to pending approval order details
-        # self.click_details_button = page.locator(
-        #     "button.order-details-button[onclick*='/pendingApprovalOrderDetails/2472']"
-        # )
         self.details_button = page.get_by_role("button", name="Details")
-        self.approve_order_button = page.get_by_role("link", name="Approve Order")
-        self.yes_button = page.get_by_role("button", name="YES")
+        self.approve_order_button = page.locator('a[id="approve-order-btn"]')
+        # self.approve_order_button = page.get_by_role("link", name="Approve Order")
+
+        self.yes_button = page.locator('button[onclick="yes(event)"]')
+        # self.yes_button = page.get_by_role("button", name="YES")
         self.close_button = page.locator("button.modal-close.modal-toggle")
 
         self.goto_order_list = page.locator("a.ico-account")
 
         # Order review
-        self.review_button = page.locator("a.review-order-button")
-        self.review_confirm_button = page.get_by_role("button", name="Review")
+        self.review_button = page.locator('a[id="ReviewEditBtn"]')
+        self.review_confirm_button = page.locator('button[class="button-2 review-confirm-button"]')
         self.enter_review_reasons = page.locator('textarea[id="reviewRemarks"]')
-        self.enter_minimum_characters = page.locator('textarea[id="reviewRemarks"]')
 
         # Preview locator
         self.preview_button = page.get_by_role("link", name="Preview")
@@ -47,36 +45,36 @@ class OrderListPublicSide(HomePage, BasicActionsDM):
         # Pending Approval Order Checkbox for single order
         self.pending_approval_checkbox = page.locator("input#pendingApprovalOrder")
 
-        self.order_1 = page.locator('input[type="checkbox"][value="2469"]')
-        self.order_2 = page.locator('input[type="checkbox"][value="2470"]')
-        self.order_3 = page.locator('input[type="checkbox"][value="2467"]')
         # Select approve button for multiselect approval
         self.click_multiselect_approve = page.locator('button[id="pendingApprovalOrder-selected"]')
+        self.pending_order_toggle_button = page.locator('button[class="toggle-button collapsed-button btn"]')
 
-    def goto_pending_approval_orders_list(self):
-        self.click_on_btn(self.pending_approval_orders)
-        self.wait_for_timeout(2000)
+    ##################### small helper so we can log easily #####################
+    def _log(self, message: str):
+        if self.logger:
+            self.logger.step(message)
 
-    def search_order_input(self, order_reference_number):
-        self.input_in_element(self.search_order_number, order_reference_number)
-        # self.wait_for_timeout(2000)
-        self.click_on_btn(self.search_button)
-        self.wait_for_timeout(2000)
-        # self.print('Search_pending_approval_order_number')
+    def search_order_input(self, reference_number):
+        self.search_order_number.click()
+        self.input_in_element(self.search_order_number, reference_number)
+
+    def click_order_search_button(self):
+        self.click_on_btn(self.pending_order_search_button)
+
+    def view_pending_order_info_toggle(self):
+        self.pending_order_toggle_button.click()
 
     def goto_pending_approval_order_details(self):
-        # self.click_on_btn(self.click_details_button)
         self.click_on_btn(self.details_button)
-        self.wait_for_timeout(2000)
-        # self.print('View_pending_approval_order_details')
 
     def approve_order(self):
         self.click_on_btn(self.approve_order_button)
-        # self.print('Show_approve_order_popup')
-        self.click_on_btn(self.close_button)
-        self.click_on_btn(self.approve_order_button)
         self.click_on_btn(self.yes_button)
-        # self.print('Successfully_approve_order_details')
+        self.wait_for_timeout(3000)
+        order_status_approved = self.page.locator("text=Order Status:").text_content()
+        order_status = order_status_approved.split(":")[-1].strip()
+        print("Order status: " + order_status)
+        return order_status
 
     def check_pending_approval(self):
         self.pending_approval_checkbox.check()
@@ -108,19 +106,16 @@ class OrderListPublicSide(HomePage, BasicActionsDM):
         #     raise AssertionError(f"Mandatory validation check failed: {e}")
 
     def check_minimum_characters_validation(self):
-        self.input_in_element(self.enter_minimum_characters, '!')
-        self.click_on_btn(self.enter_minimum_characters)
-        self.wait_for_timeout(2000)
-        self.input_in_element(self.enter_minimum_characters, 'ab')
-        self.click_on_btn(self.enter_minimum_characters)
+        self.input_in_element(self.enter_review_reasons, '!')
+        self.enter_review_reasons.clear()
+        self.input_in_element(self.enter_review_reasons, 'ab')
+        # self.click_on_btn(self.enter_review_reasons)
         self.wait_for_timeout(2000)
         self.click_on_btn(self.review_confirm_button)
 
     def check_max_min_characters_validation(self):
-        self.click_on_btn(self.review_confirm_button)
-        characters = "w"
-        # characters = "44Send back reasons~!@#$%^&*()_+}{|”:?><~`,./’;[]=-\Docx word“confirm” is a verb in its present tense, meaning that it happens right now currently. the word “confirmed” is this same word in the past tense, meaning that confirmation occurred in the past. 2556"
-
+        self.enter_review_reasons.clear()
+        characters = "Test Review remarks !@# 1234567890"
         self.input_in_element(self.enter_review_reasons, characters)
         if (len(characters) >= 3) and (len(characters) <= 255):
             print(len(characters))
@@ -134,6 +129,9 @@ class OrderListPublicSide(HomePage, BasicActionsDM):
             print("Sorry!")
         self.wait_for_timeout(5000)
 
+    def confirm_order_review(self):
+        self.click_on_btn(self.review_confirm_button)
+
     def remove_review_popup(self):
         self.click_on_btn(self.close_button)
         self.wait_for_timeout(2000)
@@ -141,8 +139,8 @@ class OrderListPublicSide(HomePage, BasicActionsDM):
     def order_review(self):
         self.click_on_btn(self.review_button)
         self.wait_for_timeout(2000)
-        self.input_in_element(self.enter_review_reasons,
-                              'Send back reasons~!@#$%^&*()_+}{|”:?><~`,./’;[]=-\Docx word“confirm” is a verb in its present tense, meaning that it happens right now currently. the word “confirmed” is this same word in the past tense, meaning that confirmation occurred in the past. 2556')
+        # self.input_in_element(self.enter_review_reasons,
+        #                       'Send back reasons~!@#$%^&*()_+}{|”:?><~`,./’;[]=-\Docx word“confirm” is a verb in its present tense, meaning that it happens right now currently. the word “confirmed” is this same word in the past tense, meaning that confirmation occurred in the past. 2556')
         self.click_on_btn(self.review_confirm_button)
 
     def open_preview(self):
@@ -172,8 +170,8 @@ class OrderListPublicSide(HomePage, BasicActionsDM):
         self.wait_for_timeout(2000)
 
     def rejection_max_characters_input(self):
-        # characters = "w"
-        characters = "Order rejection remarks or reasons~!@#$%^&*()_+}{|”:?><~`,./’;[]=-\Docx word“confirm” is a verb in its present tense, meaning that it happens right now currently. the word “confirmed” is this same word in the past tense, meaning that confirmation occurred in the past. 2556test"
+        characters = "test rejection"
+        # characters = "Order rejection remarks or reasons~!@#$%^&*()_+}{|”:?><~`,./’;[]=-\Docx word“confirm” is a verb in its present tense, meaning that it happens right now currently. the word “confirmed” is this same word in the past tense, meaning that confirmation occurred in the past. 2556test"
         self.input_in_element(self.cancellation_remarks, characters)
         if (len(characters) >= 3) and (len(characters) <= 256):
             print(len(characters))
@@ -210,3 +208,17 @@ class OrderListPublicSide(HomePage, BasicActionsDM):
         self.wait_for_timeout(5000)
         self.order_3.uncheck()
         self.wait_for_timeout(2000)
+
+    def get_pending_approval_order_count(self, pending_approval_order_count):
+        text = self.pending_approval_orders.inner_text().strip()
+
+        match = re.search(r"\((\d+)\)", text)
+
+        if not match:
+            raise AssertionError(
+                f"Pending Approval Order count not found in text: {text}"
+            )
+
+        pending_approval_order_count = int(match.group(1))
+        print(f"Pending Approval Order Count: {pending_approval_order_count}")
+        return pending_approval_order_count
