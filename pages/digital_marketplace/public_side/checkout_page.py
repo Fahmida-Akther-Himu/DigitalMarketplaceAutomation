@@ -1,9 +1,6 @@
-import re
-
-from pages.digital_marketplace.shopping_cart import ShoppingCart
+from pages.digital_marketplace.public_side.shopping_cart import ShoppingCart
 from utils.basic_actionsdm import BasicActionsDM
 # from pages.digital_marketplace.home_page import HomePage
-from playwright.sync_api import expect
 from datetime import datetime, timedelta
 
 

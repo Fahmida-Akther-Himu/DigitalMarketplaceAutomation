@@ -4,27 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="efc77538-6955-4d9d-bdef-a94599f47caf" name="Changes" comment="product added to user's wishlist">
-      <change afterPath="$PROJECT_DIR$/pages/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pages/erp_procurement/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pages/erp_procurement/reset_hub_page.py" afterDir="false" />
+    <list default="true" id="efc77538-6955-4d9d-bdef-a94599f47caf" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/dashboard_page.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/dashboard_page.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/home_page.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/home_page.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/order_list_public_side.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/public_side/my_account/order_list_public_side.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/orders_public_store.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/public_side/my_account/orders_public_store.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/pending_approval_orders.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/public_side/my_account/pending_approval_orders.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/procurement_home_page.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/procurement_home_page.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/digital_marketplace/requisition_creation.py" beforeDir="false" afterPath="$PROJECT_DIR$/pages/digital_marketplace/requisition_creation.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pytest_html_report.yml" beforeDir="false" afterPath="$PROJECT_DIR$/pytest_html_report.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/testcases/fractional_order_journey.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/testcases/fractional_order_journey.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/testcases/marketplace_order_journey.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/testcases/marketplace_order_journey.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/testcases/marketplace_order_journey_sanity_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/testcases/marketplace_order_journey_sanity_test.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/testcases/marketplace_requisition_creation/single_item_requisition.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/testcases/marketplace_requisition_creation/single_item_requisition.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/testcases/order_initiaton.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/testcases/order_initiaton.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/testcases/sanity_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/testcases/sanity_test.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/testcases/test_r.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/testcases/test_r.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -35,7 +16,6 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="HTML File" />
-        <option value="Dockerfile" />
         <option value="Python Script" />
       </list>
     </option>
@@ -43,18 +23,18 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory">{
-  &quot;lastFilter&quot;: {
-    &quot;state&quot;: &quot;OPEN&quot;,
-    &quot;assignee&quot;: &quot;Fahmida-Akther-Himu&quot;
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "Fahmida-Akther-Himu"
   }
-}</component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/Fahmida-Akther-Himu/DigitalMarketplaceAutomation.git&quot;,
-    &quot;accountId&quot;: &quot;8ed8310d-4a75-45ee-a369-941c88fb31b4&quot;
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/Fahmida-Akther-Himu/DigitalMarketplaceAutomation.git",
+    "accountId": "8ed8310d-4a75-45ee-a369-941c88fb31b4"
   }
-}</component>
+}]]></component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 6
 }</component>
@@ -63,33 +43,27 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;requisition__creation&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/fahmida.akther/Documents/Automation Project/DigitalMarketplaceAutomation/pages/digital_marketplace/public_side/my_account&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "DefaultHtmlFileTemplate": "HTML File",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "master",
+    "last_opened_file_path": "C:/Users/fahmida.akther/Documents/Automation Project/DigitalMarketplaceAutomation",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="C:\Users\fahmida.akther\Documents\Automation Project\DigitalMarketplaceAutomation\pages\digital_marketplace\public_side\my_account" />
       <recent name="C:\Users\fahmida.akther\Documents\Automation Project\DigitalMarketplaceAutomation\pages\digital_marketplace" />
       <recent name="C:\Users\fahmida.akther\Documents\Automation Project\DigitalMarketplaceAutomation" />
       <recent name="C:\Users\fahmida.akther\Documents\Automation Project\DigitalMarketplaceAutomation\utils" />
-    </key>
-    <key name="MoveFile.RECENT_KEYS">
-      <recent name="C:\Users\fahmida.akther\Documents\Automation Project\DigitalMarketplaceAutomation\pages\digital_marketplace\public_side\my_account" />
-      <recent name="C:\Users\fahmida.akther\Documents\Automation Project\DigitalMarketplaceAutomation\tests\testcases\requisition_creation" />
-      <recent name="C:\Users\fahmida.akther\Documents\Automation Project\DigitalMarketplaceAutomation\tests\testcases" />
     </key>
   </component>
   <component name="SharedIndexes">
@@ -114,94 +88,9 @@
       <workItem from="1753044806905" duration="1095000" />
       <workItem from="1753120714022" duration="639000" />
     </task>
-    <task id="LOCAL-00001" summary="update new code">
-      <option name="closed" value="true" />
-      <created>1762447727580</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
-      <option name="project" value="LOCAL" />
-      <updated>1762447727580</updated>
-    </task>
-    <task id="LOCAL-00002" summary="Executed requisition creation test cases for whitelisted, blacklisted, and non-agreement items to ensure proper system behavior and validations.">
-      <option name="closed" value="true" />
-      <created>1767992163142</created>
-      <option name="number" value="00002" />
-      <option name="presentableId" value="LOCAL-00002" />
-      <option name="project" value="LOCAL" />
-      <updated>1767992163142</updated>
-    </task>
-    <task id="LOCAL-00003" summary="Executed requisition creation test cases for whitelisted, blacklisted, and non-agreement items to ensure proper system behavior and validations.">
-      <option name="closed" value="true" />
-      <created>1767992174601</created>
-      <option name="number" value="00003" />
-      <option name="presentableId" value="LOCAL-00003" />
-      <option name="project" value="LOCAL" />
-      <updated>1767992174601</updated>
-    </task>
-    <task id="LOCAL-00004" summary="Executed requisition creation test cases single_item_requisition.py, multiple_agreement_items_and_same_vendors_requisition.py and same_agreement_item_and_different_master_items_requisition.py">
-      <option name="closed" value="true" />
-      <created>1768054799317</created>
-      <option name="number" value="00004" />
-      <option name="presentableId" value="LOCAL-00004" />
-      <option name="project" value="LOCAL" />
-      <updated>1768054799317</updated>
-    </task>
-    <task id="LOCAL-00005" summary="Requisition creation with item remarks and attachment">
-      <option name="closed" value="true" />
-      <created>1768770179995</created>
-      <option name="number" value="00005" />
-      <option name="presentableId" value="LOCAL-00005" />
-      <option name="project" value="LOCAL" />
-      <updated>1768770179995</updated>
-    </task>
-    <task id="LOCAL-00006" summary="Requisition creation testcase add for multiple_agreement_items_and_different_vendors_requisition.py">
-      <option name="closed" value="true" />
-      <created>1768823611103</created>
-      <option name="number" value="00006" />
-      <option name="presentableId" value="LOCAL-00006" />
-      <option name="project" value="LOCAL" />
-      <updated>1768823611103</updated>
-    </task>
-    <task id="LOCAL-00007" summary="product added to user's wishlist">
-      <option name="closed" value="true" />
-      <created>1774787067428</created>
-      <option name="number" value="00007" />
-      <option name="presentableId" value="LOCAL-00007" />
-      <option name="project" value="LOCAL" />
-      <updated>1774787067428</updated>
-    </task>
-    <task id="LOCAL-00008" summary="product added to user's wishlist">
-      <option name="closed" value="true" />
-      <created>1782723132932</created>
-      <option name="number" value="00008" />
-      <option name="presentableId" value="LOCAL-00008" />
-      <option name="project" value="LOCAL" />
-      <updated>1782723132932</updated>
-    </task>
-    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
-  </component>
-  <component name="Vcs.Log.Tabs.Properties">
-    <option name="TAB_STATES">
-      <map>
-        <entry key="MAIN">
-          <value>
-            <State />
-          </value>
-        </entry>
-      </map>
-    </option>
-  </component>
-  <component name="VcsManagerConfiguration">
-    <MESSAGE value="update new code" />
-    <MESSAGE value="Executed requisition creation test cases for whitelisted, blacklisted, and non-agreement items to ensure proper system behavior and validations." />
-    <MESSAGE value="Executed requisition creation test cases single_item_requisition.py, multiple_agreement_items_and_same_vendors_requisition.py and same_agreement_item_and_different_master_items_requisition.py" />
-    <MESSAGE value="Requisition creation with item remarks and attachment" />
-    <MESSAGE value="Requisition creation testcase add for multiple_agreement_items_and_different_vendors_requisition.py" />
-    <MESSAGE value="product added to user's wishlist" />
-    <option name="LAST_COMMIT_MESSAGE" value="product added to user's wishlist" />
   </component>
 </project>

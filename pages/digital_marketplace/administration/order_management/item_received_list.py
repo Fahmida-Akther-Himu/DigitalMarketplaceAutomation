@@ -1,8 +1,8 @@
-from pages.digital_marketplace.order_management import OrderManagement
+from pages.digital_marketplace.administration.order_management.orders_list_management import OrdersListManagement
 from utils.basic_actionsdm import BasicActionsDM
 
 
-class ItemReceivedList(OrderManagement, BasicActionsDM):
+class ItemReceivedList(OrdersListManagement, BasicActionsDM):
     def __init__(self, page, logger=None):
         super().__init__(page)
         self.page = page

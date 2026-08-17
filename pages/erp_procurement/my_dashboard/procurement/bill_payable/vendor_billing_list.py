@@ -2,7 +2,7 @@ import re
 from utils.basic_actionsdm import BasicActionsDM
 
 
-class BillList(BasicActionsDM):
+class VendorBillingList(BasicActionsDM):
 
     def __init__(self, page, logger=None):
         super().__init__(page)

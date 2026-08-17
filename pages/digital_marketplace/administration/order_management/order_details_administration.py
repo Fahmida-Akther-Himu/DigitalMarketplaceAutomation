@@ -1,10 +1,9 @@
-import re
-from pages.digital_marketplace.order_management import OrderManagement
-from pages.digital_marketplace.vendor_dashboard import VendorDashboard
+from pages.digital_marketplace.administration.order_management.orders_list_management import OrdersListManagement
+from pages.digital_marketplace.administration.vendor_dashboard import VendorDashboard
 from utils.basic_actionsdm import BasicActionsDM
 
 
-class OrderDetailsAdministration(VendorDashboard, OrderManagement, BasicActionsDM):
+class OrderDetailsAdministration(VendorDashboard, OrdersListManagement, BasicActionsDM):
     def __init__(self, page, logger=None):
         super().__init__(page)
         self.page = page

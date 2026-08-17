@@ -1,14 +1,10 @@
-import re
 import os
-from operator import index
-from playwright.sync_api import Page
 from playwright.sync_api import expect
 from utils.basic_actionsdm import BasicActionsDM
-from pages.digital_marketplace.procurement_home_page import ProcurementHomePage
-import datetime
+from pages.erp_procurement.procurement_home_page import ProcurementHomePage
 
 
-class CreateReqPage(ProcurementHomePage, BasicActionsDM):
+class CreateRequisition(ProcurementHomePage, BasicActionsDM):
     def __init__(self, page, logger=None):
         super().__init__(page)
         self.logger = logger
@@ -44,17 +40,12 @@ class CreateReqPage(ProcurementHomePage, BasicActionsDM):
         # self.agreement_item_selector = page.locator("tr.jqgrow")
         self.agreement_item_selector = page.locator("#gview_frameworkListGrid table#frameworkListGrid tbody tr.jqgrow")
 
-        self.get_wishlist_button = page.locator("#check-wishList-button")
-
         # Elements for "requisition for?"
         self.gl_code_dropdown = page.locator("#glInfo_0Div_arrow")
         self.selected_gl_code = page.locator('//*[@id="glInfo_0Div"]')
         self.gl_input = page.locator("div[id^='glInfo_'] input[id$='_input']")
         self.ref_code_dropdown = page.locator("#refCodeId_0Div_arrow")
         self.ref_code_input = page.locator("#refCodeId_0Div_input")
-
-        self.browse_button = page.locator('//*[@id="selector-member-photo-input"]/div/span/span')
-
         self.req_for_remarks_selector = page.locator("#reqDetailsRemarks")
         self.add_to_grid_button = page.locator("input#addToGrid")
 
@@ -76,11 +67,16 @@ class CreateReqPage(ProcurementHomePage, BasicActionsDM):
 
         self.proc_item_requisition = page.locator('//div[text()="Requisition"]')
         self.requisition_list_page = page.locator('/html/body/div[1]/div/div[5]/div[1]/div/ul/li[11]/ul/li[3]/a')
+        # self.requisition_list = page.locator(
+        #     '//div[text()="Requisition"]//following-sibling::ul//child::span[text()="Requisition List"]')
         self.requisition_list = page.locator(
-            '//div[text()="Requisition"]//following-sibling::ul//child::span[text()="Requisition List"]')
-
+            '//a[@href="#!requisition/list"]//span[text()="Requisition List"]'
+        )
         self.active_framework_list = page.locator('id="fancybox-content"')
         self.application_for_selector = page.locator('#applicableForId')
+
+        self.get_wishlist_button = page.locator("#check-wishList-button")
+        self.browse_button = page.locator('//*[@id="selector-member-photo-input"]/div/span/span')
 
     def upload_requisition_item_document(self, file_path: str) -> bool:
         try:

@@ -1,6 +1,3 @@
-from re import search
-
-from pages.digital_marketplace.framework_information import FrameworkInformation
 from utils.basic_actionsdm import BasicActionsDM
 
 
