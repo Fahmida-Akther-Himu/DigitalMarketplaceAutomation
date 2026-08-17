@@ -2,8 +2,7 @@
 # and actions could be performed, like input, verify etc.
 import re
 from utils.basic_actionsdm import BasicActionsDM
-from pages.digital_marketplace.procurement_home_page import ProcurementHomePage
-from playwright.sync_api import expect
+from pages.erp_procurement.procurement_home_page import ProcurementHomePage
 
 
 class RequisitionApproveList(ProcurementHomePage, BasicActionsDM):

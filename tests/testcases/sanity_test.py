@@ -1,11 +1,10 @@
 from dotenv import load_dotenv
 import os
-import re
 import random
 import string
 import pytest
 from conftest import new_tab
-from datetime import datetime, timedelta
+from datetime import datetime
 
 load_dotenv()
 
@@ -42,42 +41,33 @@ proc_admin = os.getenv("test_proc_admin")
 # order_reference_number = os.getenv("test_order_reference_number")
 
 # Page models for procurement
-from pages.digital_marketplace.procurement_login_page import ProcurementLoginPage
-from pages.digital_marketplace.dashboard_page import DashboardPage
-from pages.digital_marketplace.procurement_home_page import ProcurementHomePage
-from pages.digital_marketplace.requisition_creation import CreateReqPage
-from pages.digital_marketplace.requisition_list import RequisitionList
-from pages.digital_marketplace.main_navigation_bar import MainNavigationBar
-from pages.digital_marketplace.requisition_approve_list import RequisitionApproveList
-from pages.digital_marketplace.requisition_details_information import RequisitionDetailsInformation
-from pages.digital_marketplace.framework_information import FrameworkInformation
-from pages.digital_marketplace.framework_order_list import FrameworkOrderListPage
-from pages.digital_marketplace.proc_item_receive_list import ProcItemReceiveListPage
-from pages.digital_marketplace.bill_list import BillList
-from pages.digital_marketplace.create_vendor_bill_payable import CreateVendorBillPayable
-from pages.digital_marketplace.bill_details import BillDetails
+from pages.erp_procurement.procurement_login_page import ProcurementLoginPage
+from pages.erp_procurement.dashboard_page import DashboardPage
+from pages.erp_procurement.procurement_home_page import ProcurementHomePage
+from pages.erp_procurement.my_dashboard.procurement.requisition.create_requisition import CreateReqPage
+from pages.erp_procurement.my_dashboard.procurement.requisition.requisition_list import RequisitionList
+from pages.erp_procurement.main_navigation_bar import MainNavigationBar
+from pages.erp_procurement.my_dashboard.procurement.requisition.requisition_approve_list import RequisitionApproveList
+from pages.erp_procurement.my_dashboard.procurement.requisition.requisition_details_information import RequisitionDetailsInformation
+from pages.erp_procurement.my_dashboard.procurement.purchase_order.framework_information import FrameworkInformation
+from pages.erp_procurement.my_dashboard.procurement.purchase_order.framework_order_list import FrameworkOrderListPage
 
 # Page models for marketplace
 from pages.digital_marketplace.login_page import LoginPage
 from pages.digital_marketplace.home_page import HomePage
-from pages.digital_marketplace.shopping_cart import ShoppingCart
-from pages.digital_marketplace.checkout_page import CheckoutPage
+from pages.digital_marketplace.public_side.shopping_cart import ShoppingCart
+from pages.digital_marketplace.public_side.checkout_page import CheckoutPage
 from pages.digital_marketplace.main_navigation_menu import MainNavigationMenu
-from pages.digital_marketplace.active_requisition_list import ActiveRequisitionListPage
-from pages.digital_marketplace.active_requisition_product_list import ActiveRequisitionProductList
 from pages.digital_marketplace.pending_approval_orders import PendingApprovalOrders
-from pages.digital_marketplace.customers import Customers
-from pages.digital_marketplace.product_switch_history import ProductSwitchHistory
-from pages.digital_marketplace.vendor_dashboard import VendorDashboard
-from pages.digital_marketplace.all_order_for_admin import AllOrderForAdminPage
-from pages.digital_marketplace.order_management import OrderManagement
-from pages.digital_marketplace.receivable_order_list import ReceivableOrderListPage
-from pages.digital_marketplace.item_received_list import ItemReceivedList
-from pages.digital_marketplace.order_details_administration import OrderDetailsAdministration
-from pages.digital_marketplace.preview import Preview
+from pages.digital_marketplace.administration.customers import Customers
+from pages.digital_marketplace.administration.vendor_dashboard import VendorDashboard
+from pages.digital_marketplace.public_side.my_account.all_order_for_admin import AllOrderForAdminPage
+from pages.digital_marketplace.administration.order_management.orders_list_management import OrdersListManagement
+from pages.digital_marketplace.administration.order_management.receivable_order_list import ReceivableOrderList
+from pages.digital_marketplace.administration.order_management.item_received_list import ItemReceivedList
+from pages.digital_marketplace.administration.order_management.order_details_administration import OrderDetailsAdministration
 
 # For validation
-from playwright.sync_api import expect
 
 # Import for beautiful reporting
 from rich.traceback import install
@@ -799,7 +789,7 @@ def test_10_vendor_acknowledges_marketplace_order(page):
     order_details_administration.click_back_to_order_list()
     order_details_administration.get_full_page_screenshot('full_page_screenshot_45')
 
-    order_list = OrderManagement(page)
+    order_list = OrdersListManagement(page)
     current_date = datetime.today().strftime("%m-%d-%Y")
     order_list.fill_date_range(start_date=current_date, end_date=current_date)
     order_list.search_order(order_no=framework_order_no)
@@ -914,10 +904,10 @@ def test_12_receiver_receives_marketplace_item(page):
     home_page.get_full_page_screenshot('full_page_screenshot_52')
     home_page.wait_for_timeout(2000)
 
-    order_list = OrderManagement(page)
+    order_list = OrdersListManagement(page)
     order_list.click_order_management_menu()
 
-    receivable_order_list_page = ReceivableOrderListPage(page)
+    receivable_order_list_page = ReceivableOrderList(page)
     receivable_order_list_page.goto_receivable_order_list()
     current_date = datetime.today().strftime("%m-%d-%Y")
     receivable_order_list_page.fill_date_range(start_date=current_date, end_date=current_date)
@@ -1007,10 +997,10 @@ def test_13_order_initiator_receives_marketplace_item(page):
     home_page.get_full_page_screenshot('full_page_screenshot_59')
     home_page.wait_for_timeout(2000)
 
-    order_list = OrderManagement(page)
+    order_list = OrdersListManagement(page)
     order_list.click_order_management_menu()
 
-    receivable_order_list_page = ReceivableOrderListPage(page)
+    receivable_order_list_page = ReceivableOrderList(page)
     receivable_order_list_page.goto_receivable_order_list()
     current_date = datetime.today().strftime("%m-%d-%Y")
     receivable_order_list_page.fill_date_range(start_date=current_date, end_date=current_date)
@@ -1054,7 +1044,7 @@ def test_13_order_initiator_receives_marketplace_item(page):
     item_receive_list_page.wait_for_timeout(5000)
     item_receive_list_page.get_full_page_screenshot('full_page_screenshot_65')
 
-    receivable_order_list_page = ReceivableOrderListPage(page)
+    receivable_order_list_page = ReceivableOrderList(page)
     receivable_order_list_page.goto_receivable_order_list()
     current_date = datetime.today().strftime("%m-%d-%Y")
     receivable_order_list_page.fill_date_range(start_date=current_date, end_date=current_date)

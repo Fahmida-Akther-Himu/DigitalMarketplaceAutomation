@@ -2,7 +2,7 @@ import re, os
 from utils.basic_actionsdm import BasicActionsDM
 
 
-class BillDetails(BasicActionsDM):
+class BillDetailsInformation(BasicActionsDM):
 
     def __init__(self, page, logger=None):
         super().__init__(page)

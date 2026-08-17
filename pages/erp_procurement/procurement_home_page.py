@@ -43,6 +43,7 @@ class ProcurementHomePage(BasicActionsDM):
         self.proc_item_requisition.click()
         # self.get_screen_shot("Selecting Requisition")
         self.proc_item_requisition_create_requisition.click()
+        self.wait_for_timeout(5000)
 
     def navigate_to_requisition_list(self):
         self.proc_item_requisition.click()

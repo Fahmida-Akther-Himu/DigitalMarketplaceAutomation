@@ -1,9 +1,8 @@
-from pages.digital_marketplace.procurement_home_page import ProcurementHomePage
+from pages.erp_procurement.procurement_home_page import ProcurementHomePage
 from utils.basic_actionsdm import BasicActionsDM
-from playwright.sync_api import expect
 
 
-class ProcItemReceiveListPage(ProcurementHomePage, BasicActionsDM):
+class ItemReceiveList(ProcurementHomePage, BasicActionsDM):
     def __init__(self, page, logger=None):
         super().__init__(page)
         self.logger = logger
