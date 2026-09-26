@@ -10,7 +10,8 @@ class CheckoutPage(ShoppingCart, BasicActionsDM):
         self.page = page
         self.logger = logger
         # prepare the delivery schedule
-        self.schedule_quantity = page.locator('input[type="number"]')
+        # self.schedule_quantity = page.locator('input[type="number"]')
+        self.fractional_schedule_quantity = page.locator('input[type="text"][id^="quantity"]')
         self.schedule_expected_date = page.locator('input[type="date"][class="todayDate"]')
         self.schedule_expected_location = page.locator('input[id^="location"]')
         self.schedule_receiving_person_pin = page.locator('input[id^="deliveryInfo"]')
@@ -37,10 +38,15 @@ class CheckoutPage(ShoppingCart, BasicActionsDM):
         if self.logger:
             self.logger.step(message)
 
-    def update_quantity(self, quantity):
-        self.schedule_quantity.clear()
+    # def update_quantity(self, quantity):
+    #     self.schedule_quantity.clear()
+    #     self.wait_for_timeout(3000)
+    #     self.input_in_element(self.schedule_quantity, quantity)
+    #     self.wait_for_timeout(3000)
+    def fractional_schedule_update_quantity(self, delivery_schedule_quantity):
+        self.fractional_schedule_quantity.clear()
         self.wait_for_timeout(3000)
-        self.input_in_element(self.schedule_quantity, quantity)
+        self.input_in_element(self.fractional_schedule_quantity, delivery_schedule_quantity)
         self.wait_for_timeout(3000)
 
     def update_expected_date(self):
