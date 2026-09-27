@@ -21,6 +21,9 @@ class HomePage(BasicActionsDM):
 
         self.administration_link = page.locator('a[href="/Admin"]')
         self.cart_quantity = page.locator('//*[@id="topcartlink"]/a/span[2]')
+        # Header wishlist counter, shown as "(n)"
+        self.wishlist_link = page.locator("a.ico-wishlist")
+        self.wishlist_quantity = page.locator("a.ico-wishlist span.wishlist-qty")
 
         self.view_details_for_active_requisition = page.locator('a[class="btn btn-success"]')
 
@@ -36,12 +39,27 @@ class HomePage(BasicActionsDM):
 
     def go_to_all_framework_agreements_list(self):
         self.click_on_btn(self.all_framework_agreements)
+        self.move_mouse_away()
 
     def verify_welcome_message(self):
         # expect(self.welcome_locator).to_have_text("Welcome to BRAC Digital Marketplace")
         actual_text = self.welcome_locator.text_content().strip()
         print("Print digital marketplace welcoming message: " + actual_text)
         return actual_text
+
+    def get_wishlist_count(self):
+        self.wait_to_load_element(self.wishlist_quantity)
+        value = self.wishlist_quantity.text_content().strip()
+        # Count can be fractional (e.g. "(500.99)") when it sums fractional quantities
+        wishlist_count = float(value.strip('()') or 0)
+        if wishlist_count.is_integer():
+            wishlist_count = int(wishlist_count)
+        print(f"Wishlist count: {wishlist_count}")
+        return wishlist_count
+
+    def goto_wishlist(self):
+        self.click_on_btn(self.wishlist_link)
+        self.move_mouse_away()
 
     def goto_pending_approval_orders_list(self):
         self.click_on_btn(self.pending_approval_orders)

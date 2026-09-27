@@ -22,6 +22,22 @@ class BasicActionsDM:
     def get_full_page_screenshot(self, name):
         self.page.screenshot(path=os.getcwd() + "/screenshots_taken/" + name + ".png", full_page=True)
 
+    @staticmethod
+    def highlight_element(elem, color="red", duration_ms=2000):
+        # Outline the element only (Playwright's highlight() also shows the locator text on the page)
+        elem.evaluate(
+            """(el, [color, duration]) => {
+                const old = el.style.outline;
+                el.style.outline = `3px solid ${color}`;
+                setTimeout(() => { el.style.outline = old; }, duration);
+            }""",
+            [color, duration_ms]
+        )
+
+    def move_mouse_away(self):
+        # Move the mouse to the top-left corner so no hover tooltip stays on the page after a click
+        self.page.mouse.move(0, 0)
+
     def navigate_to_url(self, given_url):
         self.page.goto(given_url, wait_until="networkidle", timeout=60000)
 
