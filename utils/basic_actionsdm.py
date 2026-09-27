@@ -64,6 +64,10 @@ class BasicActionsDM:
         elem.wait_for(state='visible')
         # print('waited for the elem')
 
+    @staticmethod
+    def click_on_btn(btn):
+        btn.click()
+
     # @staticmethod
     # def wait_to_load_element(self, elem, state="attached"):
     #     elem.wait_for(state=state)
@@ -73,11 +77,7 @@ class BasicActionsDM:
         openLoginFormBtn.click()
 
     @staticmethod
-    def click_on_btn(btn):
-        btn.click()
-
-    @staticmethod
-    def click_on_btn(btn, timeout: Optional[int] = 10000):
+    def click_on_btn(btn, timeout: Optional[int] = 5000):
         btn.wait_for(state='visible', timeout=timeout)
         btn.click()
 
@@ -116,8 +116,6 @@ class BasicActionsDM:
         self.page.wait_for_selector(f'div:text-matches("{text}", "i")', state='visible')
         # Click on the first matching option
         self.page.get_by_text(text).click()
-
-
 
     # @staticmethod
     # def click_on_btn_1(locator):

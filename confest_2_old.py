@@ -323,7 +323,7 @@ def pytest_runtest_makereport(item, call):
         # Find a page to screenshot
         page_to_shoot: Optional[Page] = None
         try:
-            from conftest import global_pages  # same module
+            from conftest_3 import global_pages  # same module
             if global_pages:
                 page_to_shoot = global_pages[-1]
         except Exception:
