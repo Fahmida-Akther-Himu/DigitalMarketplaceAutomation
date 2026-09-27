@@ -200,8 +200,16 @@ test_failures: list[dict] = []
 #             indent=4
 #         )
 #
+def get_allure_results_dir(config) -> Path:
+    # Same folder allure-pytest writes to (--alluredir in pytest.ini)
+    return Path(
+        config.getoption("allure_report_dir", None)
+        or "artifacts/allure-results"
+    )
+
+
 def pytest_sessionstart(session):
-    RESULT_DIR = Path("allure-results")
+    RESULT_DIR = get_allure_results_dir(session.config)
     REPORT_DIR = Path("artifacts/reports")
     REPORT_ZIP = Path("artifacts/DigitalMarketplace_Allure_Report.zip")
     SINGLE_REPORT = Path("artifacts/DigitalMarketplace_Allure_Report.html")
@@ -270,7 +278,7 @@ def pytest_sessionstart(session):
 
         file.write(
             f"Project={project_name}\n"
-            f"Base URL={base_url}\n"
+            f"Base_URL={base_url}\n"
             f"Environment=Staging\n"
             f"Version={version}\n"
             f"Browser=Chrome\n"
@@ -573,6 +581,18 @@ def trace_per_test(
 
         try:
 
+            # Keep the trace only for failed/broken tests,
+            # otherwise the Allure report grows by ~50 MB per test
+            test_failed = any(
+                getattr(request.node, f"rep_{phase}", None) is not None
+                and getattr(request.node, f"rep_{phase}").failed
+                for phase in ("setup", "call")
+            )
+
+            if not test_failed:
+                context.tracing.stop()
+                return
+
             context.tracing.stop(
                 path=str(trace_file)
             )
@@ -611,6 +631,21 @@ def trace_per_test(
     # except Exception:
     #
     #     pass
+
+
+# =====================================================
+# TEST RESULT PER PHASE
+# Stores item.rep_setup / rep_call / rep_teardown
+# so fixtures (trace_per_test) can check the outcome
+# =====================================================
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    outcome = yield
+
+    report = outcome.get_result()
+
+    setattr(item, f"rep_{report.when}", report)
 
 
 # =====================================================
@@ -995,7 +1030,7 @@ def install_auto_highlighter():
 #         )
 # ----------
 def pytest_sessionfinish(session, exitstatus):
-    RESULT_DIR = Path("allure-results")
+    RESULT_DIR = get_allure_results_dir(session.config)
     REPORT_DIR = Path("artifacts/reports")
     REPORT_ZIP = Path("artifacts/DigitalMarketplace.zip")
 
@@ -1013,7 +1048,8 @@ def pytest_sessionfinish(session, exitstatus):
         print("\n❌ allure-results directory not found.")
         return
 
-    if not list(RESULT_DIR.glob("*.json")):
+    # categories.json is written by sessionstart, so only count real test results
+    if not list(RESULT_DIR.glob("*-result.json")):
         print("\n❌ No Allure result JSON files found.")
         return
 
@@ -1046,8 +1082,9 @@ def pytest_sessionfinish(session, exitstatus):
                 str(RESULT_DIR),
                 "-o",
                 str(REPORT_DIR),
-                "--clean"
-                # "--single-file"
+                "--clean",
+                # One self-contained index.html, so it opens with a double-click
+                "--single-file"
             ],
             check=True
         )
