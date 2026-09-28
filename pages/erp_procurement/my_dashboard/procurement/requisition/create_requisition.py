@@ -1,4 +1,6 @@
 import os
+import re
+from decimal import Decimal
 from playwright.sync_api import expect
 from utils.basic_actionsdm import BasicActionsDM
 from pages.erp_procurement.procurement_home_page import ProcurementHomePage
@@ -76,6 +78,25 @@ class CreateRequisition(ProcurementHomePage, BasicActionsDM):
         self.application_for_selector = page.locator('#applicableForId')
 
         self.get_wishlist_button = page.locator("#check-wishList-button")
+        # Wish List popup grid (FA. No | Vendor Name | Item Name | Specification | Unit Price + hidden columns)
+        self.wishlist_popup = page.locator("#gbox_frameworkWishListGrid")
+        self.wishlist_rows = page.locator("#frameworkWishListGrid tr.jqgrow")
+        self.wishlist_next_page = self.wishlist_popup.locator("td[id^='next']")
+        # Wish List grid cells (matched by column name, the grid also has hidden columns)
+        self.wishlist_fa_no_cell = "td[aria-describedby='frameworkWishListGrid_agreementNo']"
+        self.wishlist_vendor_cell = "td[aria-describedby='frameworkWishListGrid_supplierName']"
+        self.wishlist_item_name_cell = "td[aria-describedby='frameworkWishListGrid_itemName']"
+        self.wishlist_specification_cell = "td[aria-describedby='frameworkWishListGrid_specification']"
+        self.wishlist_unit_price_cell = "td[aria-describedby='frameworkWishListGrid_unitPrice']"
+        self.wishlist_quantity_cell = "td[aria-describedby='frameworkWishListGrid_quantity']"
+        self.wishlist_item_code_cell = "td[aria-describedby='frameworkWishListGrid_fwiReferenceNo']"
+        # Requisition Detail Information List (grid after Add to grid)
+        self.requisition_detail_rows = page.locator("#jqgrid-grid-requisition tr.jqgrow")
+        self.grid_quantity_cell = "td[aria-describedby='jqgrid-grid-requisition_quantity']"
+        self.grid_unit_price_cell = "td[aria-describedby='jqgrid-grid-requisition_unitPrice']"
+        # Item Cost Allocation By? radio buttons
+        self.item_cost_by_amount_radio = page.locator("#itemCostAmount")
+        self.item_cost_by_quantity_radio = page.locator("#itemCostQuantity")
         self.browse_button = page.locator('//*[@id="selector-member-photo-input"]/div/span/span')
 
     def upload_requisition_item_document(self, file_path: str) -> bool:
@@ -255,6 +276,18 @@ class CreateRequisition(ProcurementHomePage, BasicActionsDM):
         return value.split(' ')[-1]
         # print("Last Value: " + val[-1])
 
+    def submit_requisition_with_message(self):
+        # Same as submit_requisition(), also returns the full confirmation message
+        self.submit_button.click()
+        self.wait_to_load_element(self.submit_confirmation_button)
+        self.submit_confirmation_button.click()
+        self.move_mouse_away()
+        self.wait_to_load_element(self.requisition_number)
+        message = self.requisition_number.text_content().strip()
+        requisition_number = message.split(' ')[-1]
+        print(f"Submission message: {message}")
+        return message, requisition_number
+
     def submit_requisition(self) -> str:
         self.submit_button.click()
         self.wait_to_load_element(self.submit_confirmation_button)
@@ -262,6 +295,92 @@ class CreateRequisition(ProcurementHomePage, BasicActionsDM):
         self.wait_to_load_element(self.requisition_number)
         value = self.requisition_number.text_content()
         return value.split(' ')[-1]
+
+    def open_wishlist(self):
+        self.click_on_btn(self.get_wishlist_button)
+        self.move_mouse_away()
+        expect(self.wishlist_rows.first).to_be_visible(timeout=30000)
+
+    def get_wishlist_item_row(self, agreement_number, item_code):
+        # FA No: exact agreement with optional version (BPD/2026/FA-5 or BPD/2026/FA-5/V2, never FA-50)
+        exact_fa_no = re.compile(rf"^\s*{re.escape(agreement_number)}(/V\d+)?\s*$")
+        # Item Name: exact FWA code, e.g. "[FWI044624]- Long Pillar Cock -Star"
+        exact_item_code = re.compile(rf"\[{re.escape(item_code)}\]")
+        return self.wishlist_rows.filter(
+            has=self.page.locator(self.wishlist_fa_no_cell, has_text=exact_fa_no)
+        ).filter(
+            has=self.page.locator(self.wishlist_item_name_cell, has_text=exact_item_code)
+        )
+
+    def select_wishlist_item(self, agreement_number, item_code):
+        # Search page by page until the exact item is found, then click its row
+        while True:
+            item_row = self.get_wishlist_item_row(agreement_number, item_code)
+            if item_row.count() == 1:
+                break
+            next_page_class = self.wishlist_next_page.get_attribute("class") or ""
+            if "ui-state-disabled" in next_page_class:
+                raise AssertionError(f"Wishlist item {item_code} of {agreement_number} not found")
+            self.click_on_btn(self.wishlist_next_page)
+            self.move_mouse_away()
+            self.wait_for_timeout(1000)
+
+        wishlist_item = {
+            "fa_no": item_row.locator(self.wishlist_fa_no_cell).inner_text().strip(),
+            "vendor_name": item_row.locator(self.wishlist_vendor_cell).inner_text().strip(),
+            "item_name": item_row.locator(self.wishlist_item_name_cell).inner_text().strip(),
+            "specification": item_row.locator(self.wishlist_specification_cell).inner_text().strip(),
+            "unit_price": item_row.locator(self.wishlist_unit_price_cell).inner_text().strip(),
+            # Hidden columns
+            "wishlist_quantity": (item_row.locator(self.wishlist_quantity_cell).get_attribute("title") or "").strip(),
+            "item_code": (item_row.locator(self.wishlist_item_code_cell).get_attribute("title") or "").strip(),
+        }
+        self.highlight_element(item_row)
+        self.click_on_btn(item_row.locator(self.wishlist_item_name_cell))
+        self.move_mouse_away()
+        print(f"Selected wishlist item: {wishlist_item}")
+        return wishlist_item
+
+    @staticmethod
+    def _to_decimal(value):
+        # "1,931.28" -> 1931.28, "281.4" -> 281.4 (Decimal keeps 18-digit values exact)
+        cleaned = re.sub(r"[^\d.]", "", str(value))
+        return Decimal(cleaned) if cleaned else Decimal("0")
+
+    def get_item_quantity(self):
+        quantity = Decimal(re.sub(r"[^\d.]", "", self.item_qty_selector.input_value()) or "0")
+        print(f"Requisition item quantity: {quantity}")
+        return quantity
+
+    def verify_item_quantity(self, expected_quantity):
+        actual_quantity = self.get_item_quantity()
+        assert actual_quantity == Decimal(str(expected_quantity)), \
+            f"Requisition quantity {actual_quantity} is not the same as wishlist quantity {expected_quantity}"
+        return actual_quantity
+
+    def verify_grid_item(self, quantity, unit_price):
+        # The added item row shows the same Quantity and Unit Price, e.g. 554.84 and 1931.28
+        # Compare as numbers: the grid shows 281.4 for 281.40
+        expect(self.requisition_detail_rows.first).to_be_visible()
+        matching_rows = []
+        for index in range(self.requisition_detail_rows.count()):
+            row = self.requisition_detail_rows.nth(index)
+            row_quantity = self._to_decimal(row.locator(self.grid_quantity_cell).inner_text())
+            row_unit_price = self._to_decimal(row.locator(self.grid_unit_price_cell).inner_text())
+            if row_quantity == self._to_decimal(quantity) and row_unit_price == self._to_decimal(unit_price):
+                matching_rows.append(row)
+        assert len(matching_rows) == 1, \
+            f"Expected 1 grid row with Quantity {quantity} and Unit Price {unit_price}, found {len(matching_rows)}"
+        grid_row = matching_rows[0]
+        grid_row_text = " | ".join(text.strip() for text in grid_row.locator("td:visible").all_inner_texts() if text.strip())
+        print(f"Requisition grid item: {grid_row_text}")
+        return grid_row_text
+
+    def reset_cost_allocation_by_quantity(self):
+        self.click_on_btn(self.item_cost_by_amount_radio)
+        self.click_on_btn(self.item_cost_by_quantity_radio)
+        self.move_mouse_away()
+        expect(self.item_cost_by_quantity_radio).to_be_checked()
 
     def setting_requisition_for_details_2(self, gl_code, item_remarks):
         self.gl_code_dropdown.click()
