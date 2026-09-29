@@ -52,6 +52,12 @@ class ShoppingCart(HomePage, BasicActionsDM):
         # Locate all matching requisition links
         requisition_matches = self.page.locator(f"a.item-requisition-link:has-text('{requisition_number}')")
 
+        # Wait for the shopping cart to load the requisition
+        try:
+            requisition_matches.first.wait_for(state="visible", timeout=15000)
+        except Exception:
+            pass
+
         if requisition_matches.count() == 0:
             print(f"Requisition {requisition_number} not found in cart.")
             #
@@ -102,16 +108,22 @@ class ShoppingCart(HomePage, BasicActionsDM):
         return True
 
     def update_shopping_cart_value_1(self, qty_update: str):
-        self.selected_item_quantity.click()
-        self.selected_item_quantity.clear()
-        self.input_in_element(self.selected_item_quantity, qty_update)
+        self.selected_item_quantity.first.click()
+        self.selected_item_quantity.first.clear()
+        self.input_in_element(self.selected_item_quantity.first, qty_update)
         self.update_shopping_cart.click()
         self.wait_for_timeout(5000)
 
     def upload_attachment(self, file_path: str) -> bool:
         try:
-            upload_input = self.page.locator('input[type="file"][name="file"][id^="itemAttachment"]')
+            upload_input = self.page.locator('input[type="file"][id^="itemAttachment"]').first  # first item only
             confirm_button = self.page.get_by_role("button", name="Confirm")
+
+            # Wait for the attachment input (cart reloads after vendor selection)
+            try:
+                upload_input.wait_for(state="attached", timeout=15000)
+            except Exception:
+                pass
 
             if upload_input.count() == 0:
                 print("Upload input not found on page.")
@@ -131,7 +143,7 @@ class ShoppingCart(HomePage, BasicActionsDM):
     def update_cart_item_remarks(self, requisition_number: str, remarks_text: str):
         remarks_locator = self.page.locator(
             f"//a[normalize-space()='{requisition_number}']/ancestor::td//textarea[starts-with(@id,'itemRemarks')]"
-        )
+        ).first  # first item only
         if remarks_locator.count() == 0:
             raise Exception(f"No remarks field found for requisition {requisition_number}")
 

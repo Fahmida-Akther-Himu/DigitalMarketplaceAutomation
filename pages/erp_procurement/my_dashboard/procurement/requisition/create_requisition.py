@@ -90,6 +90,26 @@ class CreateRequisition(ProcurementHomePage, BasicActionsDM):
         self.wishlist_unit_price_cell = "td[aria-describedby='frameworkWishListGrid_unitPrice']"
         self.wishlist_quantity_cell = "td[aria-describedby='frameworkWishListGrid_quantity']"
         self.wishlist_item_code_cell = "td[aria-describedby='frameworkWishListGrid_fwiReferenceNo']"
+        # Active Framework List popup (Check all active framework agreement)
+        self.active_framework_popup = page.locator("div.main_container:has(h1:has-text('Active Framework List'))")
+        self.active_framework_fa_no_input = self.active_framework_popup.locator("input#faAgreementNo")
+        # FA No is an autocomplete: the agreement must be selected from the suggestion list
+        self.active_framework_fa_no_suggestions = page.locator("ul.ui-autocomplete:visible li")
+        self.active_framework_applicable_for = self.active_framework_popup.locator("#applicableForId")
+        self.active_framework_find_button = self.active_framework_popup.locator("#find-button-requisitionList")
+        self.active_framework_rows = page.locator("#frameworkListGrid tr.jqgrow")
+        self.active_framework_grid_loading = page.locator("#load_frameworkListGrid")
+        self.active_framework_next_page = page.locator("#gbox_frameworkListGrid td[id^='next']")
+        # Applicable For option values (same as setting_application_for_both / ho / hcmp)
+        self.applicable_for_values = {"Both": "3", "HO": "1", "HCMP": "2"}
+        # Active Framework List grid cells (matched by column name, the grid also has hidden columns)
+        self.active_framework_fa_no_cell = "td[aria-describedby='frameworkListGrid_agreementNo']"
+        self.active_framework_vendor_cell = "td[aria-describedby='frameworkListGrid_supplierName']"
+        self.active_framework_item_name_cell = "td[aria-describedby='frameworkListGrid_itemName']"
+        self.active_framework_item_code_cell = "td[aria-describedby='frameworkListGrid_fwiReferenceNo']"
+        self.active_framework_specification_cell = "td[aria-describedby='frameworkListGrid_specification']"
+        self.active_framework_unit_price_cell = "td[aria-describedby='frameworkListGrid_unitPrice']"
+
         # Requisition Detail Information List (grid after Add to grid)
         self.requisition_detail_rows = page.locator("#jqgrid-grid-requisition tr.jqgrow")
         self.grid_quantity_cell = "td[aria-describedby='jqgrid-grid-requisition_quantity']"
@@ -375,6 +395,78 @@ class CreateRequisition(ProcurementHomePage, BasicActionsDM):
         grid_row_text = " | ".join(text.strip() for text in grid_row.locator("td:visible").all_inner_texts() if text.strip())
         print(f"Requisition grid item: {grid_row_text}")
         return grid_row_text
+
+    def get_active_framework_rows(self, agreement_number):
+        # Exact FA No with optional version (BPD/2026/FA-5 or BPD/2026/FA-5/V1, never FA-50)
+        exact_fa_no = re.compile(rf"^\s*{re.escape(agreement_number)}(/V\d+)?\s*$")
+        return self.active_framework_rows.filter(
+            has=self.page.locator(self.active_framework_fa_no_cell, has_text=exact_fa_no)
+        )
+
+    def search_active_framework(self, agreement_number, applicable_for_options=("Both", "HO", "HCMP")):
+        # Search with Applicable For = Both first; if not found, try HO, then HCMP
+        self.click_on_btn(self.active_agreement_button)
+        self.move_mouse_away()
+        expect(self.active_framework_popup).to_be_visible(timeout=30000)
+
+        # FA No autocomplete: type the agreement and select the exact suggestion (same as sanity.py)
+        self.active_framework_fa_no_input.click()
+        self.active_framework_fa_no_input.fill("")
+        self.character_input(self.active_framework_fa_no_input, agreement_number, delay_ms=100)
+        exact_suggestion = self.active_framework_fa_no_suggestions.filter(
+            has_text=re.compile(rf"^\s*{re.escape(agreement_number)}(/V\d+)?\s*$")
+        ).first
+        self.click_on_btn(exact_suggestion, timeout=15000)
+        self.move_mouse_away()
+
+        for applicable_for in applicable_for_options:
+            self.active_framework_applicable_for.select_option(self.applicable_for_values[applicable_for])
+            self.click_on_btn(self.active_framework_find_button)
+            self.move_mouse_away()
+            self.wait_for_timeout(1000)
+            self.active_framework_grid_loading.wait_for(state="hidden", timeout=30000)
+            found_count = self.get_active_framework_rows(agreement_number).count()
+            print(f"Active framework search {agreement_number} (Applicable For: {applicable_for}): "
+                  f"{found_count} item(s)")
+            if found_count:
+                return applicable_for
+        raise AssertionError(f"{agreement_number} not found for Applicable For: {', '.join(applicable_for_options)}")
+
+    def select_active_framework_item(self, agreement_number, exclude_item_code):
+        # First item of the exact agreement that is not the wishlist item (page by page)
+        while True:
+            item_rows = self.get_active_framework_rows(agreement_number).filter(
+                has_not=self.page.locator(self.active_framework_item_code_cell,
+                                          has_text=re.compile(rf"^\s*{re.escape(exclude_item_code)}\s*$"))
+            )
+            if item_rows.count():
+                break
+            next_page_class = self.active_framework_next_page.get_attribute("class") or ""
+            if "ui-state-disabled" in next_page_class:
+                raise AssertionError(f"No other item of {agreement_number} found (excluding {exclude_item_code})")
+            self.click_on_btn(self.active_framework_next_page)
+            self.move_mouse_away()
+            self.wait_for_timeout(1000)
+            self.active_framework_grid_loading.wait_for(state="hidden", timeout=30000)
+
+        item_row = item_rows.first
+        framework_item = {
+            "fa_no": (item_row.locator(self.active_framework_fa_no_cell).text_content() or "").strip(),
+            "vendor_name": (item_row.locator(self.active_framework_vendor_cell).text_content() or "").strip(),
+            "item_name": (item_row.locator(self.active_framework_item_name_cell).text_content() or "").strip(),
+            "item_code": (item_row.locator(self.active_framework_item_code_cell).text_content() or "").strip(),
+            "specification": (item_row.locator(self.active_framework_specification_cell).text_content() or "").strip(),
+            "unit_price": (item_row.locator(self.active_framework_unit_price_cell).text_content() or "").strip(),
+        }
+        self.highlight_element(item_row)
+        self.click_on_btn(item_row.locator(self.active_framework_item_name_cell))
+        self.move_mouse_away()
+        print(f"Selected active framework item: {framework_item}")
+        return framework_item
+
+    def verify_grid_row_count(self, expected_count):
+        expect(self.requisition_detail_rows).to_have_count(expected_count)
+        print(f"Requisition Detail Information List rows: {expected_count}")
 
     def reset_cost_allocation_by_quantity(self):
         self.click_on_btn(self.item_cost_by_amount_radio)

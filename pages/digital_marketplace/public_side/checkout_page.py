@@ -2,6 +2,7 @@ from pages.digital_marketplace.public_side.shopping_cart import ShoppingCart
 from utils.basic_actionsdm import BasicActionsDM
 # from pages.digital_marketplace.home_page import HomePage
 from datetime import datetime, timedelta
+from playwright.sync_api import expect
 
 
 class CheckoutPage(ShoppingCart, BasicActionsDM):
@@ -15,6 +16,10 @@ class CheckoutPage(ShoppingCart, BasicActionsDM):
         self.schedule_expected_date = page.locator('input[type="date"][class="todayDate"]')
         self.schedule_expected_location = page.locator('input[id^="location"]')
         self.schedule_receiving_person_pin = page.locator('input[id^="deliveryInfo"]')
+        # Auto Generate schedule button and Receiving Person of the auto generated schedule row
+        self.auto_generate_button = page.get_by_role("button", name="Auto Generate")
+        self.generated_schedule_receiving_person = page.locator(
+            'tr:has(button.removeScheduleButton) input[type="text"]').last
 
         # self.click_add_schedule_button = page.locator('button[id^="addScheduleButton"]')
         self.click_add_schedule_button = page.locator('button[id^="addScheduleButton"][class="button1"]')
@@ -44,22 +49,22 @@ class CheckoutPage(ShoppingCart, BasicActionsDM):
     #     self.input_in_element(self.schedule_quantity, quantity)
     #     self.wait_for_timeout(3000)
     def fractional_schedule_update_quantity(self, delivery_schedule_quantity):
-        self.fractional_schedule_quantity.clear()
+        self.fractional_schedule_quantity.first.clear()
         self.wait_for_timeout(3000)
-        self.input_in_element(self.fractional_schedule_quantity, delivery_schedule_quantity)
+        self.input_in_element(self.fractional_schedule_quantity.first, delivery_schedule_quantity)
         self.wait_for_timeout(3000)
 
     def update_expected_date(self):
-        self.schedule_expected_date.click()
+        self.schedule_expected_date.first.click()
         expected_date = (datetime.today() + timedelta(days=1)).strftime("%Y-%m-%d")
-        self.schedule_expected_date.fill(expected_date)
+        self.schedule_expected_date.first.fill(expected_date)
         self.wait_for_timeout(5000)
         print(f"Filled expected date with: {expected_date}")
 
     def delivery_schedule_preparation(self, location, pin):
-        self.input_in_element(self.schedule_expected_location, location)
+        self.input_in_element(self.schedule_expected_location.first, location)
         self.page.wait_for_timeout(3000)
-        self.input_in_element(self.schedule_receiving_person_pin, pin)
+        self.input_in_element(self.schedule_receiving_person_pin.first, pin)
         self.page.keyboard.press('Enter')
         self.page.wait_for_timeout(5000)
 
@@ -81,6 +86,23 @@ class CheckoutPage(ShoppingCart, BasicActionsDM):
         # self.wait_for_timeout(5000)
 
     def click_continue(self):
+        self.click_on_btn(self.continue_button)
+
+    def auto_generate_schedule(self):
+        self.click_on_btn(self.auto_generate_button)
+        self.move_mouse_away()
+        self.wait_for_timeout(3000)
+
+    def fill_generated_schedule_receiving_person(self, pin):
+        # Receiving Person of the auto generated schedule row
+        self.input_in_element(self.generated_schedule_receiving_person, pin)
+        self.page.keyboard.press('Enter')
+        self.page.wait_for_timeout(5000)
+
+    def click_continue_when_enabled(self):
+        # Continue is enabled only after all delivery schedule information is complete
+        expect(self.continue_button).to_be_visible(timeout=30000)
+        expect(self.continue_button).to_be_enabled(timeout=30000)
         self.click_on_btn(self.continue_button)
 
     def fillup_order_remarks(self, input_remarks):
