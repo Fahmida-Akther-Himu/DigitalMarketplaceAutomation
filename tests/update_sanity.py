@@ -19,6 +19,13 @@ from pages.digital_marketplace.public_side.public_side_framework_agreement_list 
 from pages.digital_marketplace.public_side.wishlist_page import WishlistPage
 from pages.digital_marketplace.public_side.shopping_cart import ShoppingCart
 from pages.digital_marketplace.public_side.checkout_page import CheckoutPage
+from pages.digital_marketplace.public_side.my_account.pending_approval_orders import PendingApprovalOrders
+from pages.digital_marketplace.public_side.my_account.orders_public_store import OrdersPublicStore
+from pages.digital_marketplace.public_side.my_account.my_delegated_orders import MyDelegatedOrders
+from pages.erp_procurement.my_dashboard.table_of_authority.authority_delegation.delegation_of_authority import \
+    DelegationOfAuthority
+from pages.erp_procurement.my_dashboard.table_of_authority.authority_delegation.delegation_of_authority_list import \
+    DelegationOfAuthorityListPage
 from pages.erp_procurement.reset_hub_page import ResetHubPage
 from pages.erp_procurement.dashboard_page import DashboardPage
 from pages.erp_procurement.procurement_home_page import ProcurementHomePage
@@ -45,6 +52,10 @@ manual_delivery_location_1 = os.getenv("test_delivery_location_1")
 manual_delivery_location_2 = os.getenv("test_delivery_location_2")
 receiving_pin_1 = os.getenv("test_receiving_pin")
 order_initiator = os.getenv("test_order_initiator")
+# Delegation of Authority (Test case 14-16)
+delegated_approver = os.getenv("test_delegated_approver")
+module_selection = os.getenv("test_module_selection")
+dm_order_approval_category = os.getenv("test_dm_order_approval_category")
 
 # Scenario data
 active_framework_agreement = os.getenv("test_active_framework_agreement")
@@ -97,6 +108,13 @@ order_vendor = ''
 # Marketplace order (Test case 12)
 order_reference_number = ''
 order_status = ''
+actual_approver_pending_approval_orders = ''
+# Delegation (same as sanity.py)
+delegated_order_count_before_delegation = ''
+removed_current_date_delegations = []
+delegation_remarks = str(random.randint(10000, 99999))
+delegated_order_count_after_delegation = ''
+delegated_order_status = ''
 framework_products = []
 selected_product = {}
 wishlist_quantity = ''
@@ -202,11 +220,11 @@ def test_1_add_framework_agreement_product_to_wishlist(page):
         f"test_wishlist_min_quantity ({wishlist_min_quantity})"
     # Step 8 entry range must be inside the system limits
     assert env_decimal("test_wishlist_entry_min_quantity", wishlist_entry_min_quantity) >= \
-        Decimal(wishlist_min_quantity), \
+           Decimal(wishlist_min_quantity), \
         f"test_wishlist_entry_min_quantity ({wishlist_entry_min_quantity}) must be >= " \
         f"test_wishlist_min_quantity ({wishlist_min_quantity})"
     assert env_decimal("test_wishlist_entry_max_quantity", wishlist_entry_max_quantity) <= \
-        Decimal(wishlist_max_quantity), \
+           Decimal(wishlist_max_quantity), \
         f"test_wishlist_entry_max_quantity ({wishlist_entry_max_quantity}) must be <= " \
         f"test_wishlist_max_quantity ({wishlist_max_quantity})"
     assert Decimal(wishlist_entry_max_quantity) >= Decimal(wishlist_entry_min_quantity), \
@@ -1299,3 +1317,355 @@ def test_12_confirm_marketplace_order(page):
     with allure.step("Step 4: Log out from the Digital Marketplace"):
         MainNavigationMenu(page).perform_logout()
         checkout_page.get_full_page_screenshot('order_initiator_logout')
+
+
+@allure.suite("Public Side")
+@allure.feature("My Account")
+@allure.story("Pending Approval Orders")
+@allure.title("Test_case_13: Verify order in pending approval list")
+@allure.description("Test case 13: Verify Marketplace Order in Approver's Pending Approval List")
+@pytest.mark.order(13)
+def test_13_verify_order_in_pending_approval_list(page):
+    """
+    Test case 13: Verify the marketplace order in the approver's Pending Approval list (same as sanity.py test 10).
+
+    Steps:
+        1. Log in to the Digital Marketplace as the order approver ('approver_id_2').
+        2. Go to Orders > Pending Approval Orders.
+        3. Get the pending approval order count ('actual_approver_pending_approval_orders').
+        4. Search the order reference number ('order_reference_number') and verify the order is in the list.
+        5. Log out from the Digital Marketplace.
+    """
+    global actual_approver_pending_approval_orders
+    assert order_reference_number, "Test case 12 must pass first: no order reference number available"
+    assert approver_id_2, "Test case 7 must pass first: no order approver available"
+
+    login_page = LoginPage(page)
+    home_page = HomePage(page)
+    pending_approval_orders = PendingApprovalOrders(page)
+
+    # Step 1: Log in as the order approver
+    with allure.step(f"Step 1: Log in to the Digital Marketplace as order approver {approver_id_2}"):
+        login_page.navigate_to_url(marketplace_url_qa)
+        login_page.perform_login_for_sso_login(user_name=approver_id_2, pass_word=marketplace_password)
+        home_page.verify_welcome_message()
+        home_page.get_full_page_screenshot('order_approver_login')
+
+    # Step 2: Orders > Pending Approval Orders
+    with allure.step("Step 2: Go to Orders > Pending Approval Orders"):
+        home_page.goto_order_list()
+        home_page.goto_pending_approval_orders_list()
+        home_page.get_full_page_screenshot('pending_approval_orders')
+
+    # Step 3: Pending approval order count
+    with allure.step("Step 3: Get pending approval order count"):
+        actual_approver_pending_approval_orders = pending_approval_orders.get_pending_approval_order_count(
+            pending_approval_order_count=actual_approver_pending_approval_orders)
+        allure.attach(
+            f"Order approver: {approver_id_2}\nPending approval orders: {actual_approver_pending_approval_orders}",
+            name="Pending approval orders count",
+            attachment_type=allure.attachment_type.TEXT
+        )
+
+    # Step 4: Search the order and verify it is in the list
+    with allure.step(f"Step 4: Search order {order_reference_number} in Pending Approval Orders"):
+        pending_approval_orders.search_order_input(reference_number=order_reference_number)
+        pending_approval_orders.click_order_search_button()
+        pending_approval_orders.verify_order_in_list(reference_number=order_reference_number)
+        allure.attach(
+            f"Order {order_reference_number} found in the pending approval list of {approver_id_2}",
+            name="Order found",
+            attachment_type=allure.attachment_type.TEXT
+        )
+        pending_approval_orders.get_full_page_screenshot('pending_approval_order_search')
+
+    # Step 5: Log out from the Digital Marketplace
+    with allure.step("Step 5: Log out from the Digital Marketplace"):
+        MainNavigationMenu(page).perform_logout()
+        home_page.get_full_page_screenshot('order_approver_logout')
+
+
+@allure.suite("Table of Authority")
+@allure.feature("Delegation of Authority")
+@allure.story("DM Order Approval Delegation")
+@allure.title("Test_case_14: Remove current date delegation before creating delegation")
+@allure.description("Test case 14: Check the Delegation Of Authority List for a delegation of the delegated approver "
+                    "in the current date range and remove it before creating a new delegation.")
+@pytest.mark.order(14)
+def test_14_remove_current_date_delegation_before_creation(page):
+    """
+    Test case 14: Remove the current date delegation before creating a new delegation.
+
+    Steps:
+        1. Log in to ERP as the order approver ('approver_id_2', delegator).
+        2. Go to Delegation Of Authority List and search the delegated approver by PIN.
+        3. If a delegation for the current date range is present (Start Date <= today <= End Date),
+           remove it (Remove > Delete item(s)) and verify the deleted message.
+           If not present, continue.
+        4. Exit and log out from ERP.
+    """
+    global removed_current_date_delegations
+    assert approver_id_2, "Test case 7 must pass first: no order approver available"
+    assert delegated_approver, "Missing in .env: test_delegated_approver"
+
+    proc_dashboard_page = DashboardPage(page)
+    delegation_list_page = DelegationOfAuthorityListPage(page)
+
+    # Step 1: Log in to ERP as the order approver (delegator)
+    with allure.step(f"Step 1: Log in to ERP as order approver {approver_id_2}"):
+        erp_login(page, approver_id_2)
+        proc_dashboard_page.get_full_page_screenshot('delegator_login')
+
+    # Step 2: Delegation Of Authority List and search the delegated approver
+    with allure.step(f"Step 2: Search delegated approver {delegated_approver} in Delegation Of Authority List"):
+        # Same navigation as sanity.py: Delegation Of Authority, then Delegation Of Authority List
+        proc_dashboard_page.navigate_to_delegation_of_authority()
+        delegation_list_page.go_to_delegation_of_authority_list()
+        delegation_list_page.wait_for_timeout(2000)
+        delegation_list_page.search_by_delegated_approver_by_PIN(PIN=delegated_approver)
+        delegation_list_page.get_full_page_screenshot('delegation_list_before_creation')
+
+    # Step 3: Remove the current date delegation if present
+    with allure.step("Step 3: Remove current date delegation if present"):
+        removed_current_date_delegations = delegation_list_page.remove_current_date_delegations(
+            PIN=delegated_approver
+        )
+        allure.attach(
+            f"Delegated approver: {delegated_approver}\n"
+            + (f"Removed current date delegation(s): {', '.join(removed_current_date_delegations)}"
+               if removed_current_date_delegations else "No delegation for the current date"),
+            name="Current date delegation",
+            attachment_type=allure.attachment_type.TEXT
+        )
+        delegation_list_page.get_full_page_screenshot('delegation_list_current_date_removed')
+
+    # Step 4: Exit and log out from ERP
+    with allure.step("Step 4: Exit and log out from ERP"):
+        erp_logout(page, 'delegator_logout_after_removal')
+
+
+@allure.suite("Public Side")
+@allure.feature("My Account")
+@allure.story("My Delegated Orders")
+@allure.title("Test_case_15: Verify delegated orders before delegation")
+@allure.description("Test case 15: Verify My Delegated Orders Information Before Delegation")
+@pytest.mark.order(15)
+def test_15_verify_delegated_orders_before_delegation(page):
+    """
+    Test case 15: Verify My Delegated Orders before delegation (same as sanity.py test 11).
+
+    Steps:
+        1. Log in to the Digital Marketplace as the delegated approver ('delegated_approver').
+        2. Go to Orders and open My Delegated Orders if available; store the delegated order count.
+        3. Log out from the Digital Marketplace.
+    """
+    global delegated_order_count_before_delegation
+    assert delegated_approver, "Missing in .env: test_delegated_approver"
+
+    login_page = LoginPage(page)
+    home_page = HomePage(page)
+    my_account_orders_list = OrdersPublicStore(page)
+
+    # Step 1: Log in as the delegated approver
+    with allure.step(f"Step 1: Log in to the Digital Marketplace as delegated approver {delegated_approver}"):
+        login_page.navigate_to_url(marketplace_url_qa)
+        login_page.perform_login_for_sso_login(user_name=delegated_approver, pass_word=marketplace_password)
+        home_page.verify_welcome_message()
+        home_page.get_full_page_screenshot('delegated_approver_login')
+
+    # Step 2: Orders > My Delegated Orders
+    with allure.step("Step 2: Go to Orders > My Delegated Orders and get delegated order count"):
+        home_page.goto_order_list()
+        delegated_order_count_before_delegation = my_account_orders_list.go_to_my_delegated_orders_if_available()
+        print("DELEGATED ORDER COUNT BEFORE DELEGATION:", delegated_order_count_before_delegation)
+        allure.attach(
+            f"Delegated approver: {delegated_approver}\n"
+            f"Delegated orders before delegation: {delegated_order_count_before_delegation}",
+            name="Delegated orders count before delegation",
+            attachment_type=allure.attachment_type.TEXT
+        )
+        my_account_orders_list.get_full_page_screenshot('delegated_orders_before_delegation')
+
+    # Step 3: Log out from the Digital Marketplace
+    with allure.step("Step 3: Log out from the Digital Marketplace"):
+        MainNavigationMenu(page).perform_logout()
+        home_page.get_full_page_screenshot('delegated_approver_logout')
+
+
+@allure.suite("Table of Authority")
+@allure.feature("Delegation of Authority")
+@allure.story("DM Order Approval Delegation")
+@allure.title("Test_case_16: Create order approval delegation")
+@allure.description("Test case 16: Create DM Order Approval Delegation with TOA Category")
+@pytest.mark.order(16)
+def test_16_create_order_approval_delegation(page):
+    """
+    Test case 16: Create DM Order Approval Delegation with TOA Category (same as sanity.py test 12).
+
+    Steps:
+        1. Log in to ERP as the order approver ('approver_id_2') and go to Delegation Of Authority.
+        2. Select the delegated approver, TOA Category Required, module and DM Order Approval category,
+           start and end date (today) and remarks ('delegation_remarks'), then Create and confirm.
+        3. Go to Delegation Of Authority List and search the delegated approver by PIN.
+        4. Exit and log out from ERP.
+    """
+    required_env_values = {
+        "test_delegated_approver": delegated_approver,
+        "test_module_selection": module_selection,
+        "test_dm_order_approval_category": dm_order_approval_category,
+    }
+    missing_env_values = [name for name, value in required_env_values.items() if not value]
+    assert not missing_env_values, f"Missing in .env: {', '.join(missing_env_values)}"
+    assert approver_id_2, "Test case 7 must pass first: no order approver available"
+
+    proc_dashboard_page = DashboardPage(page)
+    delegation_page = DelegationOfAuthority(page)
+    delegation_list_page = DelegationOfAuthorityListPage(page)
+
+    # Step 1: Log in as the order approver and go to Delegation Of Authority
+    with allure.step(f"Step 1: Log in to ERP as order approver {approver_id_2} and go to Delegation Of Authority"):
+        erp_login(page, approver_id_2)
+        proc_dashboard_page.navigate_to_delegation_of_authority()
+        proc_dashboard_page.get_full_page_screenshot('delegation_of_authority')
+
+    # Step 2: Create DM Order Approval delegation
+    with allure.step(f"Step 2: Create DM Order Approval delegation to {delegated_approver}"):
+        delegation_page.select_delegated_employee(employee_search_text=delegated_approver)
+        delegation_page.select_toa_category_required()
+        delegation_page.select_module(module_name=module_selection)
+        delegation_page.search_and_add_toa_category(category_name=dm_order_approval_category)
+        delegation_date = delegation_page.select_date()
+        delegation_page.select_start_date(delegation_date)
+        delegation_page.select_end_date(delegation_date)
+        delegation_page.enter_remarks(remarks=delegation_remarks)
+        delegation_page.get_full_page_screenshot('delegation_form')
+        delegation_page.click_create_button_and_delegation_confirmation()
+        allure.attach(
+            f"Delegator: {approver_id_2}\nDelegated approver: {delegated_approver}\nModule: {module_selection}\n"
+            f"TOA category: {dm_order_approval_category}\nDate: {delegation_date}\nRemarks: {delegation_remarks}",
+            name="Created delegation",
+            attachment_type=allure.attachment_type.TEXT
+        )
+        delegation_page.get_full_page_screenshot('delegation_created')
+
+    # Step 3: Delegation Of Authority List and search the delegated approver
+    with allure.step(f"Step 3: Search delegated approver {delegated_approver} in Delegation Of Authority List"):
+        delegation_list_page.go_to_delegation_of_authority_list()
+        delegation_list_page.wait_for_timeout(2000)
+        delegation_list_page.search_by_delegated_approver_by_PIN(PIN=delegated_approver)
+        delegation_list_page.get_full_page_screenshot('delegation_list_after_creation')
+
+    # Step 4: Exit and log out from ERP
+    with allure.step("Step 4: Exit and log out from ERP"):
+        erp_logout(page, 'delegator_logout')
+
+
+@allure.suite("Public Side")
+@allure.feature("My Account")
+@allure.story("My Delegated Orders")
+@allure.title("Test_case_17: Verify delegated order after delegation")
+@allure.description("Test case 17: My Delegated Orders verify by Delegated Approver after Delegation creation")
+@pytest.mark.order(17)
+def test_17_verify_delegated_order_after_delegation(page):
+    """
+    Test case 17: Verify the delegated order after delegation (same as sanity.py test 13).
+
+    Steps:
+        1. Log in to the Digital Marketplace as the delegated approver ('delegated_approver').
+        2. Go to Orders > My Delegated Orders; the delegated order count after delegation must be
+           more than the count before delegation (Test case 15).
+        3. Search the order reference number and verify the order is in My Delegated Orders; view order info.
+        No logout: Test case 18 approves the order in the same session.
+    """
+    global delegated_order_count_after_delegation
+    assert order_reference_number, "Test case 12 must pass first: no order reference number available"
+    assert delegated_order_count_before_delegation != '', \
+        "Test case 15 must pass first: no delegated order count before delegation"
+
+    login_page = LoginPage(page)
+    home_page = HomePage(page)
+    my_account_orders_list = OrdersPublicStore(page)
+    my_delegated_orders = MyDelegatedOrders(page)
+
+    # Step 1: Log in as the delegated approver
+    with allure.step(f"Step 1: Log in to the Digital Marketplace as delegated approver {delegated_approver}"):
+        login_page.navigate_to_url(marketplace_url_qa)
+        login_page.perform_login_for_sso_login(user_name=delegated_approver, pass_word=marketplace_password)
+        home_page.verify_welcome_message()
+        home_page.get_full_page_screenshot('delegated_approver_login_after_delegation')
+
+    # Step 2: My Delegated Orders count after delegation
+    with allure.step("Step 2: Go to Orders > My Delegated Orders and verify the delegated order count"):
+        home_page.goto_order_list()
+        delegated_order_count_after_delegation = my_account_orders_list.go_to_my_delegated_orders_if_available()
+        print("DELEGATED ORDER COUNT AFTER DELEGATION:", delegated_order_count_after_delegation)
+        allure.attach(
+            f"Before delegation (Test case 15): {delegated_order_count_before_delegation}\n"
+            f"After delegation: {delegated_order_count_after_delegation}",
+            name="Delegated orders count",
+            attachment_type=allure.attachment_type.TEXT
+        )
+        my_account_orders_list.get_full_page_screenshot('delegated_orders_after_delegation')
+        assert delegated_order_count_after_delegation > delegated_order_count_before_delegation, \
+            f"Delegated order count after delegation ({delegated_order_count_after_delegation}) is not more " \
+            f"than before delegation ({delegated_order_count_before_delegation})"
+
+    # Step 3: Search the delegated order and verify it is in the list
+    with allure.step(f"Step 3: Search delegated order {order_reference_number}"):
+        my_delegated_orders.search_delegated_order(delegated_order_reference_number=order_reference_number)
+        my_delegated_orders.click_delegated_order_search_button()
+        my_delegated_orders.verify_delegated_order_in_list(reference_number=order_reference_number)
+        my_delegated_orders.view_delegated_order_info_toggle()
+        allure.attach(
+            f"Order {order_reference_number} found in My Delegated Orders of {delegated_approver}",
+            name="Delegated order found",
+            attachment_type=allure.attachment_type.TEXT
+        )
+        my_delegated_orders.get_full_page_screenshot('delegated_order_search')
+
+
+@allure.suite("Public Side")
+@allure.feature("My Account")
+@allure.story("My Delegated Orders")
+@allure.title("Test_case_18: Approve delegated marketplace order")
+@allure.description("Test case 18: Approve Delegated Order by Delegated User")
+@pytest.mark.order(18)
+def test_18_approve_delegated_marketplace_order(page):
+    """
+    Test case 18: Approve the delegated order (same as sanity.py test 14).
+    Continues in the Digital Marketplace session of Test case 17 (delegated approver).
+
+    Steps:
+        1. Open the delegated order details.
+        2. Approve the order and get the order status; if the order is not approved,
+           record the status and the page message (why the approval failed).
+        3. Log out from the Digital Marketplace.
+    """
+    global delegated_order_status
+    assert order_reference_number, "Test case 12 must pass first: no order reference number available"
+
+    my_delegated_orders = MyDelegatedOrders(page)
+
+    # Step 1: Delegated order details
+    with allure.step(f"Step 1: Open delegated order details of {order_reference_number}"):
+        my_delegated_orders.goto_delegated_order_details(reference_number=order_reference_number)
+        my_delegated_orders.get_full_page_screenshot('delegated_order_details')
+
+    # Step 2: Approve the order and get the status (record why if not approved)
+    with allure.step(f"Step 2: Approve delegated order {order_reference_number}"):
+        delegated_order_status, page_messages = my_delegated_orders.approve_delegated_order_with_result()
+        my_delegated_orders.get_full_page_screenshot('delegated_order_approved')
+        allure.attach(
+            f"Order reference number: {order_reference_number}\nOrder status: {delegated_order_status}\n"
+            f"Page message: {'; '.join(page_messages) if page_messages else '-'}",
+            name="Order status after delegated approval",
+            attachment_type=allure.attachment_type.TEXT
+        )
+        assert "approved" in delegated_order_status.lower(), \
+            f"Delegated order {order_reference_number} is not approved. Order status: '{delegated_order_status}'. " \
+            f"Reason (page message): {'; '.join(page_messages) if page_messages else 'no message shown'}"
+
+    # Step 3: Log out from the Digital Marketplace
+    with allure.step("Step 3: Log out from the Digital Marketplace"):
+        MainNavigationMenu(page).perform_logout()
+        my_delegated_orders.get_full_page_screenshot('delegated_approver_logout')

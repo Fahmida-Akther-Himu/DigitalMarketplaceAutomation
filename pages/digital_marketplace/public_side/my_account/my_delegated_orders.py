@@ -1,6 +1,7 @@
 import re
 from itertools import count
 
+from playwright.sync_api import expect
 from utils.basic_actionsdm import BasicActionsDM
 from pages.digital_marketplace.home_page import HomePage
 
@@ -46,6 +47,11 @@ class MyDelegatedOrders(HomePage, BasicActionsDM):
         self.cancellation_remarks_for_delegated_order = page.locator("textarea[name='cancelRemarks']")
 
         self.delegated_order_toggle_button = page.locator('button[class="toggle-button collapsed-button btn"]')
+
+        # Order status after approval and page messages (why approval failed)
+        self.order_status_text = page.locator("text=Order Status:")
+        self.page_messages = page.locator(
+            "#bar-notification .content, .message-error, .validation-summary-errors, .field-validation-error")
 
     ##################### small helper so we can log easily #####################
     def _log(self, message: str):
@@ -182,3 +188,30 @@ class MyDelegatedOrders(HomePage, BasicActionsDM):
         my_delegated_orders_count = int(match.group(1))
         print(f"Pending Approval Order Count: {my_delegated_orders_count}")
         return my_delegated_orders_count
+
+    def verify_delegated_order_in_list(self, reference_number):
+        # The searched order reference number is shown in My Delegated Orders
+        expect(self.page.get_by_text(reference_number).first).to_be_visible(timeout=15000)
+        print(f"Order found in My Delegated Orders: {reference_number}")
+
+    def approve_delegated_order_with_result(self):
+        # Approve Order > Yes; returns the order status and any page message (to record why approval failed)
+        self.click_on_btn(self.approve_delegated_order_button)
+        self.click_on_btn(self.delegated_order_yes_button)
+        self.wait_for_timeout(3000)
+        order_status = ""
+        if self.order_status_text.count():
+            order_status = (self.order_status_text.first.text_content() or "").split(":")[-1].strip()
+        page_messages = [message.strip() for message in self.page_messages.all_inner_texts() if message.strip()]
+        print(f"Order status: {order_status}")
+        if page_messages:
+            print(f"Page message: {page_messages}")
+        return order_status, page_messages
+
+    def goto_delegated_order_details(self, reference_number):
+        # Details button of this order only (innermost element with the reference number and a Details button)
+        order_block = self.page.locator(
+            f"xpath=//*[contains(normalize-space(.), '{reference_number}')][.//button[normalize-space()='Details']]"
+        ).last
+        self.click_on_btn(order_block.get_by_role("button", name="Details"))
+        self.move_mouse_away()
