@@ -109,9 +109,17 @@ class ShoppingCart(HomePage, BasicActionsDM):
 
             if req_number != requisition_number:
                 # Uncheck by finding its input based on label text
-                self.page.locator(
+                requisition_checkbox = self.page.locator(
                     f"//label[strong[normalize-space(text())='{req_number}']]/preceding-sibling::input[@type='checkbox']"
-                ).click()
+                )
+                requisition_checkbox.click()
+                # The cart reloads after each uncheck: wait until it is really unchecked, click again if not
+                try:
+                    expect(requisition_checkbox).not_to_be_checked(timeout=15000)
+                except AssertionError:
+                    requisition_checkbox.click()
+                    expect(requisition_checkbox).not_to_be_checked(timeout=15000)
+                self.page.wait_for_load_state("load")
                 print(f"Unchecked requisition: {req_number}")
             else:
                 print(f"Kept requisition checked: {req_number}")

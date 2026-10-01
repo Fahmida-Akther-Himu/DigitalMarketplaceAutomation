@@ -47,6 +47,11 @@ from pages.erp_procurement.my_dashboard.procurement.requisition.requisition_deta
     RequisitionDetailsInformation
 from pages.erp_procurement.main_navigation_bar import MainNavigationBar
 from pages.erp_procurement.my_dashboard.procurement.item_receive.itemreceivelist import ItemReceiveList
+from pages.erp_procurement.my_dashboard.procurement.bill_payable.create_vendor_bill_payable import \
+    CreateVendorBillPayable
+from pages.erp_procurement.my_dashboard.procurement.bill_payable.vendor_billing_list import VendorBillingList
+from pages.erp_procurement.my_dashboard.procurement.bill_payable.bill_details_information import \
+    BillDetailsInformation
 from pages.erp_procurement.my_dashboard.procurement.purchase_order.framework_information import FrameworkInformation
 
 # Procurement information
@@ -74,6 +79,11 @@ stg_vendor_pass = os.getenv("test_stg_vendor_pass")
 # Framework order and item receiving (Test case 22-24)
 proc_admin = os.getenv("test_proc_admin")
 sso_login_receiver_pin = os.getenv("test_sso_login_receiver_pin")
+# Bill payable (Test case 30-37)
+bill_creator = os.getenv("test_bill_creator")
+bill_recommender = os.getenv("test_bill_recommender")
+bill_type = os.getenv("test_bill_type")
+bill_attachment_file = os.getenv("test_bill_attachment_file")
 
 # Scenario data
 active_framework_agreement = os.getenv("test_active_framework_agreement")
@@ -149,6 +159,13 @@ vendor_acknowledged_order_status = ''
 challan_num_for_receiver = ''
 challan_num_for_order_initiator = ''
 challan_num_for_order_initiator_2 = ''
+# Bill payable: bill number generated after the framework order is known (DM_Bill4556xyZ7k)
+bill_num = ''
+billed_challan = ''
+bill_recommender_1 = ''
+bill_recommender_2 = ''
+bill_recommender_3 = ''
+final_bill_status = ''
 framework_products = []
 selected_product = {}
 wishlist_quantity = ''
@@ -2357,3 +2374,343 @@ def test_29_view_marketplace_item_receipt_details(page):
     # Step 4: Exit and log out from ERP
     with allure.step("Step 4: Exit and log out from ERP"):
         erp_logout(page, 'proc_admin_item_receive_logout')
+
+
+def generate_bill_number():
+    # DM_Bill + framework (work) order last 4 digits + random characters, e.g. DM_Bill4556xyZ7k
+    random_part = ''.join(random.choices(string.ascii_letters + string.digits, k=5))
+    return f"DM_Bill{framework_order_no[-4:]}{random_part}"
+
+
+def find_bill_approver(page, label, screenshot_name):
+    # Vendor Billing List: search the bill and get the current approver ID from the status column
+    vendor_billing_list_page = VendorBillingList(page)
+    vendor_billing_list_page.search_bill(bill_num)
+    approver = str(int(vendor_billing_list_page.find_approver_id(bill_num)))
+    print(f"{label}: {approver}")
+    allure.attach(f"Bill number: {bill_num}\n{label}: {approver}", name=label,
+                  attachment_type=allure.attachment_type.TEXT)
+    vendor_billing_list_page.get_full_page_screenshot(screenshot_name)
+    return approver
+
+
+def approve_bill_in_new_tab(page, new_tab, screenshot_prefix, attachment_path=None):
+    # Open the bill details in a new tab, (first recommender: attachment and bill type), approve and close
+    vendor_billing_list_page = VendorBillingList(page)
+    bill_tab = new_tab(lambda p: vendor_billing_list_page.click_on_bill_num(bill_num))
+    bill_details_information_page = BillDetailsInformation(bill_tab)
+    bill_details_information_page.wait_for_timeout(5000)
+    if attachment_path:
+        bill_details_information_page.upload_document(str(attachment_path))
+        bill_details_information_page.select_bill_type(bill_type)
+        print(f"Bill attachment: {attachment_path.name}, bill type: {bill_type}")
+    bill_details_information_page.get_full_page_screenshot(f'{screenshot_prefix}_bill_details')
+    bill_details_information_page.approve_bill()
+    bill_details_information_page.get_full_page_screenshot(f'{screenshot_prefix}_bill_approved')
+    bill_tab.close()
+    page.bring_to_front()
+
+
+@allure.suite("Bill Payable")
+@allure.feature("Create Vendor Bill Payable")
+@allure.story("Framework Order Bill")
+@allure.title("Test_case_30: Create and submit marketplace bill")
+@allure.description("Test case 30: Bill creation and submission for the Marketplace item receive in ERP.")
+@pytest.mark.order(30)
+def test_30_create_and_submit_marketplace_bill(page):
+    """
+    Test case 30: Create and submit the marketplace bill (same as sanity.py test 26).
+
+    Steps:
+        1. Log in to ERP as the bill creator ('bill_creator') and go to Procurement.
+        2. Bill Payable > Create Vendor Bill Payable (Framework Order).
+        3. Search the vendor ('order_vendor'), select the framework order and the first challan found.
+        4. Bill number (DM_Bill + work order last 4 digits + random characters), bill date and
+           bill receive date (today).
+        5. Select all items and the recommender ('bill_recommender').
+        6. Submit and confirm.
+        No logout: Test case 31 verifies the bill in the same session.
+    """
+    global bill_num, billed_challan
+    assert framework_order_no, "Test case 20 must pass first: no framework order number available"
+    assert order_vendor, "Test case 9 must pass first: no order vendor available"
+    required_env_values = {
+        "test_bill_creator": bill_creator,
+        "test_bill_recommender": bill_recommender,
+    }
+    missing_env_values = [name for name, value in required_env_values.items() if not value]
+    assert not missing_env_values, f"Missing in .env: {', '.join(missing_env_values)}"
+
+    bill_num = generate_bill_number()
+    proc_dashboard_page = DashboardPage(page)
+    proc_home_page = ProcurementHomePage(page)
+    create_vendor_bill = CreateVendorBillPayable(page)
+
+    # Step 1: Log in as the bill creator
+    with allure.step(f"Step 1: Log in to ERP as bill creator {bill_creator}"):
+        erp_login(page, bill_creator)
+        proc_dashboard_page.goto_procurement()
+        proc_dashboard_page.get_full_page_screenshot('bill_creator_dashboard')
+
+    # Step 2: Create Vendor Bill Payable for a framework order
+    with allure.step("Step 2: Go to Bill Payable > Create Vendor Bill Payable (Framework Order)"):
+        proc_home_page.goto_bill_payable()
+        create_vendor_bill.vendor_bill_payable_information_for_framework_order()
+        create_vendor_bill.get_full_page_screenshot('create_vendor_bill')
+
+    # Step 3: Vendor, framework order and the first challan found
+    with allure.step(f"Step 3: Select vendor {order_vendor}, order {framework_order_no} and a challan"):
+        create_vendor_bill.search_vendor(vendor_name=order_vendor)
+        create_vendor_bill.select_order_no(order_num=framework_order_no)
+        billed_challan = create_vendor_bill.select_first_challan_found(
+            challan_prefix=f"DM_{framework_order_no[-4:]}")
+        create_vendor_bill.get_full_page_screenshot('bill_vendor_order_challan')
+
+    # Step 4: Bill number, bill date and bill receive date
+    with allure.step(f"Step 4: Enter bill number {bill_num}, bill date and bill receive date"):
+        create_vendor_bill.bill_number(bill_no_1=bill_num)
+        print("BILL NUMBER:", bill_num)
+        create_vendor_bill.bill_date_with_text(create_vendor_bill.select_date())
+        create_vendor_bill.bill_receive_date_with_text(create_vendor_bill.select_date())
+
+    # Step 5: Select all items and the recommender
+    with allure.step(f"Step 5: Select all items and recommender {bill_recommender}"):
+        create_vendor_bill.select_all_items()
+        create_vendor_bill.Bill_recommender2_selecting(recommender=bill_recommender)
+        allure.attach(
+            f"Bill number: {bill_num}\nVendor: {order_vendor}\nFramework order: {framework_order_no}\n"
+            f"Challan: {billed_challan}\nRecommender: {bill_recommender}",
+            name="Bill information",
+            attachment_type=allure.attachment_type.TEXT
+        )
+        create_vendor_bill.get_full_page_screenshot('bill_information')
+
+    # Step 6: Submit and confirm
+    with allure.step("Step 6: Submit the bill and confirm"):
+        create_vendor_bill.submit_bill()
+        create_vendor_bill.get_full_page_screenshot('bill_submit_confirmation')
+        create_vendor_bill.confirm_submission()
+        create_vendor_bill.get_full_page_screenshot('bill_submitted')
+
+
+@allure.suite("Bill Payable")
+@allure.feature("Vendor Billing List")
+@allure.story("Bill Details Information")
+@allure.title("Test_case_31: Verify submitted bill and find first recommender")
+@allure.description("Test case 31: Verify the submitted bill and find the first recommender.")
+@pytest.mark.order(31)
+def test_31_verify_submitted_bill_and_recommender(page):
+    """
+    Test case 31: Verify the submitted bill and find the first recommender (same as sanity.py test 27).
+
+    Steps:
+        1. Bill Payable > Vendor Billing List.
+        2. Search the bill and get the first recommender ('bill_recommender_1').
+    """
+    global bill_recommender_1
+    assert bill_num, "Test case 30 must pass first: no bill number available"
+    vendor_billing_list_page = VendorBillingList(page)
+
+    # Step 1: Vendor Billing List
+    with allure.step("Step 1: Go to Bill Payable > Vendor Billing List"):
+        vendor_billing_list_page.go_to_billing_list()
+        vendor_billing_list_page.get_full_page_screenshot('vendor_billing_list')
+
+    # Step 2: Search the bill and get the first recommender
+    with allure.step(f"Step 2: Search bill {bill_num} and get the first recommender"):
+        bill_recommender_1 = find_bill_approver(page, "Bill recommender 1", 'bill_recommender_1')
+
+
+@allure.suite("Bill Payable")
+@allure.feature("Vendor Billing List")
+@allure.story("Bill Details Information")
+@allure.title("Test_case_32: Approve bill as first recommender")
+@allure.description("Test case 32: Approve the bill as the first recommender.")
+@pytest.mark.order(32)
+def test_32_approve_bill_as_first_recommender(page, new_tab):
+    """
+    Test case 32: The first recommender approves the bill (same as sanity.py test 28).
+    Continues in the session of Test case 31.
+
+    Steps:
+        1. Open the bill details in a new tab.
+        2. Upload the attachment ('bill_attachment_file') and select the bill type ('bill_type').
+        3. Approve the bill and close the tab.
+    """
+    assert bill_recommender_1, "Test case 31 must pass first: no first recommender available"
+    required_env_values = {
+        "test_bill_type": bill_type,
+        "test_bill_attachment_file": bill_attachment_file,
+    }
+    missing_env_values = [name for name, value in required_env_values.items() if not value]
+    assert not missing_env_values, f"Missing in .env: {', '.join(missing_env_values)}"
+    attachment_path = UTILS_DIR / bill_attachment_file
+    assert attachment_path.is_file(), f"Attachment not found in utils: {attachment_path}"
+
+    # Step 1-3: Bill details, attachment, bill type and approve
+    with allure.step(f"Step 1: Approve bill {bill_num} with attachment {attachment_path.name} "
+                     f"and bill type {bill_type}"):
+        approve_bill_in_new_tab(page, new_tab, 'bill_recommender_1', attachment_path=attachment_path)
+
+
+@allure.suite("Bill Payable")
+@allure.feature("Vendor Billing List")
+@allure.story("Bill Details Information")
+@allure.title("Test_case_33: Identify second bill recommender")
+@allure.description("Test case 33: Identify the second bill recommender.")
+@pytest.mark.order(33)
+def test_33_identify_second_bill_recommender(page):
+    """
+    Test case 33: Identify the second bill recommender (same as sanity.py test 29).
+
+    Steps:
+        1. Search the bill and get the second recommender ('bill_recommender_2').
+        2. Exit and log out from ERP.
+    """
+    global bill_recommender_2
+    assert bill_num, "Test case 30 must pass first: no bill number available"
+
+    # Step 1: Search the bill and get the second recommender
+    with allure.step(f"Step 1: Search bill {bill_num} and get the second recommender"):
+        page.reload()
+        bill_recommender_2 = find_bill_approver(page, "Bill recommender 2", 'bill_recommender_2')
+
+    # Step 2: Exit and log out
+    with allure.step("Step 2: Exit and log out from ERP"):
+        erp_logout(page, 'bill_creator_logout')
+
+
+@allure.suite("Bill Payable")
+@allure.feature("Vendor Billing List")
+@allure.story("Bill Details Information")
+@allure.title("Test_case_34: Approve bill as second recommender")
+@allure.description("Test case 34: Approve the bill as the second recommender.")
+@pytest.mark.order(34)
+def test_34_approve_bill_as_second_recommender(page, new_tab):
+    """
+    Test case 34: The second recommender approves the bill (same as sanity.py test 30).
+
+    Steps:
+        1. Log in to ERP as the second recommender ('bill_recommender_2') and go to Procurement.
+        2. Bill Payable > Vendor Billing List and search the bill.
+        3. Open the bill details in a new tab, approve and close the tab.
+    """
+    assert bill_recommender_2, "Test case 33 must pass first: no second recommender available"
+    proc_dashboard_page = DashboardPage(page)
+    vendor_billing_list_page = VendorBillingList(page)
+
+    # Step 1: Log in as the second recommender
+    with allure.step(f"Step 1: Log in to ERP as second recommender {bill_recommender_2}"):
+        erp_login(page, bill_recommender_2)
+        proc_dashboard_page.goto_procurement()
+        proc_dashboard_page.get_full_page_screenshot('bill_recommender_2_dashboard')
+
+    # Step 2: Vendor Billing List and search the bill
+    with allure.step(f"Step 2: Search bill {bill_num} in Vendor Billing List"):
+        vendor_billing_list_page.go_to_billing_list()
+        vendor_billing_list_page.search_bill(bill_num)
+        vendor_billing_list_page.get_full_page_screenshot('bill_recommender_2_search')
+
+    # Step 3: Approve the bill
+    with allure.step(f"Step 3: Approve bill {bill_num} as second recommender"):
+        approve_bill_in_new_tab(page, new_tab, 'bill_recommender_2')
+
+
+@allure.suite("Bill Payable")
+@allure.feature("Vendor Billing List")
+@allure.story("Bill Details Information")
+@allure.title("Test_case_35: Identify final bill approver")
+@allure.description("Test case 35: Identify the final bill approver.")
+@pytest.mark.order(35)
+def test_35_identify_final_bill_approver(page):
+    """
+    Test case 35: Identify the final bill approver (same as sanity.py test 31).
+
+    Steps:
+        1. Reload, search the bill and get the final approver ('bill_recommender_3').
+        2. Exit and log out from ERP.
+    """
+    global bill_recommender_3
+    assert bill_num, "Test case 30 must pass first: no bill number available"
+
+    # Step 1: Search the bill and get the final approver
+    with allure.step(f"Step 1: Search bill {bill_num} and get the final approver"):
+        page.reload()
+        bill_recommender_3 = find_bill_approver(page, "Bill final approver", 'bill_final_approver')
+
+    # Step 2: Exit and log out
+    with allure.step("Step 2: Exit and log out from ERP"):
+        erp_logout(page, 'bill_recommender_2_logout')
+
+
+@allure.suite("Bill Payable")
+@allure.feature("Vendor Billing List")
+@allure.story("Bill Details Information")
+@allure.title("Test_case_36: Approve bill as final approver")
+@allure.description("Test case 36: Approve the bill as the final approver.")
+@pytest.mark.order(36)
+def test_36_approve_bill_as_final_approver(page, new_tab):
+    """
+    Test case 36: The final approver approves the bill (same as sanity.py test 32).
+
+    Steps:
+        1. Log in to ERP as the final approver ('bill_recommender_3') and go to Procurement.
+        2. Bill Payable > Vendor Billing List and search the bill.
+        3. Open the bill details in a new tab, approve and close the tab.
+    """
+    assert bill_recommender_3, "Test case 35 must pass first: no final approver available"
+    proc_dashboard_page = DashboardPage(page)
+    vendor_billing_list_page = VendorBillingList(page)
+
+    # Step 1: Log in as the final approver
+    with allure.step(f"Step 1: Log in to ERP as final approver {bill_recommender_3}"):
+        erp_login(page, bill_recommender_3)
+        proc_dashboard_page.goto_procurement()
+        proc_dashboard_page.get_full_page_screenshot('bill_final_approver_dashboard')
+
+    # Step 2: Vendor Billing List and search the bill
+    with allure.step(f"Step 2: Search bill {bill_num} in Vendor Billing List"):
+        vendor_billing_list_page.go_to_billing_list()
+        vendor_billing_list_page.search_bill(bill_num)
+        vendor_billing_list_page.get_full_page_screenshot('bill_final_approver_search')
+
+    # Step 3: Approve the bill
+    with allure.step(f"Step 3: Approve bill {bill_num} as final approver"):
+        approve_bill_in_new_tab(page, new_tab, 'bill_final_approver')
+
+
+@allure.suite("Bill Payable")
+@allure.feature("Vendor Billing List")
+@allure.story("Bill Status")
+@allure.title("Test_case_37: Find bill status after final approval")
+@allure.description("Test case 37: Find the final bill status after the final approval.")
+@pytest.mark.order(37)
+def test_37_find_bill_status_after_final_approval(page):
+    """
+    Test case 37: Find the final bill status (same as sanity.py test 33).
+
+    Steps:
+        1. Reload, search the bill and get the final bill status.
+        2. Exit and log out from ERP.
+    """
+    global final_bill_status
+    assert bill_num, "Test case 30 must pass first: no bill number available"
+    vendor_billing_list_page = VendorBillingList(page)
+
+    # Step 1: Search the bill and get the final status
+    with allure.step(f"Step 1: Search bill {bill_num} and get the final bill status"):
+        page.reload()
+        vendor_billing_list_page.wait_for_timeout(5000)
+        vendor_billing_list_page.search_bill(bill_num)
+        final_bill_status = vendor_billing_list_page.find_bill_status(bill_num).strip()
+        print("FINAL BILL STATUS:", final_bill_status)
+        allure.attach(
+            f"Bill number: {bill_num}\nChallan: {billed_challan}\nFinal bill status: {final_bill_status}",
+            name="Final bill status",
+            attachment_type=allure.attachment_type.TEXT
+        )
+        vendor_billing_list_page.get_full_page_screenshot('bill_final_status')
+
+    # Step 2: Exit and log out
+    with allure.step("Step 2: Exit and log out from ERP"):
+        erp_logout(page, 'bill_final_approver_logout')
