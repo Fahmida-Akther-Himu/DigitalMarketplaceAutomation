@@ -198,7 +198,11 @@ class MyDelegatedOrders(HomePage, BasicActionsDM):
         # Approve Order > Yes; returns the order status and any page message (to record why approval failed)
         self.click_on_btn(self.approve_delegated_order_button)
         self.click_on_btn(self.delegated_order_yes_button)
-        self.wait_for_timeout(3000)
+        # Approval takes time (loading): wait until the status is no longer "Submitted for Approval"
+        try:
+            expect(self.order_status_text.first).not_to_contain_text("Submitted for Approval", timeout=60000)
+        except AssertionError:
+            print("Order status did not change within 60 seconds")
         order_status = ""
         if self.order_status_text.count():
             order_status = (self.order_status_text.first.text_content() or "").split(":")[-1].strip()

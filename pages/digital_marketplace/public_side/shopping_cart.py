@@ -38,6 +38,8 @@ class ShoppingCart(HomePage, BasicActionsDM):
         self.item_remarks_locator = page.locator('textarea[id^="itemRemarks"]')
         self.cart_quantity_input = page.locator('input[id^="itemquantity"]')
         self.selected_item_quantity = page.locator('input[id^="itemquantity"][inputmode="numeric"]')
+        # Visible item quantities only (items of unchecked requisitions are hidden in the cart)
+        self.visible_item_quantity = page.locator('input[id^="itemquantity"][inputmode="numeric"]:visible')
         self.select_choose_file = page.locator('input[type="file"][name="file"][id^="itemAttachment"]')
         self.confirm_button = page.get_by_role("button", name="Confirm")
         self.cancel_button = page.get_by_role("button", name="Cancel")
@@ -76,6 +78,13 @@ class ShoppingCart(HomePage, BasicActionsDM):
             f"//div[starts-with(@id,'vendorContainer')]//label[contains(., '{vendor_name}')]/preceding-sibling::input[@type='radio']"
         )
 
+        # Vendor selection loads slowly (depends on the shopping cart items): wait until it is enabled
+        try:
+            expect(radio_button.first).to_be_visible(timeout=60000)
+            expect(radio_button.first).to_be_enabled(timeout=60000)
+        except Exception:
+            pass
+
         if radio_button.count() == 0:
             print(f"Vendor '{vendor_name}' not found.")
             return False
@@ -83,6 +92,8 @@ class ShoppingCart(HomePage, BasicActionsDM):
         print(f"Found vendor: {vendor_name}")
         radio_button.check()
         self.wait_for_timeout(2000)
+        # Shopping cart reloads for the selected vendor
+        self.page.wait_for_load_state("load")
         print(f"Selected radio button for vendor: {vendor_name}")
 
         # Find all checked requisitions
@@ -108,15 +119,20 @@ class ShoppingCart(HomePage, BasicActionsDM):
         return True
 
     def update_shopping_cart_value_1(self, qty_update: str):
-        self.selected_item_quantity.first.click()
-        self.selected_item_quantity.first.clear()
-        self.input_in_element(self.selected_item_quantity.first, qty_update)
+        first_item_quantity = self.visible_item_quantity.first
+        first_item_quantity.click()
+        first_item_quantity.clear()
+        self.input_in_element(first_item_quantity, qty_update)
         self.update_shopping_cart.click()
         self.wait_for_timeout(5000)
 
     def upload_attachment(self, file_path: str) -> bool:
         try:
             upload_input = self.page.locator('input[type="file"][id^="itemAttachment"]').first  # first item only
+            if self.visible_item_quantity.count():
+                item_id = re.sub(r"\D", "", self.visible_item_quantity.first.get_attribute("id") or "")
+                if item_id:
+                    upload_input = self.page.locator(f'input[type="file"]#itemAttachment{item_id}')
             confirm_button = self.page.get_by_role("button", name="Confirm")
 
             # Wait for the attachment input (cart reloads after vendor selection)
@@ -239,3 +255,24 @@ class ShoppingCart(HomePage, BasicActionsDM):
         self.cart_quantity_input.nth(1).click()
         self.cart_quantity_input.nth(1).clear()
         self.input_in_element(self.cart_quantity_input.nth(1), "6")
+
+    def wait_for_requisition_in_cart(self, requisition_number: str, max_wait_seconds: int = 300,
+                                     reload_every_seconds: int = 30) -> bool:
+        # The approved requisition is synced from ERP to the shopping cart after some time:
+        # reload the cart until the requisition is shown (or max_wait_seconds is reached)
+        requisition_link = self.page.locator(f"a.item-requisition-link:has-text('{requisition_number}')")
+        waited_seconds = 0
+        while True:
+            try:
+                requisition_link.first.wait_for(state="visible", timeout=15000)
+                print(f"Requisition {requisition_number} found in cart after about {waited_seconds} seconds")
+                return True
+            except Exception:
+                pass
+            if waited_seconds >= max_wait_seconds:
+                print(f"Requisition {requisition_number} not in cart after {max_wait_seconds} seconds")
+                return False
+            print(f"Requisition {requisition_number} not in cart yet, reloading the shopping cart...")
+            self.wait_for_timeout(reload_every_seconds * 1000)
+            waited_seconds += reload_every_seconds + 15
+            self.page.reload(wait_until="load")

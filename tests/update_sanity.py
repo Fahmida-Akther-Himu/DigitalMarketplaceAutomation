@@ -2,7 +2,9 @@ from dotenv import load_dotenv
 import os
 import re
 import random
+import string
 from decimal import Decimal, InvalidOperation
+from datetime import datetime
 from pathlib import Path
 import pytest
 import allure
@@ -22,6 +24,15 @@ from pages.digital_marketplace.public_side.checkout_page import CheckoutPage
 from pages.digital_marketplace.public_side.my_account.pending_approval_orders import PendingApprovalOrders
 from pages.digital_marketplace.public_side.my_account.orders_public_store import OrdersPublicStore
 from pages.digital_marketplace.public_side.my_account.my_delegated_orders import MyDelegatedOrders
+from pages.digital_marketplace.public_side.my_account.all_order_for_admin import AllOrderForAdminPage
+from pages.digital_marketplace.administration.customers import Customers
+from pages.digital_marketplace.administration.vendor_dashboard import VendorDashboard
+from pages.digital_marketplace.administration.order_management.order_details_administration import \
+    OrderDetailsAdministration
+from pages.digital_marketplace.administration.order_management.orders_list_management import OrdersListManagement
+from pages.digital_marketplace.administration.order_management.receivable_order_list import ReceivableOrderList
+from pages.digital_marketplace.administration.order_management.item_received_list import ItemReceivedList
+from pages.erp_procurement.my_dashboard.procurement.purchase_order.framework_order_list import FrameworkOrderListPage
 from pages.erp_procurement.my_dashboard.table_of_authority.authority_delegation.delegation_of_authority import \
     DelegationOfAuthority
 from pages.erp_procurement.my_dashboard.table_of_authority.authority_delegation.delegation_of_authority_list import \
@@ -35,6 +46,7 @@ from pages.erp_procurement.my_dashboard.procurement.requisition.requisition_appr
 from pages.erp_procurement.my_dashboard.procurement.requisition.requisition_details_information import \
     RequisitionDetailsInformation
 from pages.erp_procurement.main_navigation_bar import MainNavigationBar
+from pages.erp_procurement.my_dashboard.procurement.item_receive.itemreceivelist import ItemReceiveList
 from pages.erp_procurement.my_dashboard.procurement.purchase_order.framework_information import FrameworkInformation
 
 # Procurement information
@@ -56,6 +68,12 @@ order_initiator = os.getenv("test_order_initiator")
 delegated_approver = os.getenv("test_delegated_approver")
 module_selection = os.getenv("test_module_selection")
 dm_order_approval_category = os.getenv("test_dm_order_approval_category")
+# Marketplace admin and vendor (Test case 19-21)
+dm_admin = os.getenv("test_order_admin")
+stg_vendor_pass = os.getenv("test_stg_vendor_pass")
+# Framework order and item receiving (Test case 22-24)
+proc_admin = os.getenv("test_proc_admin")
+sso_login_receiver_pin = os.getenv("test_sso_login_receiver_pin")
 
 # Scenario data
 active_framework_agreement = os.getenv("test_active_framework_agreement")
@@ -92,6 +110,12 @@ schedule_address = os.getenv("test_schedule_address")
 requisition_funding_remarks = os.getenv("test_requisition_funding_remarks")
 requisition_item_remarks = os.getenv("test_requisition_item_remarks")
 order_remarks = os.getenv("test_order_remarks")
+receiving_remarks = os.getenv("test_receiving_remarks")
+partial_receiving_remarks = os.getenv("test_partial_receiving_remarks")
+# Item receiving by the order initiator (Test case 25-28)
+partial_receive_quantity = os.getenv("test_partial_receive_quantity")
+receiving_attachment_file_partial = os.getenv("test_receiving_attachment_file_partial")
+receiving_attachment_file_remaining = os.getenv("test_receiving_attachment_file_remaining")
 
 # Attachment and remarks rules
 UTILS_DIR = Path(__file__).resolve().parents[1] / "utils"
@@ -99,6 +123,8 @@ ALLOWED_ATTACHMENT_TYPES = {".docx", ".pdf", ".xls", ".jpg", ".png", ".ppt", ".z
 MAX_ATTACHMENT_SIZE_MB = 20
 MAX_REQUISITION_REMARKS_LENGTH = 300
 MAX_ITEM_REMARKS_LENGTH = 500
+MIN_RECEIVING_REMARKS_LENGTH = 3
+MAX_RECEIVING_REMARKS_LENGTH = 255
 
 # Marketplace global variable
 initial_wishlist_count = 0
@@ -115,6 +141,14 @@ removed_current_date_delegations = []
 delegation_remarks = str(random.randint(10000, 99999))
 delegated_order_count_after_delegation = ''
 delegated_order_status = ''
+# Vendor acknowledgement (Test case 19-21)
+vendor_login_id = ''
+framework_order_no = ''
+vendor_acknowledged_order_status = ''
+# Item receiving: challan numbers are generated after the framework order is known (DM_4552KEs5Pm)
+challan_num_for_receiver = ''
+challan_num_for_order_initiator = ''
+challan_num_for_order_initiator_2 = ''
 framework_products = []
 selected_product = {}
 wishlist_quantity = ''
@@ -412,11 +446,11 @@ def test_2_create_requisition_with_wishlist_item(page):
     Test Case 2: Create Requisition in ERP with the Marketplace Wishlist Item.
 
     Steps:
-        1. Log in to ERP (ResetHub link, same as sanity.py) and open
+        1. Log in to ERP (ResetHub link) and open
            Procurement > Requisition > Create Requisition.
         2. Select Head Office, Project, Source of Fund and enter Remarks (max 300 characters).
         3. Search and select Item Information.
-        4. Click Get wish list.
+        4. Click Get wishlist.
         5. Find the Wishlist item added in Test Case 1 (FA No + FWA code, next page if needed)
            and click that row. Verify that Quantity is the same as the Wishlist quantity.
         6. Click Amount radio button, then Quantity radio button; verify Quantity is unchanged.
@@ -424,7 +458,7 @@ def test_2_create_requisition_with_wishlist_item(page):
         8. Add attachment from utils (max 20 MB; DOCX, PDF, XLS, JPG, PNG, PPT, ZIP, PPTX).
         9. Add item remarks (max 500 characters), click Add to grid and verify the item row
            (Quantity and Unit Price) in the Requisition Detail Information List.
-        10. Set same schedule (today).
+        10. Set the same schedule (today).
         11. Set delivery location: Head Office and 'test_schedule_address'.
         12. Submit the requisition, get the submission confirmation message and store the
             requisition number in 'req_num'.
@@ -480,7 +514,7 @@ def test_2_create_requisition_with_wishlist_item(page):
     create_requisition_page = CreateRequisition(page)
     requisition_list_page = RequisitionList(page)
 
-    # Step 1: Log in to ERP (same as sanity.py) and open Create Requisition
+    # Step 1: Log in to ERP and open Create Requisition
     with allure.step(f"Step 1: Log in to ERP as {proj_user} and open Create Requisition"):
         link = reset_page.generate_reset_link(
             env=proj_env,
@@ -512,7 +546,7 @@ def test_2_create_requisition_with_wishlist_item(page):
         )
         create_requisition_page.get_full_page_screenshot('requisition_item_information')
 
-    # Step 4: Click Get wish list
+    # Step 4: Click the Get wishlist
     with allure.step("Step 4: Click Get wish list"):
         create_requisition_page.open_wishlist()
         create_requisition_page.get_full_page_screenshot('requisition_wishlist_popup')
@@ -731,7 +765,7 @@ def test_4_submit_requisition(page):
     Test Case 4: Submit the requisition with the Wishlist item and the Active Framework Agreement item.
 
     Steps:
-        1. Set same schedule (today).
+        1. Set the same schedule (today).
         2. Set delivery location: Head Office and 'test_schedule_address'.
         3. Submit the requisition, get the submission confirmation message and store the
            requisition number in 'req_num'.
@@ -784,7 +818,7 @@ def test_4_submit_requisition(page):
 @pytest.mark.order(5)
 def test_5_identify_first_approver(page):
     """
-    Test Case 5: Identify and capture the first approver of the submitted requisition (same as sanity.py).
+    Test Case 5: Identify and capture the first approver of the submitted requisition.
 
     Steps:
         1. Go to Requisition > Requisition List.
@@ -832,7 +866,7 @@ def test_5_identify_first_approver(page):
 
 
 def erp_login(page, user_name):
-    # ERP login with ResetHub link (same as sanity.py)
+    # ERP login with the ResetHub link
     reset_page = ResetHubPage(page)
     link = reset_page.generate_reset_link(
         env=proj_env,
@@ -841,6 +875,19 @@ def erp_login(page, user_name):
     reset_page.open_generated_link(link)
     assert isinstance(link, str) and link.startswith("http")
     print(f"Logging in as user: {user_name}")
+
+
+def generate_challan_number():
+    # DM_ + framework (work) order last 4 digits + random characters, e.g. DM_4552KEs5Pm
+    random_part = ''.join(random.choices(string.ascii_letters + string.digits, k=6))
+    return f"DM_{framework_order_no[-4:]}{random_part}"
+
+
+def check_receiving_remarks_length(env_name, remarks):
+    # Received Remarks: minimum 3, maximum 255 characters
+    assert MIN_RECEIVING_REMARKS_LENGTH <= len(remarks) <= MAX_RECEIVING_REMARKS_LENGTH, \
+        f"{env_name} must be {MIN_RECEIVING_REMARKS_LENGTH}-{MAX_RECEIVING_REMARKS_LENGTH} characters, " \
+        f"found {len(remarks)}"
 
 
 def erp_logout(page, screenshot_name):
@@ -1132,7 +1179,7 @@ def test_9_requisition_initiator_gets_approval_status(page, new_tab):
 @pytest.mark.order(10)
 def test_10_prepare_cart_for_checkout(page):
     """
-    Test case 10: Prepare the shopping cart for checkout (same as sanity.py test 7, with 2 items).
+    Test case 10: Prepare the shopping cart for checkout (with 2 items).
 
     Steps:
         1. Log in to the Digital Marketplace as the order initiator ('proj_user').
@@ -1161,6 +1208,8 @@ def test_10_prepare_cart_for_checkout(page):
     # Step 2: Shopping cart and vendor selection
     with allure.step(f"Step 2: Select vendor {order_vendor} for requisition {req_num}"):
         home_page.goto_shopping_cart()
+        assert cart_page.wait_for_requisition_in_cart(requisition_number=req_num), \
+            f"Requisition {req_num} is not synced to the shopping cart"
         cart_page.select_vendor_for_requisition_found(requisition_number=req_num)
         assert cart_page.select_vendor_by_name(vendor_name=order_vendor, requisition_number=req_num), \
             f"Vendor {order_vendor} not found in the shopping cart"
@@ -1202,12 +1251,12 @@ def test_10_prepare_cart_for_checkout(page):
 @pytest.mark.order(11)
 def test_11_prepare_delivery_schedule(page):
     """
-    Test case 11: Prepare the order delivery schedule (same as sanity.py test 8, with 2 items).
+    Test case 11: Prepare the order delivery schedule (with 2 items).
 
     Steps:
         1. Click Auto Generate: the second item gets its delivery schedule.
         2. First item (updated cart quantity): schedule quantity, expected date, location 1 and
-           receiving person 1, then Add Schedule (same as sanity.py).
+           receiving person 1, then Add Schedule.
         3. First item remaining quantity: location 2 and receiving person 'order_initiator', then Add Schedule.
         4. Second item: Receiving Person 'order_initiator' in the auto generated schedule row.
         5. Wait until Continue is enabled and click Continue.
@@ -1270,7 +1319,7 @@ def test_11_prepare_delivery_schedule(page):
 @pytest.mark.order(12)
 def test_12_confirm_marketplace_order(page):
     """
-    Test case 12: Confirm the marketplace order (same as sanity.py test 9).
+    Test case 12: Confirm the marketplace order.
 
     Steps:
         1. Fill the order remarks ('order_remarks') and accept terms of service.
@@ -1398,7 +1447,7 @@ def test_14_remove_current_date_delegation_before_creation(page):
 
     Steps:
         1. Log in to ERP as the order approver ('approver_id_2', delegator).
-        2. Go to Delegation Of Authority List and search the delegated approver by PIN.
+        2. Go to the Delegation Of Authority List and search the delegated approver by PIN.
         3. If a delegation for the current date range is present (Start Date <= today <= End Date),
            remove it (Remove > Delete item(s)) and verify the deleted message.
            If not present, continue.
@@ -1418,9 +1467,8 @@ def test_14_remove_current_date_delegation_before_creation(page):
 
     # Step 2: Delegation Of Authority List and search the delegated approver
     with allure.step(f"Step 2: Search delegated approver {delegated_approver} in Delegation Of Authority List"):
-        # Same navigation as sanity.py: Delegation Of Authority, then Delegation Of Authority List
-        proc_dashboard_page.navigate_to_delegation_of_authority()
-        delegation_list_page.go_to_delegation_of_authority_list()
+        # Directly from the dashboard to the Delegation Of Authority List
+        proc_dashboard_page.navigate_to_delegation_of_authority_list()
         delegation_list_page.wait_for_timeout(2000)
         delegation_list_page.search_by_delegated_approver_by_PIN(PIN=delegated_approver)
         delegation_list_page.get_full_page_screenshot('delegation_list_before_creation')
@@ -1452,7 +1500,7 @@ def test_14_remove_current_date_delegation_before_creation(page):
 @pytest.mark.order(15)
 def test_15_verify_delegated_orders_before_delegation(page):
     """
-    Test case 15: Verify My Delegated Orders before delegation (same as sanity.py test 11).
+    Test case 15: Verify My Delegated Orders before delegation.
 
     Steps:
         1. Log in to the Digital Marketplace as the delegated approver ('delegated_approver').
@@ -1568,7 +1616,7 @@ def test_16_create_order_approval_delegation(page):
 @pytest.mark.order(17)
 def test_17_verify_delegated_order_after_delegation(page):
     """
-    Test case 17: Verify the delegated order after delegation (same as sanity.py test 13).
+    Test case 17: Verify the delegated order after delegation.
 
     Steps:
         1. Log in to the Digital Marketplace as the delegated approver ('delegated_approver').
@@ -1669,3 +1717,643 @@ def test_18_approve_delegated_marketplace_order(page):
     with allure.step("Step 3: Log out from the Digital Marketplace"):
         MainNavigationMenu(page).perform_logout()
         my_delegated_orders.get_full_page_screenshot('delegated_approver_logout')
+
+
+@allure.suite("Administration")
+@allure.feature("Customers")
+@allure.story("Vendor Information")
+@allure.title("Test_case_19: Retrieve order vendor credentials")
+@allure.description("Test case 19: Retrieve vendor credentials for a specific marketplace order.")
+@pytest.mark.order(19)
+def test_19_retrieve_order_vendor_credentials(page):
+    """
+    Test case 19: Retrieve the order vendor credentials.
+
+    Steps:
+        1. Log in to the Digital Marketplace as the admin ('dm_admin').
+        2. All Orders (admin): search the order reference number and open the order details.
+        3. Admin dashboard > Customers: search the order vendor ('order_vendor') and store the vendor
+           login ID in 'vendor_login_id'.
+        4. Log out from Administration.
+    """
+    global vendor_login_id
+    assert order_reference_number, "Test case 12 must pass first: no order reference number available"
+    assert order_vendor, "Test case 9 must pass first: no order vendor available"
+    assert dm_admin, "Missing in .env: test_order_admin"
+
+    login_page = LoginPage(page)
+    home_page = HomePage(page)
+    all_orders = AllOrderForAdminPage(page)
+    customers_page = Customers(page)
+
+    # Step 1: Log in as the admin
+    with allure.step(f"Step 1: Log in to the Digital Marketplace as admin {dm_admin}"):
+        login_page.navigate_to_url(marketplace_url_qa)
+        login_page.perform_login_for_sso_login(user_name=dm_admin, pass_word=marketplace_password)
+        home_page.get_full_page_screenshot('admin_login')
+
+    # Step 2: All Orders (admin) and order details
+    with allure.step(f"Step 2: Search order {order_reference_number} in All Orders and open order details"):
+        home_page.goto_all_orders_for_admin()
+        all_orders.admin_order_search(search_number=order_reference_number)
+        all_orders.get_full_page_screenshot('admin_order_search')
+        all_orders.admin_goes_to_order_details()
+        all_orders.get_full_page_screenshot('admin_order_details')
+
+    # Step 3: Customers > vendor login ID
+    with allure.step(f"Step 3: Get vendor login ID of {order_vendor}"):
+        all_orders.goto_admin_dashboard()
+        customers_page.view_customers_list()
+        customers_page.search_vendor(customer_name=order_vendor)
+        customers_page.wait_for_timeout(5000)
+        vendor_login_id = customers_page.search_customers()
+        assert vendor_login_id, f"Vendor login ID not found for {order_vendor}"
+        print("VENDOR LOGIN ID:", vendor_login_id)
+        allure.attach(
+            f"Order vendor: {order_vendor}\nVendor login ID: {vendor_login_id}",
+            name="Order vendor login ID",
+            attachment_type=allure.attachment_type.TEXT
+        )
+        customers_page.get_full_page_screenshot('vendor_login_id')
+
+    # Step 4: Log out from Administration
+    with allure.step("Step 4: Log out from Administration"):
+        MainNavigationMenu(page).logout_from_administration()
+        home_page.get_full_page_screenshot('admin_logout')
+
+
+@allure.suite("Vendor Dashboard")
+@allure.feature("Order Details")
+@allure.story("Order Acknowledgement")
+@allure.title("Test_case_20: Acknowledge marketplace order")
+@allure.description("Test case 20: Marketplace vendor acknowledgement process.")
+@pytest.mark.order(20)
+def test_20_acknowledge_marketplace_order(page):
+    """
+    Test case 20: Vendor acknowledges the marketplace order.
+
+    Steps:
+        1. Log in as the vendor ('vendor_login_id') and view the vendor dashboard.
+        2. Open the order ('order_reference_number') from the dashboard.
+        3. Acknowledge > Yes; store the framework order number ('framework_order_no') and the
+           acknowledged order status ('vendor_acknowledged_order_status').
+        4. Go back to the order list.
+        No logout: Test case 21 searches the order in the same session.
+    """
+    global framework_order_no, vendor_acknowledged_order_status
+    assert vendor_login_id, "Test case 19 must pass first: no vendor login ID available"
+    assert stg_vendor_pass, "Missing in .env: test_stg_vendor_pass"
+
+    login_page = LoginPage(page)
+    vendor_dashboard = VendorDashboard(page)
+    order_details_administration = OrderDetailsAdministration(page)
+
+    # Step 1: Log in as the vendor
+    with allure.step(f"Step 1: Log in as vendor {vendor_login_id}"):
+        login_page.navigate_to_url(marketplace_url_qa)
+        login_page.perform_vendor_login(user_name=vendor_login_id, pass_word=stg_vendor_pass)
+        vendor_dashboard.print_card_title()
+        vendor_dashboard.print_table_data()
+        vendor_dashboard.get_full_page_screenshot('vendor_dashboard')
+
+    # Step 2: Open the order from the dashboard
+    with allure.step(f"Step 2: Open order {order_reference_number}"):
+        assert vendor_dashboard.click_action_for_order(order_reference=order_reference_number), \
+            f"Order {order_reference_number} not found in the vendor dashboard"
+        vendor_dashboard.wait_for_timeout(5000)
+        vendor_dashboard.get_full_page_screenshot('vendor_order_details')
+
+    # Step 3: Acknowledge and get the framework order number and order status
+    with allure.step(f"Step 3: Acknowledge order {order_reference_number}"):
+        framework_order_no, vendor_acknowledged_order_status = \
+            order_details_administration.acknowledge_order_with_status()
+        assert framework_order_no, "Framework order number not displayed after acknowledgement"
+        print("FRAMEWORK ORDER NO:", framework_order_no)
+        print("ACKNOWLEDGED ORDER STATUS:", vendor_acknowledged_order_status)
+        allure.attach(
+            f"Order reference number: {order_reference_number}\nFramework order number: {framework_order_no}\n"
+            f"Order status after acknowledgement: {vendor_acknowledged_order_status}",
+            name="Vendor acknowledgement",
+            attachment_type=allure.attachment_type.TEXT
+        )
+        order_details_administration.get_full_page_screenshot('vendor_order_acknowledged')
+
+    # Step 4: Back to the order list
+    with allure.step("Step 4: Go back to the order list"):
+        order_details_administration.click_back_to_order_list()
+        order_details_administration.get_full_page_screenshot('vendor_order_list')
+
+
+@allure.suite("Vendor Side")
+@allure.feature("Order Management")
+@allure.story("Order Search")
+@allure.title("Test_case_21: Verify acknowledged order in orders list")
+@allure.description("Test case 21: Vendor acknowledged order search process.")
+@pytest.mark.order(21)
+def test_21_verify_acknowledged_order_in_order_list(page):
+    """
+    Test case 21: Verify the acknowledged order in the vendor orders list (same as sanity.py test 17).
+    Continues in the vendor session of Test case 20.
+
+    Steps:
+        1. Open the Search panel if it is closed.
+        2. Start date and End date = today, click Search.
+        3. Enter the framework order number ('framework_order_no'), select it from the dropdown,
+           click Search again and verify the order is in the list.
+        4. Log out from Administration.
+    """
+    assert framework_order_no, "Test case 20 must pass first: no framework order number available"
+
+    orders_list_management = OrdersListManagement(page)
+    current_date = datetime.today().strftime("%m-%d-%Y")
+
+    # Step 1: Search panel
+    with allure.step("Step 1: Open the Search panel if it is closed"):
+        orders_list_management.open_search_panel_if_closed()
+        orders_list_management.get_full_page_screenshot('vendor_orders_search_panel')
+
+    # Step 2: Date range = today
+    with allure.step(f"Step 2: Search orders for today ({current_date})"):
+        orders_list_management.fill_date_range(start_date=current_date, end_date=current_date)
+        orders_list_management.click_on_btn(orders_list_management.order_search_button)
+        orders_list_management.wait_for_timeout(3000)
+        orders_list_management.get_full_page_screenshot('vendor_orders_today')
+
+    # Step 3: Framework order number from the dropdown, Search again, verify
+    with allure.step(f"Step 3: Search framework order {framework_order_no}"):
+        orders_list_management.search_order_from_dropdown(order_no=framework_order_no)
+        orders_list_management.verify_order_in_list(order_no=framework_order_no)
+        allure.attach(
+            f"Framework order {framework_order_no} ({order_reference_number}) found in the vendor orders list",
+            name="Acknowledged order found",
+            attachment_type=allure.attachment_type.TEXT
+        )
+        orders_list_management.get_full_page_screenshot('vendor_acknowledged_order_search')
+
+    # Step 4: Log out from Administration
+    with allure.step("Step 4: Log out from Administration"):
+        MainNavigationMenu(page).logout_from_administration()
+        orders_list_management.get_full_page_screenshot('vendor_logout')
+
+
+@allure.suite("Purchase Order")
+@allure.feature("Framework Order")
+@allure.story("Framework Order List")
+@allure.title("Test_case_22: View marketplace framework order details")
+@allure.description("Test case 22: View marketplace framework order details in the procurement system.")
+@pytest.mark.order(22)
+def test_22_view_marketplace_framework_order_details(page, new_tab):
+    """
+    Test case 22: View the marketplace framework order in procurement.
+
+    Steps:
+        1. Log in to ERP as the procurement admin ('proc_admin') and go to Procurement.
+        2. Go to Framework Order List and search the framework order ('framework_order_no').
+        3. Open the framework order details in a new tab, then close the tab.
+        4. Exit and log out from ERP.
+    """
+    assert framework_order_no, "Test case 20 must pass first: no framework order number available"
+    assert proc_admin, "Missing in .env: test_proc_admin"
+
+    proc_dashboard_page = DashboardPage(page)
+    proc_home_page = ProcurementHomePage(page)
+    framework_order_list_page = FrameworkOrderListPage(page)
+
+    # Step 1: Log in as the procurement admin
+    with allure.step(f"Step 1: Log in to ERP as procurement admin {proc_admin}"):
+        erp_login(page, proc_admin)
+        proc_dashboard_page.goto_procurement()
+        proc_dashboard_page.get_full_page_screenshot('proc_admin_dashboard')
+
+    # Step 2: Framework Order List and search the framework order
+    with allure.step(f"Step 2: Search framework order {framework_order_no} in Framework Order List"):
+        proc_home_page.navigate_to_framework_order_list()
+        framework_order_list_page.search_framework_order(fa_order_no=framework_order_no)
+        framework_order_list_page.get_full_page_screenshot('framework_order_search')
+
+    # Step 3: Framework order details in a new tab
+    with allure.step(f"Step 3: Open framework order {framework_order_no} details"):
+        details_tab = new_tab(
+            lambda p: framework_order_list_page.click_framework_order(framework_order_no=framework_order_no))
+        details_tab.wait_for_timeout(5000)
+        details_tab.screenshot(path=os.getcwd() + "/screenshots_taken/framework_order_details.png", full_page=True)
+        allure.attach(
+            f"Framework order number: {framework_order_no}\nOrder reference number: {order_reference_number}",
+            name="Framework order",
+            attachment_type=allure.attachment_type.TEXT
+        )
+        details_tab.close()
+        page.bring_to_front()
+
+    # Step 4: Exit and log out from ERP
+    with allure.step("Step 4: Exit and log out from ERP"):
+        erp_logout(page, 'proc_admin_logout')
+
+
+@allure.suite("Administration")
+@allure.feature("Order Management")
+@allure.story("Receivable Order List")
+@allure.title("Test_case_23: Receive item as designated receiver")
+@allure.description("Test case 23: Marketplace item receipt process by the designated receiver.")
+@pytest.mark.order(23)
+def test_23_receive_item_as_designated_receiver(page):
+    """
+    Test case 23: The designated receiver receives the item.
+
+    Steps:
+        1. Log in to the Digital Marketplace as the designated receiver ('sso_login_receiver_pin')
+           and go to Administration.
+        2. Order Management > Receivable Order List: date range today, search the framework order and view it.
+        3. Enter the challan number ('challan_num_for_receiver'), select all items, add attachment and
+           receiving remarks ('receiving_remarks').
+        4. Open the item receive popup and confirm.
+        No logout: Test case 24 verifies the receipt in the same session.
+    """
+    assert framework_order_no, "Test case 20 must pass first: no framework order number available"
+    required_env_values = {
+        "test_sso_login_receiver_pin": sso_login_receiver_pin,
+        "test_receiving_remarks": receiving_remarks,
+        "test_requisition_attachment_file": requisition_attachment_file,
+    }
+    missing_env_values = [name for name, value in required_env_values.items() if not value]
+    assert not missing_env_values, f"Missing in .env: {', '.join(missing_env_values)}"
+    check_receiving_remarks_length("test_receiving_remarks", receiving_remarks)
+
+    global challan_num_for_receiver
+    challan_num_for_receiver = generate_challan_number()
+    login_page = LoginPage(page)
+    home_page = HomePage(page)
+    orders_list_management = OrdersListManagement(page)
+    receivable_order_list = ReceivableOrderList(page)
+    attachment_path = UTILS_DIR / requisition_attachment_file
+    current_date = datetime.today().strftime("%m-%d-%Y")
+
+    # Step 1: Log in as the designated receiver
+    with allure.step(f"Step 1: Log in to the Digital Marketplace as designated receiver {sso_login_receiver_pin}"):
+        login_page.navigate_to_url(marketplace_url_qa)
+        login_page.perform_login_for_sso_login(user_name=sso_login_receiver_pin, pass_word=marketplace_password)
+        home_page.goto_administration()
+        home_page.wait_for_timeout(2000)
+        home_page.get_full_page_screenshot('receiver_administration')
+
+    # Step 2: Receivable Order List and view the framework order
+    with allure.step(f"Step 2: Search framework order {framework_order_no} in Receivable Order List"):
+        orders_list_management.click_order_management_menu()
+        receivable_order_list.goto_receivable_order_list()
+        receivable_order_list.open_search_panel_if_collapsed(receivable_order_list.order_input)
+        receivable_order_list.fill_date_range(start_date=current_date, end_date=current_date)
+        receivable_order_list.search_receivable_order(receivable_order_number=framework_order_no)
+        receivable_order_list.get_full_page_screenshot('receiver_receivable_order_search')
+        receivable_order_list.receivable_order_view()
+
+    # Step 3: Challan number, items, attachment and remarks
+    with allure.step(f"Step 3: Enter challan {challan_num_for_receiver}, select items, attachment and remarks"):
+        receivable_order_list.challan_no_input(fill_challan_no=challan_num_for_receiver)
+        print("RECEIVER CHALLAN NUMBER:", challan_num_for_receiver)
+        receivable_order_list.all_item_select.click()
+        assert receivable_order_list.receiving_upload_attachment(str(attachment_path)), "File upload failed"
+        receivable_order_list.wait_for_timeout(5000)
+        receivable_order_list.input_received_remarks(receiving_remarks=receiving_remarks)
+        allure.attach(
+            f"Framework order number: {framework_order_no}\nChallan number: {challan_num_for_receiver}\n"
+            f"Attachment: {attachment_path.name}\nRemarks: {receiving_remarks}",
+            name="Receiver challan number",
+            attachment_type=allure.attachment_type.TEXT
+        )
+        receivable_order_list.get_full_page_screenshot('receiver_receive_items')
+
+    # Step 4: Item receive popup and confirm
+    with allure.step("Step 4: Open item receive popup and confirm"):
+        receivable_order_list.open_item_receive_popup()
+        receivable_order_list.get_full_page_screenshot('receiver_receive_popup')
+        receivable_order_list.confirm_receivable_order()
+        receivable_order_list.get_full_page_screenshot('receiver_items_received')
+
+
+@allure.suite("Administration")
+@allure.feature("Order Management")
+@allure.story("Item Received List")
+@allure.title("Test_case_24: Verify designated receiver item receipt")
+@allure.description("Test case 24: Item received information verify by receiver.")
+@pytest.mark.order(24)
+def test_24_verify_designated_receiver_item_receipt(page):
+    """
+    Test case 24: Verify the designated receiver item receipt (same as sanity.py test 20).
+    Continues in the session of Test case 23 (designated receiver).
+
+    Steps:
+        1. Item Received List: date range today, search the framework order and the challan number.
+        2. Verify the received order is in the list and view it.
+        3. Log out from Administration.
+    """
+    assert framework_order_no, "Test case 20 must pass first: no framework order number available"
+
+    item_received_list = ItemReceivedList(page)
+    current_date = datetime.today().strftime("%m-%d-%Y")
+
+    # Step 1: Search the received order with the challan number
+    with allure.step(f"Step 1: Search received order {framework_order_no} with challan {challan_num_for_receiver}"):
+        item_received_list.open_search_panel_if_collapsed(item_received_list.order_number_input)
+        item_received_list.fill_date_range(start_date=current_date, end_date=current_date)
+        item_received_list.fill_received_order_number(order_no=framework_order_no)
+        item_received_list.searched_received_order(challan_no=challan_num_for_receiver)
+        item_received_list.search_button_for_received_item.click()
+        item_received_list.wait_for_timeout(3000)
+        item_received_list.get_full_page_screenshot('receiver_item_received_search')
+
+    # Step 2: Verify the received order and view it
+    with allure.step(f"Step 2: Verify received order {framework_order_no} and view it"):
+        item_received_list.verify_order_in_list(order_no=framework_order_no)
+        allure.attach(
+            f"Framework order {framework_order_no} with challan {challan_num_for_receiver} "
+            f"found in Item Received List",
+            name="Received order found",
+            attachment_type=allure.attachment_type.TEXT
+        )
+        item_received_list.order_view_button.first.click()
+        item_received_list.wait_for_timeout(5000)
+        item_received_list.get_full_page_screenshot('receiver_item_received_details')
+
+    # Step 3: Log out from Administration
+    with allure.step("Step 3: Log out from Administration"):
+        MainNavigationMenu(page).logout_from_administration()
+        item_received_list.get_full_page_screenshot('receiver_logout')
+
+
+def receive_order_items(page, challan_no, attachment_path, remarks, screenshot_prefix, partial_quantity=None):
+    """
+    Receivable Order List: search the framework order (date range today), view it, enter the challan,
+    select all items, (optionally) change the first item's quantity, attachment, remarks and confirm.
+    """
+    orders_list_management = OrdersListManagement(page)
+    receivable_order_list = ReceivableOrderList(page)
+    current_date = datetime.today().strftime("%m-%d-%Y")
+
+    with allure.step(f"Search framework order {framework_order_no} in Receivable Order List"):
+        orders_list_management.open_order_management_menu_if_collapsed(
+            receivable_order_list.receivable_order_list_submenu)
+        receivable_order_list.goto_receivable_order_list()
+        receivable_order_list.open_search_panel_if_collapsed(receivable_order_list.order_input)
+        receivable_order_list.fill_date_range(start_date=current_date, end_date=current_date)
+        receivable_order_list.search_receivable_order(receivable_order_number=framework_order_no)
+        receivable_order_list.get_full_page_screenshot(f'{screenshot_prefix}_receivable_order_search')
+        receivable_order_list.receivable_order_view()
+
+    with allure.step(f"Enter challan {challan_no} and select all items"):
+        receivable_order_list.challan_no_input(fill_challan_no=challan_no)
+        print("ORDER INITIATOR CHALLAN NUMBER:", challan_no)
+        receivable_order_list.all_item_select.click()
+        receivable_order_list.wait_for_timeout(3000)
+        if partial_quantity:
+            receivable_order_list.input_first_item_quantity_to_receive(received_quantity=partial_quantity)
+            print(f"First item Quantity to Receive: {partial_quantity}")
+        receivable_order_list.get_full_page_screenshot(f'{screenshot_prefix}_items_selected')
+
+    with allure.step(f"Add attachment {attachment_path.name} and remarks '{remarks}'"):
+        assert receivable_order_list.receiving_upload_attachment(str(attachment_path)), "File upload failed"
+        receivable_order_list.wait_for_timeout(3000)
+        receivable_order_list.input_received_remarks(receiving_remarks=remarks)
+        allure.attach(
+            f"Framework order number: {framework_order_no}\nChallan number: {challan_no}\n"
+            f"First item quantity: {partial_quantity or 'remaining quantity'}\n"
+            f"Attachment: {attachment_path.name}\nRemarks: {remarks}",
+            name="Item receive information",
+            attachment_type=allure.attachment_type.TEXT
+        )
+        receivable_order_list.get_full_page_screenshot(f'{screenshot_prefix}_receive_items')
+
+    with allure.step("Open item receive popup and confirm"):
+        receivable_order_list.open_item_receive_popup()
+        receivable_order_list.get_full_page_screenshot(f'{screenshot_prefix}_receive_popup')
+        receivable_order_list.confirm_receivable_order()
+        receivable_order_list.get_full_page_screenshot(f'{screenshot_prefix}_items_received')
+
+
+def verify_item_receipt(page, challan_no, screenshot_prefix):
+    """
+    Item Received List: date range today, search the framework order and challan, verify and view it.
+    """
+    orders_list_management = OrdersListManagement(page)
+    item_received_list = ItemReceivedList(page)
+    current_date = datetime.today().strftime("%m-%d-%Y")
+
+    with allure.step(f"Search framework order {framework_order_no} with challan {challan_no} in Item Received List"):
+        orders_list_management.open_order_management_menu_if_collapsed(item_received_list.item_received_list_submenu)
+        item_received_list.goto_received_order_list()
+        item_received_list.open_search_panel_if_collapsed(item_received_list.order_number_input)
+        item_received_list.fill_date_range(start_date=current_date, end_date=current_date)
+        item_received_list.fill_received_order_number(order_no=framework_order_no)
+        item_received_list.searched_received_order(challan_no=challan_no)
+        item_received_list.search_button_for_received_item.click()
+        item_received_list.wait_for_timeout(3000)
+        item_received_list.get_full_page_screenshot(f'{screenshot_prefix}_item_received_search')
+
+    with allure.step(f"Verify challan {challan_no} in Item Received List and view it"):
+        item_received_list.verify_challan_in_list(challan_no=challan_no)
+        allure.attach(
+            f"Framework order {framework_order_no} with challan {challan_no} found in Item Received List",
+            name="Received challan found",
+            attachment_type=allure.attachment_type.TEXT
+        )
+        item_received_list.order_view_button.first.click()
+        item_received_list.wait_for_timeout(5000)
+        item_received_list.get_full_page_screenshot(f'{screenshot_prefix}_item_received_details')
+
+
+@allure.suite("Administration")
+@allure.feature("Order Management")
+@allure.story("Receivable Order List")
+@allure.title("Test_case_25: Partially receive item as order initiator")
+@allure.description("Test case 25: Partial item receipt by the order initiator acting as receiver.")
+@pytest.mark.order(25)
+def test_25_partially_receive_item_as_order_initiator(page):
+    """
+    Test case 25: The order initiator partially receives the items (same as sanity.py test 21).
+
+    Steps:
+        1. Log in to the Digital Marketplace as the order initiator ('proj_user') and go to Administration.
+        2. Receivable Order List: Search panel, date range today, search the framework order and view it.
+        3. Enter the challan number ('challan_num_for_order_initiator'), select all items and enter the
+           first item's partial quantity ('partial_receive_quantity').
+        4. Add attachment and partial receiving remarks (3-255 characters).
+        5. Open the item receive popup and confirm.
+        No logout: Test case 26 verifies the receipt in the same session.
+    """
+    global challan_num_for_order_initiator
+    assert framework_order_no, "Test case 20 must pass first: no framework order number available"
+    required_env_values = {
+        "test_user_name": proj_user,
+        "test_partial_receive_quantity": partial_receive_quantity,
+        "test_partial_receiving_remarks": partial_receiving_remarks,
+        "test_receiving_attachment_file_partial": receiving_attachment_file_partial,
+    }
+    missing_env_values = [name for name, value in required_env_values.items() if not value]
+    assert not missing_env_values, f"Missing in .env: {', '.join(missing_env_values)}"
+    check_receiving_remarks_length("test_partial_receiving_remarks", partial_receiving_remarks)
+    attachment_path = UTILS_DIR / receiving_attachment_file_partial
+    assert attachment_path.is_file(), f"Attachment not found in utils: {attachment_path}"
+
+    challan_num_for_order_initiator = generate_challan_number()
+    login_page = LoginPage(page)
+    home_page = HomePage(page)
+
+    # Step 1: Log in as the order initiator
+    with allure.step(f"Step 1: Log in to the Digital Marketplace as order initiator {proj_user}"):
+        login_page.navigate_to_url(marketplace_url_qa)
+        login_page.perform_login_for_sso_login(user_name=proj_user, pass_word=marketplace_password)
+        home_page.goto_administration()
+        home_page.wait_for_timeout(2000)
+        home_page.get_full_page_screenshot('order_initiator_administration')
+
+    # Step 2-5: Partially receive the items
+    with allure.step(f"Step 2: Partially receive framework order {framework_order_no} "
+                     f"with challan {challan_num_for_order_initiator}"):
+        receive_order_items(
+            page,
+            challan_no=challan_num_for_order_initiator,
+            attachment_path=attachment_path,
+            remarks=partial_receiving_remarks,
+            screenshot_prefix='order_initiator_partial',
+            partial_quantity=partial_receive_quantity
+        )
+
+
+@allure.suite("Administration")
+@allure.feature("Order Management")
+@allure.story("Item Received List")
+@allure.title("Test_case_26: Verify partial item receipt")
+@allure.description("Test case 26: Partial item received information verify by the order initiator.")
+@pytest.mark.order(26)
+def test_26_verify_partial_item_receipt(page):
+    """
+    Test case 26: Verify the partial item receipt (same as sanity.py test 22).
+
+    Steps:
+        1. Item Received List: Search panel, date range today, search the framework order and the
+           challan number ('challan_num_for_order_initiator').
+        2. Verify the challan is in the list and view it.
+    """
+    assert challan_num_for_order_initiator, "Test case 25 must pass first: no order initiator challan available"
+    verify_item_receipt(page, challan_no=challan_num_for_order_initiator,
+                        screenshot_prefix='order_initiator_partial')
+
+
+@allure.suite("Administration")
+@allure.feature("Order Management")
+@allure.story("Receivable Order List")
+@allure.title("Test_case_27: Receive remaining item as order initiator")
+@allure.description("Test case 27: Remaining item receipt by the order initiator.")
+@pytest.mark.order(27)
+def test_27_receive_remaining_item_as_order_initiator(page):
+    """
+    Test case 27: The order initiator receives the remaining items (same as sanity.py test 23).
+
+    Steps:
+        1. Receivable Order List: Search panel, date range today, search the framework order and view it.
+        2. Enter the second challan number ('challan_num_for_order_initiator_2') and select all items
+           (remaining quantity).
+        3. Add attachment and receiving remarks ('receiving_remarks', 3-255 characters).
+        4. Open the item receive popup and confirm.
+    """
+    global challan_num_for_order_initiator_2
+    assert challan_num_for_order_initiator, "Test case 25 must pass first: no order initiator challan available"
+    required_env_values = {
+        "test_receiving_remarks": receiving_remarks,
+        "test_receiving_attachment_file_remaining": receiving_attachment_file_remaining,
+    }
+    missing_env_values = [name for name, value in required_env_values.items() if not value]
+    assert not missing_env_values, f"Missing in .env: {', '.join(missing_env_values)}"
+    check_receiving_remarks_length("test_receiving_remarks", receiving_remarks)
+    attachment_path = UTILS_DIR / receiving_attachment_file_remaining
+    assert attachment_path.is_file(), f"Attachment not found in utils: {attachment_path}"
+
+    challan_num_for_order_initiator_2 = generate_challan_number()
+
+    # Step 1-4: Receive the remaining items
+    with allure.step(f"Step 1: Receive remaining items of {framework_order_no} "
+                     f"with challan {challan_num_for_order_initiator_2}"):
+        receive_order_items(
+            page,
+            challan_no=challan_num_for_order_initiator_2,
+            attachment_path=attachment_path,
+            remarks=receiving_remarks,
+            screenshot_prefix='order_initiator_remaining'
+        )
+
+
+@allure.suite("Administration")
+@allure.feature("Order Management")
+@allure.story("Item Received List")
+@allure.title("Test_case_28: Verify final item receipt")
+@allure.description("Test case 28: Final item received information verify by the order initiator.")
+@pytest.mark.order(28)
+def test_28_verify_final_item_receipt(page):
+    """
+    Test case 28: Verify the final item receipt (same as sanity.py test 24).
+
+    Steps:
+        1. Item Received List: Search panel, date range today, search the framework order and the
+           challan number ('challan_num_for_order_initiator_2').
+        2. Verify the challan is in the list and view it.
+        3. Log out from Administration.
+    """
+    assert challan_num_for_order_initiator_2, "Test case 27 must pass first: no second challan available"
+    verify_item_receipt(page, challan_no=challan_num_for_order_initiator_2,
+                        screenshot_prefix='order_initiator_remaining')
+
+    # Log out from Administration
+    with allure.step("Log out from Administration"):
+        MainNavigationMenu(page).logout_from_administration()
+        HomePage(page).get_full_page_screenshot('order_initiator_receiving_logout')
+
+
+@allure.suite("Item Receive")
+@allure.feature("Item Receive List")
+@allure.story("Item Receive Details Information")
+@allure.title("Test_case_29: View marketplace item receipt details in ERP")
+@allure.description("Test case 29: View marketplace item receive details in the procurement system.")
+@pytest.mark.order(29)
+def test_29_view_marketplace_item_receipt_details(page):
+    """
+    Test case 29: View marketplace item receive details in ERP (same as sanity.py test 25).
+
+    Steps:
+        1. Log in to ERP as the procurement admin ('proc_admin') and go to Procurement.
+        2. Item Receive > Item Receive List and search the framework order.
+        3. Open the item receive (MRR) details.
+        4. Exit and log out from ERP.
+    """
+    assert framework_order_no, "Test case 20 must pass first: no framework order number available"
+    assert proc_admin, "Missing in .env: test_proc_admin"
+
+    proc_dashboard_page = DashboardPage(page)
+    proc_home_page = ProcurementHomePage(page)
+    proc_item_receive_list_page = ItemReceiveList(page)
+
+    # Step 1: Log in as the procurement admin
+    with allure.step(f"Step 1: Log in to ERP as procurement admin {proc_admin}"):
+        erp_login(page, proc_admin)
+        proc_dashboard_page.goto_procurement()
+        proc_dashboard_page.get_full_page_screenshot('proc_admin_item_receive_dashboard')
+
+    # Step 2: Item Receive List and search the framework order
+    with allure.step(f"Step 2: Search framework order {framework_order_no} in Item Receive List"):
+        proc_home_page.goto_item_receive_list()
+        proc_home_page.get_full_page_screenshot('proc_item_receive_list')
+        proc_item_receive_list_page.search_item_receive_order(receivable_item=framework_order_no)
+        proc_item_receive_list_page.get_full_page_screenshot('proc_item_receive_search')
+
+    # Step 3: Item receive (MRR) details
+    with allure.step(f"Step 3: Open item receive details of {framework_order_no}"):
+        proc_item_receive_list_page.item_receive_details_view()
+        proc_item_receive_list_page.get_full_page_screenshot('proc_item_receive_details')
+        allure.attach(
+            f"Framework order number: {framework_order_no}\nChallans: {challan_num_for_receiver}, "
+            f"{challan_num_for_order_initiator}, {challan_num_for_order_initiator_2}",
+            name="Item receive details",
+            attachment_type=allure.attachment_type.TEXT
+        )
+
+    # Step 4: Exit and log out from ERP
+    with allure.step("Step 4: Exit and log out from ERP"):
+        erp_logout(page, 'proc_admin_item_receive_logout')

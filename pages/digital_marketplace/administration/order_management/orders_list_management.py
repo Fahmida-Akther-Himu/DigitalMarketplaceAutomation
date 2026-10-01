@@ -1,4 +1,5 @@
 import re
+from playwright.sync_api import expect
 from pages.digital_marketplace.home_page import HomePage
 from utils.basic_actionsdm import BasicActionsDM
 
@@ -20,6 +21,10 @@ class OrdersListManagement(HomePage, BasicActionsDM):
         self.icon_expand = page.locator('i[class="far fa-angle-down"]')
         self.order_input = page.locator('#OrderNo')
         self.order_search_button = page.locator('button[id="search-orders"]')
+        # Order number autocomplete dropdown and orders grid rows
+        self.order_number_suggestions = page.locator(
+            "ul.ui-autocomplete:visible li, .tt-menu:visible .tt-suggestion, .k-list-container:visible li")
+        self.order_rows = page.locator("table tbody tr")
         # self.order = page.get_by_role("textbox", name="Order")
         # self.order_input = page.locator("#OrderNo")
 
@@ -80,6 +85,11 @@ class OrdersListManagement(HomePage, BasicActionsDM):
     def click_order_management_menu(self):
         self.click_on_btn(self.order_management_menu)
 
+    def open_order_management_menu_if_collapsed(self, submenu):
+        # Order Management menu toggles: click it only when the submenu is hidden
+        if not submenu.is_visible():
+            self.click_order_management_menu()
+
     # Use for search grid open
     def open_search_grid(self):
         self.click_on_btn(self.icon_expand)
@@ -97,3 +107,19 @@ class OrdersListManagement(HomePage, BasicActionsDM):
         # Click and fill
         self.order_input.click(force=True)  # force in case something is overlapping
         self.order_input.fill("2025/TRN-2668")
+
+    def open_search_panel_if_closed(self):
+        # Search panel is collapsible: open it only if the Order field is not visible
+        self.open_search_panel_if_collapsed(self.order_input)
+
+    def search_order_from_dropdown(self, order_no):
+        # Type the order number, click it in the dropdown if the page shows one, then Search again
+        self.fill_autocomplete_field(self.order_input, order_no)
+        self.move_mouse_away()
+        self.click_on_btn(self.order_search_button)
+        self.wait_for_timeout(3000)
+
+    def verify_order_in_list(self, order_no):
+        # The searched order is shown in the orders grid
+        expect(self.order_rows.filter(has_text=order_no).first).to_be_visible(timeout=15000)
+        print(f"Order found in orders list: {order_no}")

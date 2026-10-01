@@ -91,5 +91,6 @@ class RequisitionDetailsInformation(BasicActionsDM):
 
     def verify_requisition_item_count(self, fa_no, expected_count):
         fa_no_links = self.fa_no_hyperlink.filter(has_text=re.compile(rf"^\s*{re.escape(fa_no)}(\s|$|/)"))
-        expect(fa_no_links).to_have_count(expected_count)
+        # Requisition details page loads slowly: wait up to 30 seconds
+        expect(fa_no_links).to_have_count(expected_count, timeout=30000)
         print(f"Requisition items of {fa_no}: {expected_count}")
