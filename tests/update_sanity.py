@@ -46,7 +46,7 @@ from pages.erp_procurement.my_dashboard.procurement.requisition.requisition_appr
 from pages.erp_procurement.my_dashboard.procurement.requisition.requisition_details_information import \
     RequisitionDetailsInformation
 from pages.erp_procurement.main_navigation_bar import MainNavigationBar
-from pages.erp_procurement.my_dashboard.procurement.item_receive.itemreceivelist import ItemReceiveList
+from pages.erp_procurement.my_dashboard.procurement.item_receive.item_receive_list import ItemReceiveList
 from pages.erp_procurement.my_dashboard.procurement.bill_payable.create_vendor_bill_payable import \
     CreateVendorBillPayable
 from pages.erp_procurement.my_dashboard.procurement.bill_payable.vendor_billing_list import VendorBillingList
