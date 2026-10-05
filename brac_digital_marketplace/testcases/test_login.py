@@ -14,7 +14,6 @@ from pages.erp_procurement.reset_hub_page import ResetHubPage
 # install()
 
 
-
 def test_reset_login():
     reset_page = ResetHubPage(page=None)
 
@@ -26,32 +25,3 @@ def test_reset_login():
     print("Generated Link:" + link)
 
     assert isinstance(link, str) and link.startswith("http")
-
-
-# import os
-# import sys
-#
-# PROJECT_ROOT = os.path.abspath(
-#     os.path.join(
-#         os.path.dirname(__file__),
-#         "..",
-#         "..",
-#     )
-# )
-#
-# if PROJECT_ROOT not in sys.path:
-#     sys.path.insert(0, PROJECT_ROOT)
-#
-# from pages.erp_procurement.reset_hub_page import ResetHubPage
-#
-#
-# def test_reset_login():
-#     reset_page = ResetHubPage()
-#
-#     link = reset_page.generate_reset_link(
-#         env="erpstaging",
-#         username="761",
-#     )
-#
-#     assert isinstance(link, str)
-#     assert link.startswith(("http://", "https://"))

@@ -1,12 +1,10 @@
 import pytest
 from dotenv import load_dotenv
 import os
-import re
 import random
 import string
-from conftest import new_tab
+from conftest_3 import new_tab
 # from conftest_1 import new_tab
-from datetime import datetime, timedelta
 
 load_dotenv()
 
@@ -34,14 +32,13 @@ marketplace_url_qa = os.getenv("test_marketplace_url_qa")
 # order_reference_number = os.getenv("test_order_reference_number")
 
 # Page models for procurement
-from pages.digital_marketplace.procurement_login_page import ProcurementLoginPage
-from pages.digital_marketplace.dashboard_page import DashboardPage
-from pages.digital_marketplace.procurement_home_page import ProcurementHomePage
-from pages.digital_marketplace.main_navigation_bar import MainNavigationBar
-from pages.digital_marketplace.framework_information import FrameworkInformation
-from pages.digital_marketplace.framework_order_list import FrameworkOrderListPage
-from pages.digital_marketplace.framework_list import FrameworkList
-from pages.digital_marketplace.framework_agreement_information import FrameworkAgreementInformation
+from pages.erp_procurement.procurement_login_page import ProcurementLoginPage
+from pages.erp_procurement.dashboard_page import DashboardPage
+from pages.erp_procurement.procurement_home_page import ProcurementHomePage
+from pages.erp_procurement.main_navigation_bar import MainNavigationBar
+from pages.erp_procurement.my_dashboard.procurement.purchase_order.framework_information import FrameworkInformation
+from pages.erp_procurement.my_dashboard.procurement.purchase_order.framework_list import FrameworkList
+from pages.erp_procurement.my_dashboard.procurement.purchase_order.framework_agreement_information import FrameworkAgreementInformation
 
 # Page models for marketplace
 from pages.digital_marketplace.login_page import LoginPage
@@ -49,7 +46,6 @@ from pages.digital_marketplace.home_page import HomePage
 from pages.digital_marketplace.main_navigation_menu import MainNavigationMenu
 
 # For validation
-from playwright.sync_api import expect
 
 # Import for beautiful reporting
 from rich.traceback import install

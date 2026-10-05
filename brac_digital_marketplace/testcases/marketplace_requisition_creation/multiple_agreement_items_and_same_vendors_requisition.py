@@ -1,11 +1,7 @@
 from dotenv import load_dotenv
 import os
-import re
-import random
-import string
 import pytest
-from conftest import new_tab
-from datetime import datetime, timedelta
+from conftest_3 import new_tab
 
 # from tests.testcases.test_r import whitelisted_agreement_number
 
@@ -36,27 +32,24 @@ marketplace_url_qa = os.getenv("test_marketplace_url_qa")
 marketplace_password = os.getenv("test_marketplace_password")
 
 # Page models for procurement
-from pages.digital_marketplace.procurement_login_page import ProcurementLoginPage
-from pages.digital_marketplace.dashboard_page import DashboardPage
-from pages.digital_marketplace.procurement_home_page import ProcurementHomePage
-from pages.digital_marketplace.requisition_creation import CreateReqPage
-from pages.digital_marketplace.requisition_list import RequisitionList
-from pages.digital_marketplace.main_navigation_bar import MainNavigationBar
-from pages.digital_marketplace.requisition_approve_list import RequisitionApproveList
-from pages.digital_marketplace.requisition_details_information import RequisitionDetailsInformation
-from pages.digital_marketplace.framework_information import FrameworkInformation
-from pages.digital_marketplace.framework_order_list import FrameworkOrderListPage
-from pages.digital_marketplace.proc_item_receive_list import ProcItemReceiveListPage
+from pages.erp_procurement.procurement_login_page import ProcurementLoginPage
+from pages.erp_procurement.dashboard_page import DashboardPage
+from pages.erp_procurement.procurement_home_page import ProcurementHomePage
+from pages.erp_procurement.my_dashboard.procurement.requisition.create_requisition import CreateReqPage
+from pages.erp_procurement.my_dashboard.procurement.requisition.requisition_list import RequisitionList
+from pages.erp_procurement.main_navigation_bar import MainNavigationBar
+from pages.erp_procurement.my_dashboard.procurement.requisition.requisition_approve_list import RequisitionApproveList
+from pages.erp_procurement.my_dashboard.procurement.requisition.requisition_details_information import RequisitionDetailsInformation
+from pages.erp_procurement.my_dashboard.procurement.purchase_order.framework_information import FrameworkInformation
 
 # Page models for marketplace
 from pages.digital_marketplace.login_page import LoginPage
 from pages.digital_marketplace.home_page import HomePage
-from pages.digital_marketplace.active_requisition_list import ActiveRequisitionListPage
-from pages.digital_marketplace.active_requisition_product_list import ActiveRequisitionProductList
+from pages.digital_marketplace.public_side.my_account.active_requisition_list import ActiveRequisitionListPage
+from pages.digital_marketplace.public_side.my_account.active_requisition_product_list import ActiveRequisitionProductList
 from pages.digital_marketplace.main_navigation_menu import MainNavigationMenu
 
 # For validation
-from playwright.sync_api import expect
 
 # Import for beautiful reporting
 from rich.traceback import install

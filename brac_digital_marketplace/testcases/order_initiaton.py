@@ -2,8 +2,7 @@ from dotenv import load_dotenv
 import os
 import random
 import string
-import pytest
-from conftest import new_tab
+from conftest_1 import new_tab
 from datetime import datetime
 
 load_dotenv()
@@ -31,7 +30,7 @@ stg_vendor_pass = os.getenv("test_stg_vendor_pass")
 receiving_pin_1 = os.getenv("test_receiving_pin")
 sso_login_receiver_pin = os.getenv("test_sso_login_receiver_pin")
 order_approver = os.getenv("test_order_approver")
-marketplace_admin = os.getenv("test_order_admin")
+dm_admin = os.getenv("test_order_admin")
 manual_delivery_location_1 = os.getenv("test_delivery_location_1")
 manual_delivery_location_2 = os.getenv("test_delivery_location_2")
 dm_user_gen_password = os.getenv("test_dm_user_gen_password")
@@ -41,35 +40,35 @@ proc_admin = os.getenv("test_proc_admin")
 # order_reference_number = os.getenv("test_order_reference_number")
 
 # Page models for procurement
-from pages.digital_marketplace.procurement_login_page import ProcurementLoginPage
-from pages.digital_marketplace.dashboard_page import DashboardPage
-from pages.digital_marketplace.procurement_home_page import ProcurementHomePage
-from pages.digital_marketplace.requisition_creation import CreateReqPage
-from pages.digital_marketplace.requisition_list import RequisitionList
-from pages.digital_marketplace.main_navigation_bar import MainNavigationBar
-from pages.digital_marketplace.requisition_approve_list import RequisitionApproveList
-from pages.digital_marketplace.requisition_details_information import RequisitionDetailsInformation
-from pages.digital_marketplace.framework_information import FrameworkInformation
-from pages.digital_marketplace.framework_order_list import FrameworkOrderListPage
-from pages.digital_marketplace.proc_item_receive_list import ProcItemReceiveListPage
-from pages.digital_marketplace.bill_list import BillList
-from pages.digital_marketplace.create_vendor_bill_payable import CreateVendorBillPayable
-from pages.digital_marketplace.bill_details import BillDetails
+from pages.erp_procurement.procurement_login_page import ProcurementLoginPage
+from pages.erp_procurement.dashboard_page import DashboardPage
+from pages.erp_procurement.procurement_home_page import ProcurementHomePage
+from pages.erp_procurement.my_dashboard.procurement.requisition.create_requisition import CreateReqPage
+from pages.erp_procurement.my_dashboard.procurement.requisition.requisition_list import RequisitionList
+from pages.erp_procurement.main_navigation_bar import MainNavigationBar
+from pages.erp_procurement.my_dashboard.procurement.requisition.requisition_approve_list import RequisitionApproveList
+from pages.erp_procurement.my_dashboard.procurement.requisition.requisition_details_information import RequisitionDetailsInformation
+from pages.erp_procurement.my_dashboard.procurement.purchase_order.framework_information import FrameworkInformation
+from pages.erp_procurement.my_dashboard.procurement.purchase_order.framework_order_list import FrameworkOrderListPage
+from pages.erp_procurement.my_dashboard.procurement.item_receive.item_receive_list import ItemReceiveList
+from pages.erp_procurement.my_dashboard.procurement.bill_payable.vendor_billing_list import VendorBillingList
+from pages.erp_procurement.my_dashboard.procurement.bill_payable.create_vendor_bill_payable import CreateVendorBillPayable
+from pages.erp_procurement.my_dashboard.procurement.bill_payable.bill_details_information import BillDetailsInformation
 
 # Page models for marketplace
 from pages.digital_marketplace.login_page import LoginPage
 from pages.digital_marketplace.home_page import HomePage
-from pages.digital_marketplace.shopping_cart import ShoppingCart
-from pages.digital_marketplace.checkout_page import CheckoutPage
+from pages.digital_marketplace.public_side.shopping_cart import ShoppingCart
+from pages.digital_marketplace.public_side.checkout_page import CheckoutPage
 from pages.digital_marketplace.main_navigation_menu import MainNavigationMenu
 from pages.digital_marketplace.public_side.my_account.pending_approval_orders import PendingApprovalOrders
-from pages.digital_marketplace.customers import Customers
-from pages.digital_marketplace.vendor_dashboard import VendorDashboard
-from pages.digital_marketplace.all_order_for_admin import AllOrderForAdminPage
-from pages.digital_marketplace.order_management import OrderManagement
-from pages.digital_marketplace.receivable_order_list import ReceivableOrderListPage
-from pages.digital_marketplace.item_received_list import ItemReceivedList
-from pages.digital_marketplace.order_details_administration import OrderDetailsAdministration
+from pages.digital_marketplace.administration.customers import Customers
+from pages.digital_marketplace.administration.vendor_dashboard import VendorDashboard
+from pages.digital_marketplace.public_side.my_account.all_order_for_admin import AllOrderForAdminPage
+from pages.digital_marketplace.administration.order_management.orders_list_management import OrdersListManagement
+from pages.digital_marketplace.administration.order_management.receivable_order_list import ReceivableOrderList
+from pages.digital_marketplace.administration.order_management.item_received_list import ItemReceivedList
+from pages.digital_marketplace.administration.order_management.order_details_administration import OrderDetailsAdministration
 
 # For validation
 
@@ -101,24 +100,9 @@ bill_approver_id = ''
 bill_recommender_3 = ''
 
 
-@pytest.mark.reporting(
-    functional_specification="test_1",
-    test_description="""Test Case 1: Login to the ERP Procurement system and create & submit a requisition for white listed agreement item.
-
-    Objective:
-        To validate that a user can successfully log in to the ERP Procurement system,
-        create a requisition using a whitelisted framework agreement item,
-        provide all necessary requisition details, and submit it successfully —
-        generating a unique requisition number for further processing.""")
 def test_1_create_requisition_with_whitelisted_agreement_item(page):
     """
     Test Case 1: Login to the ERP Procurement system and create & submit a requisition for white listed agreement item.
-
-    Objective:
-        To validate that a user can successfully log in to the ERP Procurement system,
-        create a requisition using a whitelisted framework agreement item,
-        provide all necessary requisition details, and submit it successfully —
-        generating a unique requisition number for further processing.
 
     Steps:
         1. Login to the procurement portal using valid credentials.
@@ -159,10 +143,8 @@ def test_1_create_requisition_with_whitelisted_agreement_item(page):
     create_requisition_page.setting_active_framework_list(agreement_info="BPD/2024/FA-93")
     create_requisition_page.agreement_item_selector.nth(0).click()
     create_requisition_page.finalize_item_quantity(item_quantity="100")
-    create_requisition_page.setting_requisition_for_details("1202010501",
+    create_requisition_page.setting_requisition_for_details("[1202010501-01] Furniture and Fixture",
                                                             "Item remarks abc123@")
-    # create_requisition_page.setting_requisition_for_details("[1101010101-02] Petty Cash",
-    #                                                         "Item remarks abc123@")
     create_requisition_page.setting_same_schedule_for_date()
     create_requisition_page.setting_location_for_head_office(address="Gulshan 1, Head Office, Dhaka - 1200")
     create_requisition_page.get_full_page_screenshot('full_page_screenshot_3')
@@ -173,15 +155,7 @@ def test_1_create_requisition_with_whitelisted_agreement_item(page):
     create_requisition_page.get_full_page_screenshot('full_page_screenshot_4')
 
 
-@pytest.mark.reporting(
-    functional_specification="test_1",
-    test_description="""Test Case 2: Identify and capture the first approver of a submitted requisition.
-
-    Objective:
-        To verify that the system correctly retrieves the first-level approver
-        assigned to the newly created requisition, ensuring that workflow routing
-        is functioning as expected.""")
-def test_2_identify_first_approver_for_created_requisition(page):
+def test_2_find_1st_approver_of_the_requisition(page):
     """
     Test Case 2: Identify and capture the first approver of a submitted requisition.
 
@@ -215,15 +189,7 @@ def test_2_identify_first_approver_for_created_requisition(page):
     m_page.wait_for_timeout(2000)
 
 
-@pytest.mark.reporting(
-    functional_specification="test_1",
-    test_description="""Test Case 3: Login as the first approver and approve the submitted requisition in the ERP Procurement system.
-
-    Objective:
-        To verify that the first-level approver can successfully log in to the
-        procurement portal, locate the submitted requisition, and approve it,
-        ensuring that the workflow moves correctly to the next approval stage.""")
-def test_3_login_as_first_approver_and_approve_requisition(page):
+def test_3_login_as_1st_approver_and_approve_requisition(page):
     """
     Test Case 3: Login as the first approver and approve the submitted requisition in the ERP Procurement system.
 
@@ -274,15 +240,7 @@ def test_3_login_as_first_approver_and_approve_requisition(page):
     m_page.wait_for_timeout(2000)
 
 
-@pytest.mark.reporting(
-    functional_specification="test_1",
-    test_description="""Test Case 4: Identify and capture the second-level approver of a submitted requisition in the ERP Procurement system.
-
-    Objective:
-        To verify that the system correctly retrieves the second-level approver
-        for a previously submitted requisition, ensuring that the approval workflow
-        is routed correctly to the next approver.""")
-def test_4_identify_second_approver_for_created_requisition(page):
+def test_4_find_2nd_approver_of_the_requisition(page):
     """
     Test Case 4: Identify and capture the second-level approver of a submitted requisition in the ERP Procurement system.
 
@@ -334,14 +292,7 @@ def test_4_identify_second_approver_for_created_requisition(page):
     m_page.wait_for_timeout(2000)
 
 
-@pytest.mark.reporting(
-    functional_specification="test_1",
-    test_description="""Test Case 5: Login as the second-level approver and approve the submitted requisition in the ERP Procurement system.
-
-    Objective:
-        To verify that the second-level approver can successfully log in, locate the requisition,
-        and approve it, ensuring that the approval workflow progresses correctly to the next stage.""")
-def test_5_login_as_second_approver_and_approve_requisition(page):
+def test_5_login_as_2nd_approver_and_approve_requisition(page):
     """
     Test Case 5: Login as the second-level approver and approve the submitted requisition in the ERP Procurement system.
 
@@ -390,15 +341,7 @@ def test_5_login_as_second_approver_and_approve_requisition(page):
     m_page.wait_for_timeout(2000)
 
 
-@pytest.mark.reporting(
-    functional_specification="test_1",
-    test_description="""Test Case 6: Verify that the requisition is approved and retrieve vendor information from the ERP Procurement system.
-
-    Objective:
-        To ensure that the requisition submitted and approved in previous steps
-        is correctly reflected as "Approved" in the system, and to capture
-        detailed information including the assigned vendor for documentation and verification.""")
-def test_6_verify_requisition_is_approved(page, new_tab):
+def test_6_check_requisition_approved(page, new_tab):
     """
     Test Case 6: Verify that the requisition is approved and retrieve vendor information from the ERP Procurement system.
 
@@ -475,15 +418,8 @@ def test_6_verify_requisition_is_approved(page, new_tab):
 # Marketplace flow
 # Order initiation
 
-@pytest.mark.reporting(
-    functional_specification="test_1",
-    test_description="""Test Case 7: Marketplace order initiation process in the Staging environment.
 
-    Objective:
-        To verify that a marketplace order can be initiated, processed, and confirmed successfully
-        by the order initiator, including selecting vendors, updating cart information, uploading attachments,
-        scheduling delivery, and confirming the order.""")
-def test_7_initiate_marketplace_order(page, new_tab):
+def test_7_marketplace_order_initiation_process(page, new_tab):
     """
     Test Case 7: Marketplace order initiation process in the Staging environment.
 
@@ -572,49 +508,12 @@ def test_7_initiate_marketplace_order(page, new_tab):
     checkout_page.get_full_page_screenshot('full_page_screenshot_29')
     checkout_page.wait_for_timeout(5000)
 
-    # # -----
-    # new_tab(lambda p: checkout_page.preview_button.click())
-    # proc_login_page = ProcurementLoginPage(new_tab)
-    # proc_login_page.perform_login(
-    #     given_url=proj_url,
-    #     user_name=proj_user,
-    #     pass_word=proj_pass,
-    #     timeout=60000
-    # )
-    # #----
-    # new_page = new_tab(lambda p: checkout_page.preview_button.click())
-    # checkout_page.get_full_page_screenshot('full_page_screenshot_30')
-    # proc_login_page = ProcurementLoginPage(new_page)
-    # proc_login_page.userName.click()
-    # proc_login_page.input_in_element(self.userName, proj_user)
-    # proc_login_page.passWord.click()
-    # proc_login_page.input_in_element(self.passWord, proj_user)
-    # proc_login_page.signBtn.click()
-    # proc_login_page.wait_for_timeout(2000)
-    # new_page.close()
-
-    # new_page_2 = new_tab(lambda p: checkout_page.preview_button.click())
-    # preview_details = Preview(new_page_2)
-    # preview_details.get_full_page_screenshot('full_page_screenshot_31')
-    # preview_details.icon.click()
-    # preview_details.get_full_page_screenshot('full_page_screenshot_32')
-    # preview_details.wait_for_timeout(5000)
-    # new_page_2.close()
-
     dm_logout = MainNavigationMenu(page)
     dm_logout.perform_logout()
     dm_logout.get_full_page_screenshot('full_page_screenshot_30')
 
 
-@pytest.mark.reporting(
-    functional_specification="test_1",
-    test_description="""Test Case 8: Marketplace order approval process by the designated approver.
-
-    Objective:
-        To verify that a marketplace order can be successfully approved by the
-        second-level approver ('approver_id_2') in the staging environment, ensuring
-        that the order moves correctly through the approval workflow.""")
-def test_8_approve_marketplace_order(page):
+def test_8_marketplace_order_approve_process(page):
     """
     Test Case 8: Marketplace order approval process by the designated approver.
 
@@ -670,14 +569,7 @@ def test_8_approve_marketplace_order(page):
     dm_logout.perform_logout()
 
 
-@pytest.mark.reporting(
-    functional_specification="test_1",
-    test_description="""Test Case 9: Retrieve vendor credentials for a specific marketplace order.
-
-    Objective:
-        To verify that the admin user can successfully access order details and retrieve
-        the vendor credentials associated with a specific order in the marketplace system.""")
-def test_9_retrieve_vendor_credentials_for_marketplace_order(page):
+def test_9_find_vendor_credential_for_order_in_marketplace(page):
     """
     Test Case 9: Retrieve vendor credentials for a specific marketplace order.
 
@@ -686,7 +578,7 @@ def test_9_retrieve_vendor_credentials_for_marketplace_order(page):
         the vendor credentials associated with a specific order in the marketplace system.
 
     Steps:
-        1. Login to the marketplace portal as an admin user ('marketplace_admin').
+        1. Login to the marketplace portal as an admin user ('dm_admin').
         2. Navigate to the "All Orders" page for admin and capture a screenshot.
         3. Search for the order using its reference number ('order_reference_number').
         4. Access the order details page and capture a screenshot.
@@ -700,7 +592,7 @@ def test_9_retrieve_vendor_credentials_for_marketplace_order(page):
     print("Test 9: Find vendor credential for order...")
     login_page = LoginPage(page)
     login_page.perform_login_for_sso_login(
-        user_name=marketplace_admin,
+        user_name=dm_admin,
         pass_word=marketplace_password
     )
     home_page = HomePage(page)
@@ -731,15 +623,7 @@ def test_9_retrieve_vendor_credentials_for_marketplace_order(page):
     dm_logout.logout_from_administration()
 
 
-@pytest.mark.reporting(
-    functional_specification="test_1",
-    test_description="""Test Case 10: Marketplace vendor acknowledgement process.
-
-    Objective:
-        To verify that a vendor can log in to the marketplace portal, acknowledge
-        the assigned order, generate a framework order number, and confirm
-        that the order appears correctly in the order management system.""")
-def test_10_vendor_acknowledges_marketplace_order(page):
+def test_10_marketplace_vendor_acknowledgement_process(page):
     """
     Test Case 10: Marketplace vendor acknowledgement process.
 
@@ -786,8 +670,8 @@ def test_10_vendor_acknowledges_marketplace_order(page):
     order_details_administration.click_back_to_order_list()
     order_details_administration.get_full_page_screenshot('full_page_screenshot_45')
 
-    order_list = OrderManagement(page)
-    current_date = datetime.today().strftime("%m-%d-%Y")
+    order_list = OrdersListManagement(page)
+    current_date = datetime.today().strftime("%d-%m-%Y")
     order_list.fill_date_range(start_date=current_date, end_date=current_date)
     order_list.search_order(order_no=framework_order_no)
     order_list.get_full_page_screenshot('full_page_screenshot_46')
@@ -797,14 +681,6 @@ def test_10_vendor_acknowledges_marketplace_order(page):
     dm_logout.logout_from_administration()
 
 
-@pytest.mark.reporting(
-    functional_specification="test_1",
-    test_description="""Test Case 11: View marketplace framework order details in the procurement system.
-
-    Objective:
-        To verify that a procurement admin can log in, navigate to the framework
-        order list, search for a specific framework order ('framework_order_no'),
-        and view its details in a new tab for validation purposes.""")
 def test_11_login_to_procurement_and_view_marketplace_work_order_details(page, new_tab):
     """
     Test Case 11: View marketplace framework order details in the procurement system.
@@ -858,15 +734,7 @@ def test_11_login_to_procurement_and_view_marketplace_work_order_details(page, n
 
 
 # Item receive by receiver
-@pytest.mark.reporting(
-    functional_specification="test_1",
-    test_description="""Test Case 12: Marketplace item receipt process by the designated receiver.
-
-    Objective:
-        To verify that a receiver can log in to the marketplace portal, access
-        the receivable orders, confirm receipt of items, upload necessary
-        attachments, and validate the received items in the system.""")
-def test_12_receiver_receives_marketplace_item(page):
+def test_12_marketplace_item_receive_by_receiver(page):
     """
     Test Case 12: Marketplace item receipt process by the designated receiver.
 
@@ -901,12 +769,12 @@ def test_12_receiver_receives_marketplace_item(page):
     home_page.get_full_page_screenshot('full_page_screenshot_52')
     home_page.wait_for_timeout(2000)
 
-    order_list = OrderManagement(page)
+    order_list = OrdersListManagement(page)
     order_list.click_order_management_menu()
 
-    receivable_order_list_page = ReceivableOrderListPage(page)
+    receivable_order_list_page = ReceivableOrderList(page)
     receivable_order_list_page.goto_receivable_order_list()
-    current_date = datetime.today().strftime("%m-%d-%Y")
+    current_date = datetime.today().strftime("%d-%m-%Y")
     receivable_order_list_page.fill_date_range(start_date=current_date, end_date=current_date)
     receivable_order_list_page.search_receivable_order(receivable_order_number=framework_order_no)
     receivable_order_list_page.get_full_page_screenshot('full_page_screenshot_53')
@@ -933,7 +801,7 @@ def test_12_receiver_receives_marketplace_item(page):
     receivable_order_list_page.get_full_page_screenshot('full_page_screenshot_56')
 
     item_receive_list_page = ItemReceivedList(page)
-    current_date = datetime.today().strftime("%m-%d-%Y")
+    current_date = datetime.today().strftime("%d-%m-%Y")
     item_receive_list_page.fill_date_range(start_date=current_date, end_date=current_date)
     item_receive_list_page.search_received_order(received_order_number=framework_order_no)
     item_receive_list_page.searched_received_order(
@@ -950,15 +818,7 @@ def test_12_receiver_receives_marketplace_item(page):
     dm_logout.logout_from_administration()
 
 
-@pytest.mark.reporting(
-    functional_specification="test_1",
-    test_description="""Test Case 13: Marketplace item receipt by order initiator acting as receiver.
-
-    Objective:
-        To verify that the order initiator can act as a receiver to confirm receipt
-        of items in the marketplace portal, including partial receipt scenarios,
-        uploading attachments, and validating received items in the system.""")
-def test_13_order_initiator_receives_marketplace_item(page):
+def test_13_marketplace_item_receive_by_order_initiator_as_receiver(page):
     """
     Test Case 13: Marketplace item receipt by order initiator acting as receiver.
 
@@ -994,12 +854,12 @@ def test_13_order_initiator_receives_marketplace_item(page):
     home_page.get_full_page_screenshot('full_page_screenshot_59')
     home_page.wait_for_timeout(2000)
 
-    order_list = OrderManagement(page)
+    order_list = OrdersListManagement(page)
     order_list.click_order_management_menu()
 
-    receivable_order_list_page = ReceivableOrderListPage(page)
+    receivable_order_list_page = ReceivableOrderList(page)
     receivable_order_list_page.goto_receivable_order_list()
-    current_date = datetime.today().strftime("%m-%d-%Y")
+    current_date = datetime.today().strftime("%d-%m-%Y")
     receivable_order_list_page.fill_date_range(start_date=current_date, end_date=current_date)
     receivable_order_list_page.search_receivable_order(receivable_order_number=framework_order_no)
     receivable_order_list_page.get_full_page_screenshot('full_page_screenshot_60')
@@ -1015,7 +875,7 @@ def test_13_order_initiator_receives_marketplace_item(page):
     receivable_order_list_page.input_quantity_to_receive(received_quantity="1")
 
     current_dir = os.getcwd()
-    document_location = os.path.join(current_dir, "utils", "PNG_image.png")
+    document_location = os.path.join(current_dir, "utils", "image_png.png")
     assert receivable_order_list_page.receiving_upload_attachment(document_location), "File upload failed"
 
     receivable_order_list_page.input_received_remarks(
@@ -1028,7 +888,7 @@ def test_13_order_initiator_receives_marketplace_item(page):
     receivable_order_list_page.get_full_page_screenshot('full_page_screenshot_63')
 
     item_receive_list_page = ItemReceivedList(page)
-    current_date = datetime.today().strftime("%m-%d-%Y")
+    current_date = datetime.today().strftime("%d-%m-%Y")
     item_receive_list_page.fill_date_range(start_date=current_date, end_date=current_date)
     item_receive_list_page.search_received_order(received_order_number=framework_order_no)
     item_receive_list_page.searched_received_order(
@@ -1041,9 +901,9 @@ def test_13_order_initiator_receives_marketplace_item(page):
     item_receive_list_page.wait_for_timeout(5000)
     item_receive_list_page.get_full_page_screenshot('full_page_screenshot_65')
 
-    receivable_order_list_page = ReceivableOrderListPage(page)
+    receivable_order_list_page = ReceivableOrderList(page)
     receivable_order_list_page.goto_receivable_order_list()
-    current_date = datetime.today().strftime("%m-%d-%Y")
+    current_date = datetime.today().strftime("%d-%m-%Y")
     receivable_order_list_page.fill_date_range(start_date=current_date, end_date=current_date)
     receivable_order_list_page.search_receivable_order(receivable_order_number=framework_order_no)
     receivable_order_list_page.get_full_page_screenshot('full_page_screenshot_66')
@@ -1070,7 +930,7 @@ def test_13_order_initiator_receives_marketplace_item(page):
     receivable_order_list_page.get_full_page_screenshot('full_page_screenshot_69')
 
     item_receive_list_page = ItemReceivedList(page)
-    current_date = datetime.today().strftime("%m-%d-%Y")
+    current_date = datetime.today().strftime("%d-%m-%Y")
     item_receive_list_page.fill_date_range(start_date=current_date, end_date=current_date)
     item_receive_list_page.search_received_order(received_order_number=framework_order_no)
     item_receive_list_page.searched_received_order(
@@ -1086,15 +946,7 @@ def test_13_order_initiator_receives_marketplace_item(page):
     dm_logout.logout_from_administration()
 
 
-@pytest.mark.reporting(
-    functional_specification="test_1",
-    test_description="""Test Case 14: View marketplace item receive details in the procurement system.
-
-    Objective:
-        To verify that a procurement admin can log in, access the item receive list,
-        search for a specific received item ('framework_order_no'), and view its details
-        in the procurement system.""")
-def test_14_login_to_procurement_and_view_marketplace_item_receipt_details(page):
+def test_14_login_to_procurement_and_view_marketplace_item_receive_details(page):
     """
     Test Case 14: View marketplace item receive details in the procurement system.
 
@@ -1129,7 +981,7 @@ def test_14_login_to_procurement_and_view_marketplace_item_receipt_details(page)
     proc_home_page.goto_item_receive_list()
     proc_home_page.get_full_page_screenshot('full_page_screenshot_73')
 
-    proc_item_receive_list_page = ProcItemReceiveListPage(page)
+    proc_item_receive_list_page = ItemReceiveList(page)
     proc_item_receive_list_page.search_item_receive_order(receivable_item=framework_order_no)
     proc_item_receive_list_page.get_full_page_screenshot('full_page_screenshot_74')
     proc_item_receive_list_page.item_receive_details_view()
@@ -1141,14 +993,7 @@ def test_14_login_to_procurement_and_view_marketplace_item_receipt_details(page)
     m_page.get_full_page_screenshot('full_page_screenshot_76')
 
 
-@pytest.mark.reporting(
-    functional_specification="test_1",
-    test_description="""Test Case 15: Bill creation and submission for Marketplace item receive in procurement system.
-
-    Objective:
-        To verify that a procurement user can create a vendor bill for received Marketplace items,
-        submit the bill, and assign the appropriate recommender for approval in the procurement system.""")
-def test_15_create_and_submit_bill_for_received_marketplace_item(page):
+def test_15_marketplace_item_receive_bill_creation_and_submit_in_procurement(page):
     """
     Test Case 15: Bill creation and submission for Marketplace item receive in procurement system.
 
@@ -1190,8 +1035,7 @@ def test_15_create_and_submit_bill_for_received_marketplace_item(page):
     create_vendor_bill.vendor_bill_payable_information_for_framework_order()
     create_vendor_bill.search_vendor(vendor_name=order_vendor)
     create_vendor_bill.select_order_no(order_num=framework_order_no)
-    create_vendor_bill.select_challan_no(challan_no=challan_num_for_order_initiator_2)
-    # create_vendor_bill.select_challan_no(challan_no=challan_num_for_receiver)
+    create_vendor_bill.select_challan_no(challan_no=challan_num_for_receiver)
 
     global bill_num
     create_vendor_bill.bill_number(bill_no_1=bill_num)
@@ -1206,7 +1050,7 @@ def test_15_create_and_submit_bill_for_received_marketplace_item(page):
     create_vendor_bill.wait_for_timeout(5000)
     create_vendor_bill.get_full_page_screenshot('full_page_screenshot_84')
 
-    bill_list_page = BillList(page)
+    bill_list_page = VendorBillingList(page)
     bill_list_page.go_to_billing_list()
     bill_list_page.get_full_page_screenshot('full_page_screenshot_85')
     bill_list_page.search_bill(bill_num)
@@ -1216,14 +1060,7 @@ def test_15_create_and_submit_bill_for_received_marketplace_item(page):
     bill_list_page.get_full_page_screenshot('full_page_screenshot_86')
 
 
-@pytest.mark.reporting(
-    functional_specification="test_1",
-    test_description="""Test Case 16: Vendor bill approval by first recommender in the procurement system.
-
-    Objective:
-        To verify that the first recommender can review, upload supporting documents,
-        approve a vendor bill, and assign the next approver in the workflow.""")
-def test_16_first_recommender_approves_marketplace_bill(page, new_tab):
+def test_16_vendor_bill_recommender1_approval_process_in_procurement(page, new_tab):
     """
     Test Case 16: Vendor bill approval by first recommender in the procurement system.
 
@@ -1242,10 +1079,10 @@ def test_16_first_recommender_approves_marketplace_bill(page, new_tab):
         8. Exit and log out from the procurement system, capturing a final screenshot.
     """
     print("Test 16: Vendor bill recommender1 approval...")
-    bill_list_page = BillList(page)
+    bill_list_page = VendorBillingList(page)
     new_page = new_tab(lambda p: bill_list_page.click_on_bill_num(bill_num))
 
-    bill_detail_page = BillDetails(new_page)
+    bill_detail_page = BillDetailsInformation(new_page)
     current_dir = os.getcwd()
     # print(f"Current directory: {current_dir}")
     document_location = os.path.join(current_dir, 'utils', 'upload_file.pdf')
@@ -1258,7 +1095,7 @@ def test_16_first_recommender_approves_marketplace_bill(page, new_tab):
     bill_detail_page.get_full_page_screenshot('full_page_screenshot_88')
     new_page.close()
 
-    bill_list_page = BillList(page)
+    bill_list_page = VendorBillingList(page)
     bill_list_page.search_bill(bill_num)
     global bill_recommender_2
     bill_recommender_2 = str(int(bill_list_page.find_approver_id(bill_num)))
@@ -1271,14 +1108,7 @@ def test_16_first_recommender_approves_marketplace_bill(page, new_tab):
     m_page.get_full_page_screenshot('full_page_screenshot_90')
 
 
-@pytest.mark.reporting(
-    functional_specification="test_1",
-    test_description="""Test Case 17: Vendor bill approval by second recommender in the procurement system.
-
-    Objective:
-        To verify that the second recommender can review and approve a vendor bill,
-        and the next approver (if any) is correctly assigned in the workflow.""")
-def test_17_second_recommender_approves_marketplace_bill(page, new_tab):
+def test_17_vendor_bill_recommender2_approval_process_in_procurement(page, new_tab):
     """
     Test Case 17: Vendor bill approval by second recommender in the procurement system.
 
@@ -1314,16 +1144,16 @@ def test_17_second_recommender_approves_marketplace_bill(page, new_tab):
     proc_home_page.goto_vendor_billing_list()
     proc_home_page.get_full_page_screenshot('full_page_screenshot_92')
 
-    bill_list_page = BillList(page)
+    bill_list_page = VendorBillingList(page)
     bill_list_page.search_bill(bill_num)
     new_page = new_tab(lambda p: bill_list_page.click_on_bill_num(bill_num))
 
-    bill_detail_page = BillDetails(new_page)
+    bill_detail_page = BillDetailsInformation(new_page)
     bill_detail_page.approve_bill()
     bill_detail_page.get_full_page_screenshot('full_page_screenshot_93')
     new_page.close()
 
-    bill_list_page = BillList(page)
+    bill_list_page = VendorBillingList(page)
     page.reload()
     # bill_list_page.wait_for_timeout(5000)
     #     bill_list_page.navigate_to_url(bill_payable_url)
@@ -1341,13 +1171,6 @@ def test_17_second_recommender_approves_marketplace_bill(page, new_tab):
     m_page.get_full_page_screenshot('full_page_screenshot_96')
 
 
-@pytest.mark.reporting(
-    functional_specification="test_1",
-    test_description="""Test Case 18: Vendor bill final approval by the approver in the procurement system.
-
-    Objective:
-        To verify that the final approver can review and approve the vendor bill,
-        confirm that the bill status is updated correctly after approval and sent it to HO-FIN.""")
 def test_18_vendor_bill_approver_approval_process_in_procurement(page, new_tab):
     """
     Test Case 18: Vendor bill final approval by the approver in the procurement system.
@@ -1386,19 +1209,19 @@ def test_18_vendor_bill_approver_approval_process_in_procurement(page, new_tab):
     proc_home_page.goto_vendor_billing_list()
     proc_home_page.get_full_page_screenshot('full_page_screenshot_98')
 
-    bill_list_page = BillList(page)
+    bill_list_page = VendorBillingList(page)
     bill_list_page.search_bill(bill_num)
     bill_list_page.get_full_page_screenshot('full_page_screenshot_99')
     new_page = new_tab(lambda p: bill_list_page.click_on_bill_num(bill_num))
 
-    bill_detail_page = BillDetails(new_page)
+    bill_detail_page = BillDetailsInformation(new_page)
     bill_detail_page.wait_for_timeout(5000)
     bill_detail_page.get_full_page_screenshot('full_page_screenshot_100')
     bill_detail_page.approve_bill()
     bill_detail_page.get_full_page_screenshot('full_page_screenshot_101')
     new_page.close()
 
-    bill_list_page = BillList(page)
+    bill_list_page = VendorBillingList(page)
     page.reload()
     bill_list_page.wait_for_timeout(5000)
     bill_list_page.get_full_page_screenshot('full_page_screenshot_102')

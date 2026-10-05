@@ -1,11 +1,7 @@
 from dotenv import load_dotenv
 import os
-import re
 import random
-import string
 import pytest
-from conftest import new_tab
-from datetime import datetime, timedelta
 
 load_dotenv()
 
@@ -38,29 +34,17 @@ proc_admin = os.getenv("test_proc_admin")
 # order_reference_number = os.getenv("test_order_reference_number")
 
 # Page models for procurement
-from pages.digital_marketplace.procurement_login_page import ProcurementLoginPage
-from pages.digital_marketplace.dashboard_page import DashboardPage
-from pages.digital_marketplace.procurement_home_page import ProcurementHomePage
-from pages.digital_marketplace.requisition_creation import CreateReqPage
-from pages.digital_marketplace.requisition_list import RequisitionList
-from pages.digital_marketplace.main_navigation_bar import MainNavigationBar
-from pages.digital_marketplace.requisition_approve_list import RequisitionApproveList
-from pages.digital_marketplace.requisition_details_information import RequisitionDetailsInformation
-from pages.digital_marketplace.framework_information import FrameworkInformation
-from pages.digital_marketplace.framework_order_list import FrameworkOrderListPage
-from pages.digital_marketplace.proc_item_receive_list import ProcItemReceiveListPage
+from pages.erp_procurement.procurement_login_page import ProcurementLoginPage
+from pages.erp_procurement.dashboard_page import DashboardPage
+from pages.erp_procurement.procurement_home_page import ProcurementHomePage
+from pages.erp_procurement.my_dashboard.procurement.requisition.create_requisition import CreateReqPage
 # from pages.digital_marketplace.bill_list import BillList
 # from pages.digital_marketplace.create_vendor_bill_payable import CreateVendorBillPayable
 # from pages.digital_marketplace.bill_details import BillDetails
 
 # Page models for marketplace
-from pages.digital_marketplace.login_page import LoginPage
-from pages.digital_marketplace.home_page import HomePage
 # from pages.digital_marketplace.shopping_cart import ShoppingCart
 # from pages.digital_marketplace.checkout_page import CheckoutPage
-from pages.digital_marketplace.main_navigation_menu import MainNavigationMenu
-from pages.digital_marketplace.active_requisition_list import ActiveRequisitionListPage
-from pages.digital_marketplace.active_requisition_product_list import ActiveRequisitionProductList
 from pages.digital_marketplace.pending_approval_orders import PendingApprovalOrders
 # from pages.digital_marketplace.customers import Customers
 # from pages.digital_marketplace.product_switch_history import ProductSwitchHistory
@@ -70,10 +54,8 @@ from pages.digital_marketplace.pending_approval_orders import PendingApprovalOrd
 # from pages.digital_marketplace.receivable_order_list import ReceivableOrderListPage
 # from pages.digital_marketplace.item_received_list import ItemReceivedList
 # from pages.digital_marketplace.order_details_administration import OrderDetailsAdministration
-from pages.digital_marketplace.preview import Preview
 
 # For validation
-from playwright.sync_api import expect
 
 # Import for beautiful reporting
 from rich.traceback import install

@@ -80,7 +80,7 @@ from pages.erp_procurement.my_dashboard.table_of_authority.authority_delegation.
     DelegationOfAuthority
 from pages.erp_procurement.my_dashboard.table_of_authority.authority_delegation.delegation_of_authority_list import \
     DelegationOfAuthorityListPage
-from pages.erp_procurement.my_dashboard.procurement.item_receive.itemreceivelist import ItemReceiveList
+from pages.erp_procurement.my_dashboard.procurement.item_receive.item_receive_list import ItemReceiveList
 from pages.erp_procurement.my_dashboard.procurement.bill_payable.create_vendor_bill_payable import \
     CreateVendorBillPayable
 from pages.erp_procurement.my_dashboard.procurement.bill_payable.vendor_billing_list import VendorBillingList

@@ -1,11 +1,7 @@
 from dotenv import load_dotenv
 import os
-import re
-import random
-import string
 import pytest
-from conftest import new_tab
-from datetime import datetime, timedelta
+from conftest_3 import new_tab
 
 # from tests.testcases.test_r import whitelisted_agreement_number
 
@@ -20,45 +16,46 @@ proj_user = os.getenv("test_user_name")
 proj_pass = os.getenv("test_user_pass")
 requisition_project_name = os.getenv("test_requisition_project_name")
 whitelisted_agreement_number = os.getenv("test_whitelisted_agreement_number")
-# same_vendor_agreement_number_1 = os.getenv("test_same_vendor_agreement_number_1")
-# same_vendor_agreement_number_2 = os.getenv("test_same_vendor_agreement_number_2")
-different_vendors_agreement_number_1 = os.getenv("test_different_vendors_agreement_number_1")
+blacklisted_agreement_number = os.getenv("test_blacklisted_agreement_number")
 requisition_funding_source = os.getenv("test_requisition_funding_source")
 requisition_funding_remarks = os.getenv("test_requisition_funding_remarks")
 master_item_1 = os.getenv("test_master_item_1")
 master_item_1_full_path = os.getenv("test_master_item_1_full_path")
+
 master_item_2 = os.getenv("test_master_item_2")
 master_item_2_full_path = os.getenv("test_master_item_2_full_path")
+
+master_item_3 = os.getenv("test_master_item_3")
+master_item_3_full_path = os.getenv("test_master_item_3_full_path")
+
 item_gl_code_1 = os.getenv("test_item_gl_code_1")
 item_gl_code_2 = os.getenv("test_item_gl_code_2")
+item_gl_code_3 = os.getenv("test_item_gl_code_3")
 requisition_item_remarks = os.getenv("test_requisition_item_remarks")
-other_schedule_address = os.getenv("test_other_schedule_address")
+schedule_address = os.getenv("test_schedule_address")
 
 marketplace_url_qa = os.getenv("test_marketplace_url_qa")
 marketplace_password = os.getenv("test_marketplace_password")
 
 # Page models for procurement
-from pages.digital_marketplace.procurement_login_page import ProcurementLoginPage
-from pages.digital_marketplace.dashboard_page import DashboardPage
-from pages.digital_marketplace.procurement_home_page import ProcurementHomePage
-from pages.digital_marketplace.requisition_creation import CreateReqPage
-from pages.digital_marketplace.requisition_list import RequisitionList
-from pages.digital_marketplace.main_navigation_bar import MainNavigationBar
-from pages.digital_marketplace.requisition_approve_list import RequisitionApproveList
-from pages.digital_marketplace.requisition_details_information import RequisitionDetailsInformation
-from pages.digital_marketplace.framework_information import FrameworkInformation
-from pages.digital_marketplace.framework_order_list import FrameworkOrderListPage
-from pages.digital_marketplace.proc_item_receive_list import ProcItemReceiveListPage
+from pages.erp_procurement.procurement_login_page import ProcurementLoginPage
+from pages.erp_procurement.dashboard_page import DashboardPage
+from pages.erp_procurement.procurement_home_page import ProcurementHomePage
+from pages.erp_procurement.my_dashboard.procurement.requisition.create_requisition import CreateReqPage
+from pages.erp_procurement.my_dashboard.procurement.requisition.requisition_list import RequisitionList
+from pages.erp_procurement.main_navigation_bar import MainNavigationBar
+from pages.erp_procurement.my_dashboard.procurement.requisition.requisition_approve_list import RequisitionApproveList
+from pages.erp_procurement.my_dashboard.procurement.requisition.requisition_details_information import RequisitionDetailsInformation
+from pages.erp_procurement.my_dashboard.procurement.purchase_order.framework_information import FrameworkInformation
 
 # Page models for marketplace
 from pages.digital_marketplace.login_page import LoginPage
 from pages.digital_marketplace.home_page import HomePage
-from pages.digital_marketplace.active_requisition_list import ActiveRequisitionListPage
-from pages.digital_marketplace.active_requisition_product_list import ActiveRequisitionProductList
+from pages.digital_marketplace.public_side.my_account.active_requisition_list import ActiveRequisitionListPage
+from pages.digital_marketplace.public_side.my_account.active_requisition_product_list import ActiveRequisitionProductList
 from pages.digital_marketplace.main_navigation_menu import MainNavigationMenu
 
 # For validation
-from playwright.sync_api import expect
 
 # Import for beautiful reporting
 from rich.traceback import install
@@ -69,73 +66,57 @@ install()
 req_num = ''
 approver_id = ''
 approver_id_2 = ''
-order_vendor_1 = ''
-order_vendor_2 = ''
-
-
-# approver_id_3 = ''
+order_vendor = ''
+# order_approver = ''
+approver_id_3 = ''
 
 
 @pytest.mark.reporting(
     functional_specification="test_1",
-    test_description="""Test Case 1: Create and Submit Requisition with Different Framework Agreements and Different Vendor Items.
+    test_description="""Create Requisition with Whitelisted, Blacklisted, and Non-Agreement Items.
 
     Objective:
         To verify that a user can successfully create and submit a requisition containing
-        multiple items sourced from the same vendor but associated with different
-        framework agreements.
-        """)
-def test_1_create_requisition_with_different_agreement_and_different_vendor_items(page):
+        a combination of:
+        - Whitelisted framework agreement items
+        - Blacklisted framework agreement items
+        - Non-framework (open market) items
+
+        and that the system correctly processes each item type within a single requisition.""")
+def test_1_create_requisition_with_whitelisted_blacklisted_and_non_agreement_item(page):
     """
-    Test Case 1: Create and Submit Requisition with Different Framework Agreements
-        and Different Vendor Items
+    Test Case 1: Create Requisition with Whitelisted, Blacklisted, and Non-Agreement Items.
 
     Objective:
-        To verify that a requisition can be successfully created and submitted
-        using multiple line items sourced from different vendors and different
-        framework agreements. This test validates that the system correctly
-        supports:
-            - Multiple framework agreement selection within a single requisition
-            - Vendor-specific agreement applicability (Both / HO)
-            - Item-level GL code assignment
-            - Item-level document attachment uploads
-            - Successful requisition submission with mixed vendor data
+        To verify that a user can successfully create and submit a requisition containing
+        a combination of:
+        - Whitelisted framework agreement items
+        - Blacklisted framework agreement items
+        - Non-framework (open market) items
+
+        and that the system correctly processes each item type within a single requisition.
 
     Steps:
-        1. Log in to the Procurement system using valid credentials.
-        2. Navigate to the Procurement dashboard.
+        1. Log in to the ERP Procurement system using valid user credentials.
+        2. Navigate to the Procurement module.
         3. Open the "Create Requisition" page.
-        4. Enter requisition header information including:
-            - Project name
-            - Funding source
-            - Funding remarks
-        5. Add the first requisition item:
-            a. Select a master item from the catalog.
-            b. Open the Active Framework Agreement popup.
-            c. Search and select a whitelisted framework agreement.
-            d. Set applicability to "Both".
-            e. Select an agreement item.
-            f. Enter item quantity.
-            g. Assign the appropriate GL code.
-            h. Upload a PDF attachment for the item.
-            i. Enter item-level remarks.
-            j. Add the item to the requisition item list.
-        6. Add the second requisition item:
-            a. Open the Active Framework Agreement popup again.
-            b. Search and select a framework agreement from a different vendor.
-            c. Set applicability to "HO".
-            d. Select an agreement item.
-            e. Enter item quantity.
-            f. Assign a different GL code.
-            g. Upload a JPG attachment for the item.
-            h. Add the item to the requisition item list.
-        7. Apply a common delivery schedule for all requisition items.
-        8. Set the delivery location to a non-head-office address.
-        9. Capture a full-page screenshot for verification.
-        10. Submit the requisition.
-        11. Capture and log the generated requisition number.
-        12. Navigate to the requisition list page.
-        13. Verify that the newly created requisition appears in the list.
+        4. Enter requisition header details such as project, funding source, and remarks.
+        5. Add a whitelisted framework agreement item:
+            - Select the active whitelisted agreement.
+            - Choose an agreement item and define quantity.
+            - Assign GL code and item remarks.
+        6. Add a blacklisted framework agreement item:
+            - Select the active blacklisted agreement.
+            - Choose an agreement item and define quantity.
+            - Assign GL code and item remarks.
+        7. Add a non-framework (non-agreement) item:
+            - Define item quantity and unit price.
+            - Assign GL code and item remarks.
+        8. Configure delivery schedule and location.
+        9. Submit the requisition.
+        10. Capture and store the generated requisition number.
+        11. Navigate to the requisition list and verify successful creation.
+
     """
     proc_login_page = ProcurementLoginPage(page)
     proc_login_page.perform_login(
@@ -159,41 +140,43 @@ def test_1_create_requisition_with_different_agreement_and_different_vendor_item
     create_requisition_page.setting_requisition_for(project_name=requisition_project_name)
     create_requisition_page.setting_requisition_information(fund_source=requisition_funding_source,
                                                             fund_remarks=requisition_funding_remarks)
-    # Same vendor first framework agreement item information setting
+    # Whitelisted framework agreement information
     create_requisition_page.setting_requisition_details(item_info_1=master_item_1, item_info_2=master_item_1_full_path)
 
     create_requisition_page.active_agreement_button.click()
     create_requisition_page.setting_active_framework_list(agreement_info=whitelisted_agreement_number)
-    create_requisition_page.setting_application_for_both()
     create_requisition_page.agreement_item_selector.nth(0).click()
     create_requisition_page.finalize_item_quantity(item_quantity="100")
-    create_requisition_page.setting_item_gl_code(gl_code=item_gl_code_1)
 
-    current_dir = os.getcwd()
-    document_path = os.path.join(current_dir, 'utils', 'upload_file.pdf')
-    create_requisition_page.upload_requisition_item_document(document_path)
-    create_requisition_page.wait_for_timeout(2000)
-    create_requisition_page.setting_item_remarks(item_remarks="Upload PDF file and automation test remarks 1")
-    create_requisition_page.add_item_requisition_details_information_list()
-    create_requisition_page.wait_for_timeout(2000)
+    create_requisition_page.setting_requisition_for_details(gl_code=item_gl_code_1,
+                                                            item_remarks=requisition_item_remarks)
 
+    # Blacklisted framework agreement information
     create_requisition_page.setting_requisition_details(item_info_1=master_item_2, item_info_2=master_item_2_full_path)
+
     create_requisition_page.active_agreement_button.click()
-    create_requisition_page.setting_active_framework_list(agreement_info=different_vendors_agreement_number_1)
-    create_requisition_page.setting_application_for_ho()
+    create_requisition_page.setting_active_framework_list(agreement_info=blacklisted_agreement_number)
     create_requisition_page.agreement_item_selector.nth(0).click()
+    # create_requisition_page.count_and_select_active_framework_items()
     create_requisition_page.finalize_item_quantity(item_quantity="90")
-    create_requisition_page.setting_item_gl_code(gl_code=item_gl_code_2)
 
-    current_dir = os.getcwd()
-    document_path = os.path.join(current_dir, 'utils', 'JPG_image.jpg')
-    create_requisition_page.upload_requisition_item_document(document_path)
-    create_requisition_page.wait_for_timeout(2000)
-    create_requisition_page.setting_item_remarks(item_remarks="")
-    create_requisition_page.add_item_requisition_details_information_list()
+    create_requisition_page.setting_requisition_for_details(gl_code=item_gl_code_2,
+                                                            item_remarks=requisition_item_remarks)
 
+    # Non-framework agreement information
+    create_requisition_page.setting_requisition_details(item_info_1=master_item_3, item_info_2=master_item_3_full_path)
+    create_requisition_page.finalize_item_quantity(item_quantity="50")
+    create_requisition_page.finalize_item_unit_price(unit_price="10")
+
+    create_requisition_page.setting_requisition_for_details(gl_code=item_gl_code_3,
+                                                            item_remarks=requisition_item_remarks)
+
+    # create_requisition_page.setting_requisition_for_details("1202010501",
+    #                                                         "Item remarks abc123@")
+    # create_requisition_page.setting_requisition_for_details("[1101010101-02] Petty Cash",
+    #                                                         "Item remarks abc123@")
     create_requisition_page.setting_same_schedule_for_date()
-    create_requisition_page.setting_location_for_other_location(address=other_schedule_address)
+    create_requisition_page.setting_location_for_central_store(address=schedule_address)
     create_requisition_page.get_full_page_screenshot('full_page_screenshot_3')
     global req_num
     req_num = create_requisition_page.submit_requisition()
@@ -470,30 +453,24 @@ def test_6_verify_requisition_is_approved(page, new_tab):
     req_status = requisition_list_page.find_requisition_status()
     print("REQ STATUS:", req_status)
     requisition_list_page.get_full_page_screenshot('full_page_screenshot_17')
+    # expect(req_status).to_be_equal("Approved")
+    # requisition_list_page.goto_requisition_details_information()
+    # requisition_list_page.requisition_no.nth(0).click()
 
     new_page = new_tab(lambda p: requisition_list_page.goto_requisition_details_information())
     requisition_list_page.get_full_page_screenshot('full_page_screenshot_18')
     req_details = RequisitionDetailsInformation(new_page)
+    # req_details.fa_no_hyperlink.nth(0).click()
     req_details.wait_for_timeout(2000)
     new_page_2 = new_tab(lambda p: req_details.fa_no_hyperlink.nth(0).click())
     req_details.get_full_page_screenshot('full_page_screenshot_19')
     framework_info = FrameworkInformation(new_page_2)
 
-    global order_vendor_1
-    order_vendor_1 = framework_info.get_vendor_info()
+    global order_vendor
+    order_vendor = framework_info.get_vendor_info()
     framework_info.wait_for_timeout(2000)
     framework_info.get_full_page_screenshot('full_page_screenshot_20')
     new_page_2.close()
-
-    new_page_3 = new_tab(lambda p: req_details.fa_no_hyperlink.nth(1).click())
-    req_details.get_full_page_screenshot('full_page_screenshot_19')
-    framework_info = FrameworkInformation(new_page_3)
-
-    global order_vendor_2
-    order_vendor_2 = framework_info.get_vendor_info()
-    framework_info.wait_for_timeout(2000)
-    framework_info.get_full_page_screenshot('full_page_screenshot_20')
-    new_page_3.close()
 
     req_details.wait_for_timeout(2000)
     new_page.close()
@@ -559,10 +536,7 @@ def test_7_verify_requisition_sync_to_marketplace(page, new_tab):
 
     active_requisition_product_list = ActiveRequisitionProductList(new_page)
     active_requisition_product_list.get_full_page_screenshot('full_page_screenshot_23')
-    active_requisition_product_list.history_link.nth(0).click()
-    active_requisition_product_list.go_to_product_history()
-    active_requisition_product_list.history_link.nth(1).click()
-    active_requisition_product_list.go_to_product_history()
+    active_requisition_product_list.view_product_switch_history()
     active_requisition_product_list.get_full_page_screenshot('full_page_screenshot_24')
     new_page.close()
 

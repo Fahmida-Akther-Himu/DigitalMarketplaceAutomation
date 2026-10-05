@@ -1,11 +1,7 @@
 from dotenv import load_dotenv
 import os
-import re
-import random
-import string
 import pytest
-from conftest import new_tab
-from datetime import datetime, timedelta
+from conftest_3 import new_tab
 
 load_dotenv()
 
@@ -14,6 +10,7 @@ proj_url = os.getenv("test_url")
 requisition_list_url = proj_url + "/procurementDashboard/myDashboard#!/requisition/list"
 
 # Procurement information
+proj_env = os.getenv("test_env")
 proj_user = os.getenv("test_user_name")
 proj_pass = os.getenv("test_user_pass")
 requisition_project_name = os.getenv("test_requisition_project_name")
@@ -54,27 +51,26 @@ marketplace_url_qa = os.getenv("test_marketplace_url_qa")
 marketplace_password = os.getenv("test_marketplace_password")
 
 # Page models for procurement
-from pages.digital_marketplace.procurement_login_page import ProcurementLoginPage
-from pages.digital_marketplace.dashboard_page import DashboardPage
-from pages.digital_marketplace.procurement_home_page import ProcurementHomePage
-from pages.digital_marketplace.requisition_creation import CreateReqPage
-from pages.digital_marketplace.requisition_list import RequisitionList
-from pages.digital_marketplace.main_navigation_bar import MainNavigationBar
-from pages.digital_marketplace.requisition_approve_list import RequisitionApproveList
-from pages.digital_marketplace.requisition_details_information import RequisitionDetailsInformation
-from pages.digital_marketplace.framework_information import FrameworkInformation
-from pages.digital_marketplace.framework_order_list import FrameworkOrderListPage
-from pages.digital_marketplace.proc_item_receive_list import ProcItemReceiveListPage
+from pages.erp_procurement.reset_hub_page import ResetHubPage
+from pages.erp_procurement.dashboard_page import DashboardPage
+from pages.erp_procurement.procurement_home_page import ProcurementHomePage
+from pages.erp_procurement.my_dashboard.procurement.requisition.create_requisition import CreateRequisition
+from pages.erp_procurement.my_dashboard.procurement.requisition.requisition_list import RequisitionList
+from pages.erp_procurement.main_navigation_bar import MainNavigationBar
+from pages.erp_procurement.my_dashboard.procurement.requisition.requisition_approve_list import RequisitionApproveList
+from pages.erp_procurement.my_dashboard.procurement.requisition.requisition_details_information import \
+    RequisitionDetailsInformation
+from pages.erp_procurement.my_dashboard.procurement.purchase_order.framework_information import FrameworkInformation
 
 # Page models for marketplace
 from pages.digital_marketplace.login_page import LoginPage
 from pages.digital_marketplace.home_page import HomePage
-from pages.digital_marketplace.active_requisition_list import ActiveRequisitionListPage
-from pages.digital_marketplace.active_requisition_product_list import ActiveRequisitionProductList
+from pages.digital_marketplace.public_side.my_account.active_requisition_list import ActiveRequisitionListPage
+from pages.digital_marketplace.public_side.my_account.active_requisition_product_list import \
+    ActiveRequisitionProductList
 from pages.digital_marketplace.main_navigation_menu import MainNavigationMenu
 
 # For validation
-from playwright.sync_api import expect
 
 # Import for beautiful reporting
 from rich.traceback import install
@@ -108,7 +104,7 @@ approver_id_3 = ''
         item additions, attachment uploads, scheduling, and final requisition
         submission without errors.
         """)
-def test_1_create_and_submit_requisition_with_multiple_items_and_attachments(page):
+def test_1_create_and_submit_requisition_with_multiple_items_and_attachments(page, logger):
     """
     Test Case 1: Create and Submit Requisition with Multiple Items and Attachments
 
@@ -159,13 +155,26 @@ def test_1_create_and_submit_requisition_with_multiple_items_and_attachments(pag
         12. Navigate to the requisition list page.
         13. Verify that the newly created requisition appears in the list.
     """
-    proc_login_page = ProcurementLoginPage(page)
-    proc_login_page.perform_login(
-        given_url=proj_url,
-        user_name=proj_user,
-        pass_word=proj_pass,
-        timeout=60000
+    # Using Test Server Login
+    # proc_login_page = ProcurementLoginPage(page)
+    # proc_login_page.perform_login(
+    #     given_url=proj_url,
+    #     user_name=proj_user,
+    #     pass_word=proj_pass,
+    #     timeout=60000
+    # )
+    # Using Staging Server Login
+    reset_page = ResetHubPage(page)
+
+    link = reset_page.generate_reset_link(
+        env=proj_env,
+        username=proj_user,
     )
+
+    print("Generated Link:" + link)
+    reset_page.open_generated_link(link)
+    assert isinstance(link, str) and link.startswith("http")
+    logger.step(f" 📥 Logging in as requisition initiator: {proj_user}")
 
     proc_dashboard_page = DashboardPage(page)
     proc_dashboard_page.goto_procurement()
@@ -176,7 +185,7 @@ def test_1_create_and_submit_requisition_with_multiple_items_and_attachments(pag
     proc_home_page.get_full_page_screenshot('full_page_screenshot_2')
 
     print("Test 1: Creating requisition...")
-    create_requisition_page = CreateReqPage(page)
+    create_requisition_page = CreateRequisition(page)
     # c_page.validate()
     create_requisition_page.setting_requisition_for(project_name=requisition_project_name)
     create_requisition_page.setting_requisition_information(fund_source=requisition_funding_source,
@@ -319,7 +328,7 @@ def test_1_create_and_submit_requisition_with_multiple_items_and_attachments(pag
             To verify that the system correctly retrieves the first-level approver
             assigned to the newly created requisition, ensuring that workflow routing
             is functioning as expected.""")
-def test_2_identify_first_approver_for_created_requisition(page):
+def test_2_identify_first_approver_for_created_requisition(page, logger):
     """
     Test Case 2: Identify and capture the first approver of a submitted requisition.
 
@@ -344,6 +353,7 @@ def test_2_identify_first_approver_for_created_requisition(page):
     global approver_id
     approver_id = str(int(requisition_list_page.find_approver_id()))
     print("APPROVER ID:", approver_id)
+    logger.step("Requisition first approver ID:", approver_id)
     requisition_list_page.get_full_page_screenshot('full_page_screenshot_6')
 
     m_page = MainNavigationBar(page)
@@ -361,7 +371,7 @@ def test_2_identify_first_approver_for_created_requisition(page):
             To verify that the first-level approver can successfully log in to the
             procurement portal, locate the submitted requisition, and approve it,
             ensuring that the workflow moves correctly to the next approval stage.""")
-def test_3_login_as_first_approver_and_approve_requisition(page):
+def test_3_login_as_first_approver_and_approve_requisition(page, logger):
     """
     Test Case 3: Login as the first approver and approve the submitted requisition in the ERP Procurement system.
 
@@ -383,13 +393,23 @@ def test_3_login_as_first_approver_and_approve_requisition(page):
         10. Log out from the session and capture a final screenshot.
     """
     print("Test 3: Logging in as first approver and approving requisition...")
-    proc_login_page = ProcurementLoginPage(page)
-    proc_login_page.perform_login(
-        given_url=proj_url,
-        user_name=approver_id,
-        pass_word=proj_pass,
-        timeout=60000
+    # proc_login_page = ProcurementLoginPage(page)
+    # proc_login_page.perform_login(
+    #     given_url=proj_url,
+    #     user_name=approver_id,
+    #     pass_word=proj_pass,
+    #     timeout=60000
+    # )
+    reset_page = ResetHubPage(page)
+    link = reset_page.generate_reset_link(
+        env=proj_env,
+        username=approver_id,
     )
+
+    print("Generated Link:" + link)
+    reset_page.open_generated_link(link)
+    assert isinstance(link, str) and link.startswith("http")
+    logger.step(f" 📥 Logging in as requisition first approver: {approver_id}")
 
     proc_dashboard_page = DashboardPage(page)
     proc_dashboard_page.menu_click_procurement_hyperlink()
@@ -420,7 +440,7 @@ def test_3_login_as_first_approver_and_approve_requisition(page):
             To verify that the system correctly retrieves the second-level approver
             for a previously submitted requisition, ensuring that the approval workflow
             is routed correctly to the next approver.""")
-def test_4_identify_second_approver_for_created_requisition(page):
+def test_4_identify_second_approver_for_created_requisition(page, logger):
     """
     Test Case 4: Identify and capture the second-level approver of a submitted requisition in the ERP Procurement system.
 
@@ -440,13 +460,27 @@ def test_4_identify_second_approver_for_created_requisition(page):
         8. Log out from the session and capture a final screenshot.
     """
     print("Test 4: Finding approver of the requisition again...")
-    proc_login_page = ProcurementLoginPage(page)
-    proc_login_page.perform_login(
-        given_url=proj_url,
-        user_name=proj_user,
-        pass_word=proj_pass,
-        timeout=60000
+
+    # Using Test Server Login
+    # proc_login_page = ProcurementLoginPage(page)
+    # proc_login_page.perform_login(
+    #     given_url=proj_url,
+    #     user_name=proj_user,
+    #     pass_word=proj_pass,
+    #     timeout=60000
+    # )
+    # Using Staging Server Login
+    reset_page = ResetHubPage(page)
+    link = reset_page.generate_reset_link(
+        env=proj_env,
+        username=proj_user,
     )
+
+    print("Generated Link:" + link)
+    reset_page.open_generated_link(link)
+    assert isinstance(link, str) and link.startswith("http")
+    logger.step(f" 📥 Logging in as requisition initiator: {proj_user}")
+
     proc_dashboard_page = DashboardPage(page)
     proc_dashboard_page.goto_procurement()
 
@@ -463,6 +497,7 @@ def test_4_identify_second_approver_for_created_requisition(page):
     # order_approver = requisition_list_page.find_approver_id()
     approver_id_2 = str(int(requisition_list_page.find_approver_id()))
     print("APPROVER ID 2:", approver_id_2)
+    logger.step("Approver ID 2:", approver_id_2)
     requisition_list_page.get_full_page_screenshot('full_page_screenshot_12')
 
     m_page = MainNavigationBar(page)
@@ -479,7 +514,7 @@ def test_4_identify_second_approver_for_created_requisition(page):
         Objective:
             To verify that the second-level approver can successfully log in, locate the requisition,
             and approve it, ensuring that the approval workflow progresses correctly to the next stage.""")
-def test_5_login_as_second_approver_and_approve_requisition(page):
+def test_5_login_as_second_approver_and_approve_requisition(page, logger):
     """
     Test Case 5: Login as the second-level approver and approve the submitted requisition in the ERP Procurement system.
 
@@ -500,13 +535,26 @@ def test_5_login_as_second_approver_and_approve_requisition(page):
         10. Log out from the session and capture a final screenshot.
     """
     print("Test 5: Logging in as second approver and approving requisition...")
-    proc_login_page = ProcurementLoginPage(page)
-    proc_login_page.perform_login(
-        given_url=proj_url,
-        user_name=approver_id_2,
-        pass_word=proj_pass,
-        timeout=60000  # Increased timeout for login
+    # Using Test Server Login
+    # proc_login_page = ProcurementLoginPage(page)
+    # proc_login_page.perform_login(
+    #     given_url=proj_url,
+    #     user_name=approver_id_2,
+    #     pass_word=proj_pass,
+    #     timeout=60000  # Increased timeout for login
+    # )
+    # Using Staging Server Login
+    reset_page = ResetHubPage(page)
+    link = reset_page.generate_reset_link(
+        env=proj_env,
+        username=approver_id_2,
     )
+
+    print("Generated Link:" + link)
+    reset_page.open_generated_link(link)
+    assert isinstance(link, str) and link.startswith("http")
+    logger.step(f" 📥 Logging in as requisition approver 2: {approver_id_2}")
+
     proc_dashboard_page = DashboardPage(page)
     proc_dashboard_page.goto_procurement()
 
@@ -536,7 +584,7 @@ def test_5_login_as_second_approver_and_approve_requisition(page):
             To ensure that the requisition submitted and approved in previous steps
             is correctly reflected as "Approved" in the system, and to capture
             detailed information including the assigned vendor for documentation and verification.""")
-def test_6_verify_requisition_is_approved(page, new_tab):
+def test_6_verify_requisition_is_approved(page, new_tab, logger):
     """
     Test Case 6: Verify that the requisition is approved and retrieve vendor information from the ERP Procurement system.
 
@@ -561,13 +609,26 @@ def test_6_verify_requisition_is_approved(page, new_tab):
         13. Log out from the session and capture a final screenshot.
     """
     print("Test 6: Checking requisition status after approval...")
-    proc_login_page = ProcurementLoginPage(page)
-    proc_login_page.perform_login(
-        given_url=proj_url,
-        user_name=proj_user,
-        pass_word=proj_pass,
-        timeout=60000
+    # Using Test Server Login
+    # proc_login_page = ProcurementLoginPage(page)
+    # proc_login_page.perform_login(
+    #     given_url=proj_url,
+    #     user_name=proj_user,
+    #     pass_word=proj_pass,
+    #     timeout=60000
+    # )
+    # Using Staging Server Login
+    reset_page = ResetHubPage(page)
+    link = reset_page.generate_reset_link(
+        env=proj_env,
+        username=proj_user,
     )
+
+    print("Generated Link:" + link)
+    reset_page.open_generated_link(link)
+    assert isinstance(link, str) and link.startswith("http")
+    logger.step(f" 📥 Logging in as requisition initiator: {proj_user}")
+
     proc_dashboard_page = DashboardPage(page)
     proc_dashboard_page.goto_procurement()
 
@@ -578,6 +639,7 @@ def test_6_verify_requisition_is_approved(page, new_tab):
     requisition_list_page.search_requisition(req_num)
     req_status = requisition_list_page.find_requisition_status()
     print("REQ STATUS:", req_status)
+    logger.step("Requisition final status", req_status)
     requisition_list_page.get_full_page_screenshot('full_page_screenshot_17')
     # expect(req_status).to_be_equal("Approved")
     # requisition_list_page.goto_requisition_details_information()
