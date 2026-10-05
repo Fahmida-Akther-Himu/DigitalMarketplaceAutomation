@@ -53,7 +53,7 @@ class DashboardPage(BasicActionsDM):
 
         # Delegation Of Authority List
         self.delegation_of_authority_list = page.locator(
-            '//span[@class="menuTxtSpan" and normalize-space()="Delegation Of Authority List"]/parent::a'
+            '#wrapper ul.main_top_navigation a[href="#!delegationOfAuthority/delegationList"]'
         )
 
     ##################### small helper so we can log easily #####################
@@ -96,6 +96,13 @@ class DashboardPage(BasicActionsDM):
 
         self._log("Opening Authority Delegation submenu")
         self.authority_delegation.click()
+        self.authority_delegation.hover()
+        # The flyout sometimes does not open after the first click: click again if the link is hidden
+        try:
+            self.delegation_of_authority_list.wait_for(state="visible", timeout=5000)
+        except Exception:
+            self.authority_delegation.click()
+            self.delegation_of_authority_list.wait_for(state="visible", timeout=10000)
 
         self._log("Opening Delegation of Authority List")
         self.delegation_of_authority_list.click()

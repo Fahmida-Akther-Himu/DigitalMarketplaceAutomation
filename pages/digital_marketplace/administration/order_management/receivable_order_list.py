@@ -42,9 +42,8 @@ class ReceivableOrderList(OrdersListManagement, BasicActionsDM):
         self.wait_for_timeout(2000)
 
     def search_receivable_order(self, receivable_order_number):
-        self.order_input.click()
-        self.input_in_element(self.order_input, receivable_order_number)
-        self.wait_for_timeout(2000)
+        # Order No. autocomplete: select the exact match if the dropdown is shown, then Search
+        self.fill_autocomplete_field(self.order_input, receivable_order_number)
         self.search_button.click()
 
     def receivable_order_view(self):
@@ -63,6 +62,14 @@ class ReceivableOrderList(OrdersListManagement, BasicActionsDM):
         self.quantity_to_receive.click()
         self.quantity_to_receive.clear()
         self.input_in_element(self.quantity_to_receive, received_quantity)
+        self.wait_for_timeout(2000)
+
+    def input_first_item_quantity_to_receive(self, received_quantity):
+        # Several items can be received together: change the first item's Quantity to Receive only
+        first_quantity = self.quantity_to_receive.first
+        first_quantity.click()
+        first_quantity.clear()
+        first_quantity.fill(str(received_quantity))
         self.wait_for_timeout(2000)
 
     def input_received_remarks(self, receiving_remarks):

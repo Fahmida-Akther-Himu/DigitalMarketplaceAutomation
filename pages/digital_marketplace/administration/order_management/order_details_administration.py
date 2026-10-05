@@ -20,6 +20,13 @@ class OrderDetailsAdministration(VendorDashboard, OrdersListManagement, BasicAct
 
         self.back_to_order_list = page.get_by_role("link", name="back to order list")
 
+        # Framework order number and order status after acknowledgement (same locators as sanity.py)
+        self.framework_order_number_text = page.locator(
+            'div.card-body:nth-child(6) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > '
+            'div:nth-child(2) > div:nth-child(1)')
+        self.acknowledged_order_status_text = page.locator(
+            '//*[@id="order-info"]/div[5]/div[1]/div/div[5]/div[2]/div')
+
     ##################### small helper so we can log easily #####################
     def _log(self, message: str):
         if self.logger:
@@ -51,3 +58,14 @@ class OrderDetailsAdministration(VendorDashboard, OrdersListManagement, BasicAct
 
     def click_order_management_menu(self):
         self.click_on_btn(self.order_management_menu)
+
+    def acknowledge_order_with_status(self):
+        # Acknowledge > Yes; returns the framework order number and the acknowledged order status
+        self.click_on_btn(self.acknowledge_button)
+        self.click_on_btn(self.yes_button)
+        framework_order_number = (self.framework_order_number_text.text_content() or "").strip()
+        self.wait_for_timeout(5000)
+        order_status = (self.acknowledged_order_status_text.text_content() or "").strip()
+        print(f"Framework order number: {framework_order_number}")
+        print(f"Acknowledged order status: {order_status}")
+        return framework_order_number, order_status

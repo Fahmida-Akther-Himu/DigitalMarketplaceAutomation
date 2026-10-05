@@ -1,3 +1,4 @@
+import re
 from utils.basic_actionsdm import BasicActionsDM
 
 
@@ -19,6 +20,12 @@ class FrameworkList(BasicActionsDM):
         self.hub_selection = page.locator("select[id='hub']")
         self.fa_no_link = page.locator("a[style='text-decoration: underline;'][onclick^='showDetails']")
         self.status_cell = page.locator("td[aria-describedby='frameworkListGrid_status']")
+        # Framework List grid rows, pager (page size and Next) and paging info
+        self.agreement_rows = page.locator("#frameworkListGrid tr.jqgrow")
+        self.page_size_select = page.locator("#frameworkListGridPager select.ui-pg-selbox")
+        self.next_page_button = page.locator("#frameworkListGridPager #next")
+        self.paging_info = page.locator("#frameworkListGridPager .ui-paging-info")
+        self.price_review_legend = page.locator("span.item-legend.price_review_item")
 
     ##################### small helper so we can log easily #####################
     def _log(self, message: str):
@@ -113,3 +120,71 @@ class FrameworkList(BasicActionsDM):
         print("DEBUG Approver ID:", approver)
 
         return approver
+
+    def search_agreement_with_enter(self, search_framework_agreement):
+        # The FA No. search filters the list after Enter (wait until the list is fully loaded first)
+        self.agreement_rows.first.wait_for(state="visible", timeout=60000)
+        self.wait_for_timeout(3000)
+        self.search_framework_number.click()
+        self.search_framework_number.fill(search_framework_agreement)
+        self.search_framework_number.press("Enter")
+        self.wait_for_timeout(5000)
+
+    def find_exact_agreement_row(self, base_fa_no, max_pages=20, exact_version=False):
+        # Exact base FA No. with an optional ERP version (/V1, /V2 ...), never BPD/2026/FA-50, FA-51 ...
+        # exact_version=True: only this exact FA No. (no other version)
+        version_part = "" if exact_version else "(/V\\d+)?"
+        fa_no_pattern = re.compile(rf"^\s*{re.escape(base_fa_no)}{version_part}\s*$")
+        agreement_row = self.agreement_rows.filter(
+            has=self.page.locator("td[aria-describedby='frameworkListGrid_agreementNo']", has_text=fa_no_pattern))
+        # Not on this page: go to the next page and check again
+        for _ in range(max_pages):
+            if agreement_row.count():
+                break
+            print(f"Agreement {base_fa_no} not found in: {self.paging_info.inner_text()}")
+            if "ui-state-disabled" in (self.next_page_button.get_attribute("class") or ""):
+                break
+            self.next_page_button.click()
+            self.wait_for_timeout(5000)
+        assert agreement_row.count(), f"Agreement {base_fa_no} not found in the Framework List"
+        agreement_row = agreement_row.first
+        fa_no = agreement_row.locator("td[aria-describedby='frameworkListGrid_agreementNo']").inner_text().strip()
+        print(f"Agreement found: {fa_no} ({self.paging_info.inner_text()})")
+        return agreement_row, fa_no
+
+    def get_row_initiator(self, agreement_row):
+        # Initiator column, e.g. "[00000761]-Md. Yusuf Ali Bhuiyan Manager, Procurement" -> ("761", name)
+        initiator_text = agreement_row.locator(
+            "td[aria-describedby='frameworkListGrid_initiatorName']").inner_text().strip()
+        initiator_pin = initiator_text.split("[")[1].split("]")[0]
+        initiator_name = initiator_text.split("]-", 1)[1].splitlines()[0].strip()
+        print(f"Agreement initiator: {initiator_pin} - {initiator_name}")
+        return str(int(initiator_pin)), initiator_name
+
+    def get_row_status_info(self, agreement_row):
+        # Status column, e.g. "Reviewer[00260331]-MAHADE HASSAN SHARKAR Manager, Procurement"
+        status_text = agreement_row.locator("td[aria-describedby='frameworkListGrid_status']").inner_text().strip()
+        status_info = {"Agreement Status": " ".join(status_text.split()), "Reviewer PIN": "",
+                       "Reviewer Name": "", "Reviewer Designation": ""}
+        if "[" in status_text and "]" in status_text:
+            status_info["Agreement Status"] = status_text.split("[")[0].strip()
+            status_info["Reviewer PIN"] = str(int(status_text.split("[")[1].split("]")[0]))
+            person_lines = [line.strip() for line in status_text.split("]", 1)[1].lstrip("-").splitlines()
+                            if line.strip()]
+            status_info["Reviewer Name"] = person_lines[0] if person_lines else ""
+            status_info["Reviewer Designation"] = " ".join(person_lines[1:])
+        for label, value in status_info.items():
+            print(f"{label}: {value}")
+        return status_info
+
+    def get_price_review_legend_color(self):
+        # Colour box of the "Price to be reviewed" legend in the Framework List header
+        return self.price_review_legend.evaluate("box => getComputedStyle(box).backgroundColor")
+
+    def get_row_color(self, agreement_row):
+        # Background colour of the agreement row (row colour, or its first cell colour)
+        return agreement_row.evaluate("""(row) => {
+            const rowColor = getComputedStyle(row).backgroundColor;
+            const cellColor = getComputedStyle(row.cells[1] || row.cells[0]).backgroundColor;
+            return rowColor !== 'rgba(0, 0, 0, 0)' ? rowColor : cellColor;
+        }""")

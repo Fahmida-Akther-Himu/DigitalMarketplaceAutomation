@@ -6,8 +6,17 @@ import random
 import string
 import pytest
 from datetime import datetime
+import allure
+# import pytest
+
 
 load_dotenv()
+
+from typing import Any
+from playwright.sync_api import Page
+from pathlib import Path
+
+pytestmark = pytest.mark.order  ## Test execution order enable kore. like: @pytest.mark.order(1)
 
 # Project URLs
 proj_url = os.getenv("test_url")
@@ -70,7 +79,7 @@ from pages.erp_procurement.my_dashboard.table_of_authority.authority_delegation.
     DelegationOfAuthority
 from pages.erp_procurement.my_dashboard.table_of_authority.authority_delegation.delegation_of_authority_list import \
     DelegationOfAuthorityListPage
-from pages.erp_procurement.my_dashboard.procurement.item_receive.itemreceivelist import ItemReceiveList
+from pages.erp_procurement.my_dashboard.procurement.item_receive.item_receive_list import ItemReceiveList
 from pages.erp_procurement.my_dashboard.procurement.bill_payable.create_vendor_bill_payable import \
     CreateVendorBillPayable
 from pages.erp_procurement.my_dashboard.procurement.bill_payable.vendor_billing_list import VendorBillingList
@@ -128,6 +137,51 @@ bill_recommender_2 = ''
 bill_recommender_3 = ''
 
 
+
+###
+@allure.suite("Create Requisition")
+@allure.feature("feature1")
+@allure.story("story1")
+@allure.title("Test_case_1: Create requisition with whitelisted agreement item")
+@allure.description("Fahmida d")
+@pytest.mark.order(1)
+#@pytest.mark.reporting( functional_specification="test_1", test_description="")
+def test_1_create_requisition_with_whitelisted_agreement_item(page, logger):
+
+    reset_page = ResetHubPage(page)
+
+    link = reset_page.generate_reset_link(
+        env=proj_env,
+        username=proj_user,
+    )
+
+    print("Generated Link:" + link)
+    #reset_page.get_full_page_screenshot('zzzzzzzz')
+    reset_page.open_generated_link(link)
+    assert isinstance(link, str) and link.startswith("http")
+    logger.step(f" 📥 Logging in as requisition initiator: {proj_user}")
+
+@allure.suite("Approve Requisition")
+@allure.feature("feature1")
+@allure.story("story2")
+@allure.title("Test_case_2")
+@allure.description("Fahmida d2")
+@pytest.mark.order(2)
+#@pytest.mark.reporting( functional_specification="test_1", test_description="")
+def test_2_fahmida (page, logger):
+    pass
+
+
+@allure.suite("Approve Requisition")
+@allure.feature("feature2")
+@allure.story("story3")
+@allure.title("Test_case_3")
+@allure.description("Fahmida d3")
+@pytest.mark.order(3)
+#@pytest.mark.reporting( functional_specification="test_1", test_description="")
+def test_3_zaima (page, logger):
+    pass
+'''
 @pytest.mark.reporting(
     functional_specification="test_1",
     test_description="""Test Case 1: Login to the ERP Procurement system and create & submit a requisition for white listed agreement item.
@@ -2061,3 +2115,6 @@ def test_21_vendor_bill_approver_approval_process_in_procurement(page, new_tab):
     m_page.exit()
     m_page.logout()
     m_page.get_full_page_screenshot('full_page_screenshot_112')
+
+
+'''   ###

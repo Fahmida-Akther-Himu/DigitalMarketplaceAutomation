@@ -1,5 +1,6 @@
 import re
 from itertools import count
+from playwright.sync_api import expect
 from utils.basic_actionsdm import BasicActionsDM
 from pages.digital_marketplace.home_page import HomePage
 
@@ -222,3 +223,8 @@ class PendingApprovalOrders(HomePage, BasicActionsDM):
         pending_approval_order_count = int(match.group(1))
         print(f"Pending Approval Order Count: {pending_approval_order_count}")
         return pending_approval_order_count
+
+    def verify_order_in_list(self, reference_number):
+        # The searched order reference number is shown in the Pending Approval Orders list
+        expect(self.page.get_by_text(reference_number).first).to_be_visible(timeout=15000)
+        print(f"Order found in pending approval list: {reference_number}")

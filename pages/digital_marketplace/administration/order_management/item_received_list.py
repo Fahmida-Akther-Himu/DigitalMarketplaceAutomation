@@ -1,3 +1,4 @@
+from playwright.sync_api import expect
 from pages.digital_marketplace.administration.order_management.orders_list_management import OrdersListManagement
 from utils.basic_actionsdm import BasicActionsDM
 
@@ -30,10 +31,20 @@ class ItemReceivedList(OrdersListManagement, BasicActionsDM):
         self.input_in_element(self.order_number_input.nth(0), received_order_number)
         self.click_on_btn(self.search_button_for_received_item)
 
+    def fill_received_order_number(self, order_no):
+        # Order No. autocomplete: select the exact match if the dropdown is shown (no Search click)
+        self.fill_autocomplete_field(self.order_number_input.first, order_no)
+
     def received_order_view(self):
         # self.click_on_btn(self.order_view_button.first())
         self.order_view_button.first.click()
         # self.order_view_button.nth(0).click()
 
     def searched_received_order(self, challan_no):
-        self.input_in_element(self.challan_no_input.nth(0), challan_no)
+        # Challan No. autocomplete: select the exact match if the dropdown is shown
+        self.fill_autocomplete_field(self.challan_no_input.first, challan_no)
+
+    def verify_challan_in_list(self, challan_no):
+        # The received challan is shown in the Item Received List grid
+        expect(self.order_rows.filter(has_text=challan_no).first).to_be_visible(timeout=15000)
+        print(f"Challan found in Item Received List: {challan_no}")

@@ -1,3 +1,4 @@
+import re
 from utils.basic_actionsdm import BasicActionsDM
 from pages.erp_procurement.procurement_home_page import ProcurementHomePage
 
@@ -220,3 +221,17 @@ class CreateVendorBillPayable(ProcurementHomePage, BasicActionsDM):
         self.page.keyboard.press(' ')
         self.wait_for_timeout(1000)
         self.page.keyboard.press('Enter')
+
+    def select_first_challan_found(self, challan_prefix: str) -> str:
+        # Search the challans of the order and select the first one found; returns the selected challan
+        self.challan_no.scroll_into_view_if_needed()
+        self.challan_no.type(challan_prefix)
+        first_challan = self.page.get_by_text(re.compile(rf"^\s*{re.escape(challan_prefix)}")).first
+        first_challan.wait_for(state="visible", timeout=10000)
+        first_challan.hover()
+        first_challan.click()
+        self.wait_for_timeout(1000)
+        # Selected challan = value shown in the Challan No. field (the suggestion may highlight only the typed part)
+        challan_text = self.challan_no.input_value().strip()
+        print(f"Selected challan for bill: {challan_text}")
+        return challan_text

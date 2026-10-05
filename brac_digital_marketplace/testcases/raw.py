@@ -1,12 +1,10 @@
 from dotenv import load_dotenv
-import re
 import random
 import string
-from conftest import new_tab
+from conftest_3 import new_tab
 # from conftest_1 import new_tab
 # from datetime import datetime, timedelta
 import os
-from datetime import datetime
 import pytest
 
 load_dotenv()
@@ -29,17 +27,13 @@ amended_agreement_approver = os.getenv("test_amended_agreement_approver")
 # order_reference_number = os.getenv("test_order_reference_number")
 
 # Page models for procurement
-from pages.digital_marketplace.procurement_login_page import ProcurementLoginPage
-from pages.digital_marketplace.dashboard_page import DashboardPage
-from pages.digital_marketplace.procurement_home_page import ProcurementHomePage
-from pages.digital_marketplace.main_navigation_bar import MainNavigationBar
-from pages.digital_marketplace.framework_information import FrameworkInformation
-from pages.digital_marketplace.framework_order_list import FrameworkOrderListPage
-from pages.digital_marketplace.framework_list import FrameworkList
-from pages.digital_marketplace.framework_agreement_information import FrameworkAgreementInformation
-from datetime import datetime
+from pages.erp_procurement.procurement_login_page import ProcurementLoginPage
+from pages.erp_procurement.dashboard_page import DashboardPage
+from pages.erp_procurement.procurement_home_page import ProcurementHomePage
+from pages.erp_procurement.main_navigation_bar import MainNavigationBar
+from pages.erp_procurement.my_dashboard.procurement.purchase_order.framework_information import FrameworkInformation
+from pages.erp_procurement.my_dashboard.procurement.purchase_order.framework_list import FrameworkList
 # For validation
-from playwright.sync_api import expect
 
 # Import for beautiful reporting
 from rich.traceback import install

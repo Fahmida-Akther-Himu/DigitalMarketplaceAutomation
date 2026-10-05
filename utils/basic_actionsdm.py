@@ -34,6 +34,29 @@ class BasicActionsDM:
             [color, duration_ms]
         )
 
+    def open_search_panel_if_collapsed(self, search_field, timeout=10000):
+        # Search panel may load expanded or collapsed: expand it only when the search field is hidden
+        if search_field.first.is_visible():
+            print("Search panel is already expanded")
+        else:
+            self.click_on_btn(self.page.locator('i[class="far fa-angle-down"]').first)
+            print("Search panel expanded")
+        expect(search_field.first).to_be_visible(timeout=timeout)
+
+    def fill_autocomplete_field(self, field, value, wait_ms=2000):
+        # Enter value -> exact match in the dropdown? select it : continue with the entered value
+        field.fill(value[:-1])
+        field.press_sequentially(value[-1])  # key event so the page shows its suggestions
+        suggestion = self.page.locator(
+            f'xpath=//*[not(self::input) and not(self::textarea) and not(ancestor::table)]'
+            f'[normalize-space(text())="{value}"]').first
+        try:
+            suggestion.wait_for(state="visible", timeout=wait_ms)
+            suggestion.click()
+            print(f"Selected {value} from the dropdown")
+        except Exception:
+            print(f"No dropdown shown for {value}, continuing with the entered value")
+
     def move_mouse_away(self):
         # Move the mouse to the top-left corner so no hover tooltip stays on the page after a click
         self.page.mouse.move(0, 0)
@@ -219,6 +242,8 @@ class BasicActionsDM:
         # Fill the input fields with the provided dates
         start_date_field.fill(start_date)
         end_date_field.fill(end_date)
+        # Date entry completed: End Date should not stay selected
+        end_date_field.blur()
 
         print(f"Print searching order Start Date: {start_date}, End Date: {end_date}")
 

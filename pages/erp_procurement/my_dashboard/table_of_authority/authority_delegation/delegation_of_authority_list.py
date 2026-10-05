@@ -1,4 +1,8 @@
 # import pages.login_page
+import re
+from datetime import datetime
+
+from playwright.sync_api import expect
 from utils.basic_actionsdm import BasicActionsDM
 
 
@@ -29,6 +33,13 @@ class DelegationOfAuthorityListPage(BasicActionsDM):
         self.delegated_approver_autocomplete = page.locator(
             'ul.ui-autocomplete[role="listbox"]:visible'
         )
+
+        # Delegation Of Authority grid rows (SL | Delegated User | PIN | Start Date | End Date | Remove)
+        self.delegation_rows = page.locator("table[role='grid'] tr.jqgrow")
+        # Delete alert: "Delete item(s)" and success message
+        self.delete_items_button = page.get_by_role("button", name="Delete item(s)")
+        self.delete_success_message = page.locator("#jGrowl").get_by_text(
+            "Delegation Of Authority deleted successfully")
 
     ##################### small helper so we can log easily #####################
 
@@ -91,3 +102,35 @@ class DelegationOfAuthorityListPage(BasicActionsDM):
         print(
             f"Delegated approver found successfully with PIN: {PIN}"
         )
+
+    def get_current_date_delegation_row(self, PIN: str):
+        # First row of the delegated approver whose Start Date <= today <= End Date (dates dd-mm-yyyy)
+        today = datetime.today().date()
+        self.wait_for_timeout(2000)
+        for index in range(self.delegation_rows.count()):
+            row = self.delegation_rows.nth(index)
+            row_text = row.inner_text()
+            dates = re.findall(r"\d{2}-\d{2}-\d{4}", row_text)
+            if PIN not in row_text or len(dates) < 2:
+                continue
+            start_date = datetime.strptime(dates[0], "%d-%m-%Y").date()
+            end_date = datetime.strptime(dates[1], "%d-%m-%Y").date()
+            if start_date <= today <= end_date:
+                print(f"Current date delegation found: {dates[0]} to {dates[1]}")
+                return row, f"{dates[0]} to {dates[1]}"
+        return None, None
+
+    def remove_current_date_delegations(self, PIN: str):
+        # Remove every delegation of the delegated approver for the current date; returns removed date ranges
+        removed_delegations = []
+        while True:
+            row, date_range = self.get_current_date_delegation_row(PIN)
+            if row is None:
+                break
+            self.highlight_element(row)
+            self.click_on_btn(row.get_by_text("Remove", exact=True))
+            self.click_on_btn(self.delete_items_button)
+            expect(self.delete_success_message).to_be_visible(timeout=15000)
+            print(f"Delegation removed: {date_range}")
+            removed_delegations.append(date_range)
+        return removed_delegations

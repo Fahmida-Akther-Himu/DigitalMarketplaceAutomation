@@ -722,135 +722,57 @@ def pytest_runtest_makereport(item, call):
 # AUTO HIGHLIGHT
 # =====================================================
 
-def highlight_locator(
-        locator: Locator,
-        action: str
-):
+# Locator actions that mark the field while Playwright interacts with it
+HIGHLIGHT_ACTIONS = ["click", "dblclick", "fill", "type", "press_sequentially",
+                     "check", "uncheck", "select_option", "set_input_files"]
+
+# Restore the original outline of every marked field
+_CLEAR_HIGHLIGHT_JS = """() => document.querySelectorAll('[data-pw-highlight]').forEach(el => {
+    el.style.outline = el.getAttribute('data-pw-highlight');
+    el.removeAttribute('data-pw-highlight');
+})"""
+
+
+def clear_highlight(page):
     try:
-
-        color = ACTION_COLORS.get(
-
-            action,
-
-            "red"
-
-        )
-
-        locator.evaluate(
-
-            f"""
-
-            (el)=>{{
-
-
-                const old =
-                el.style.outline;
-
-
-
-                el.style.outline =
-                '3px solid {color}';
-
-
-
-                setTimeout(()=>{{
-
-
-                    el.style.outline =
-                    old;
-
-
-                }},
-
-                {HIGHLIGHT_DURATION_MS});
-
-
-            }}
-
-            """
-
-        )
-
-
-
+        page.evaluate(_CLEAR_HIGHLIGHT_JS)
     except Exception:
+        pass  # page navigated after a click
 
+
+def highlight_locator(locator: Locator, action: str):
+    color = ACTION_COLORS.get(action, "red")
+    try:
+        # Remove the mark of the previous field, then mark the current field
+        locator.evaluate(
+            """(el, color) => {
+                (""" + _CLEAR_HIGHLIGHT_JS + """)();
+                el.setAttribute('data-pw-highlight', el.style.outline || '');
+                el.style.outline = `3px solid ${color}`;
+            }""",
+            color,
+            timeout=2000
+        )
+    except Exception:
         pass
 
 
 def install_auto_highlighter():
-    if getattr(
-
-            Locator,
-
-            "_selp_highlight",
-
-            False
-
-    ):
+    if getattr(Locator, "_selp_highlight", False):
         return
 
-    original_click = Locator.click
+    for action in HIGHLIGHT_ACTIONS:
+        original = getattr(Locator, action)
 
-    original_fill = Locator.fill
+        def wrapper(self, *args, _original=original, _action=action, **kwargs):
+            highlight_locator(self, _action)
+            try:
+                return _original(self, *args, **kwargs)
+            finally:
+                # No mark stays on the page after the action
+                clear_highlight(self.page)
 
-    def click(
-
-            self,
-
-            *args,
-
-            **kwargs
-
-    ):
-        highlight_locator(
-
-            self,
-
-            "click"
-
-        )
-
-        return original_click(
-
-            self,
-
-            *args,
-
-            **kwargs
-
-        )
-
-    def fill(
-
-            self,
-
-            *args,
-
-            **kwargs
-
-    ):
-        highlight_locator(
-
-            self,
-
-            "fill"
-
-        )
-
-        return original_fill(
-
-            self,
-
-            *args,
-
-            **kwargs
-
-        )
-
-    Locator.click = click
-
-    Locator.fill = fill
+        setattr(Locator, action, wrapper)
 
     Locator._selp_highlight = True
 

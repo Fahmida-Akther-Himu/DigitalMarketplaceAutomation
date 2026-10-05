@@ -3,7 +3,7 @@ import os
 import random
 import string
 import pytest
-from conftest import new_tab
+from conftest_3 import new_tab
 from datetime import datetime
 
 load_dotenv()
@@ -41,35 +41,35 @@ proc_admin = os.getenv("test_proc_admin")
 # order_reference_number = os.getenv("test_order_reference_number")
 
 # Page models for procurement
-from pages.digital_marketplace.procurement_login_page import ProcurementLoginPage
-from pages.digital_marketplace.dashboard_page import DashboardPage
-from pages.digital_marketplace.procurement_home_page import ProcurementHomePage
-from pages.digital_marketplace.requisition_creation import CreateReqPage
-from pages.digital_marketplace.requisition_list import RequisitionList
-from pages.digital_marketplace.main_navigation_bar import MainNavigationBar
-from pages.digital_marketplace.requisition_approve_list import RequisitionApproveList
-from pages.digital_marketplace.requisition_details_information import RequisitionDetailsInformation
-from pages.digital_marketplace.framework_information import FrameworkInformation
-from pages.digital_marketplace.framework_order_list import FrameworkOrderListPage
-from pages.digital_marketplace.proc_item_receive_list import ProcItemReceiveListPage
-from pages.digital_marketplace.bill_list import BillList
-from pages.digital_marketplace.create_vendor_bill_payable import CreateVendorBillPayable
-from pages.digital_marketplace.bill_details import BillDetails
+from pages.erp_procurement.procurement_login_page import ProcurementLoginPage
+from pages.erp_procurement.dashboard_page import DashboardPage
+from pages.erp_procurement.procurement_home_page import ProcurementHomePage
+from pages.erp_procurement.my_dashboard.procurement.requisition.create_requisition import CreateReqPage
+from pages.erp_procurement.my_dashboard.procurement.requisition.requisition_list import RequisitionList
+from pages.erp_procurement.main_navigation_bar import MainNavigationBar
+from pages.erp_procurement.my_dashboard.procurement.requisition.requisition_approve_list import RequisitionApproveList
+from pages.erp_procurement.my_dashboard.procurement.requisition.requisition_details_information import RequisitionDetailsInformation
+from pages.erp_procurement.my_dashboard.procurement.purchase_order.framework_information import FrameworkInformation
+from pages.erp_procurement.my_dashboard.procurement.purchase_order.framework_order_list import FrameworkOrderListPage
+from pages.erp_procurement.my_dashboard.procurement.item_receive.item_receive_list import ItemReceiveList
+from pages.erp_procurement.my_dashboard.procurement.bill_payable.vendor_billing_list import VendorBillingList
+from pages.erp_procurement.my_dashboard.procurement.bill_payable.create_vendor_bill_payable import CreateVendorBillPayable
+from pages.erp_procurement.my_dashboard.procurement.bill_payable.bill_details_information import BillDetailsInformation
 
 # Page models for marketplace
 from pages.digital_marketplace.login_page import LoginPage
 from pages.digital_marketplace.home_page import HomePage
-from pages.digital_marketplace.shopping_cart import ShoppingCart
-from pages.digital_marketplace.checkout_page import CheckoutPage
+from pages.digital_marketplace.public_side.shopping_cart import ShoppingCart
+from pages.digital_marketplace.public_side.checkout_page import CheckoutPage
 from pages.digital_marketplace.main_navigation_menu import MainNavigationMenu
 from pages.digital_marketplace.public_side.my_account.pending_approval_orders import PendingApprovalOrders
-from pages.digital_marketplace.customers import Customers
-from pages.digital_marketplace.vendor_dashboard import VendorDashboard
-from pages.digital_marketplace.all_order_for_admin import AllOrderForAdminPage
-from pages.digital_marketplace.order_management import OrderManagement
-from pages.digital_marketplace.receivable_order_list import ReceivableOrderListPage
-from pages.digital_marketplace.item_received_list import ItemReceivedList
-from pages.digital_marketplace.order_details_administration import OrderDetailsAdministration
+from pages.digital_marketplace.administration.customers import Customers
+from pages.digital_marketplace.administration.vendor_dashboard import VendorDashboard
+from pages.digital_marketplace.public_side.my_account.all_order_for_admin import AllOrderForAdminPage
+from pages.digital_marketplace.administration.order_management.orders_list_management import OrdersListManagement
+from pages.digital_marketplace.administration.order_management.receivable_order_list import ReceivableOrderList
+from pages.digital_marketplace.administration.order_management.item_received_list import ItemReceivedList
+from pages.digital_marketplace.administration.order_management.order_details_administration import OrderDetailsAdministration
 
 # For validation
 
@@ -786,7 +786,7 @@ def test_10_vendor_acknowledges_marketplace_order(page):
     order_details_administration.click_back_to_order_list()
     order_details_administration.get_full_page_screenshot('full_page_screenshot_45')
 
-    order_list = OrderManagement(page)
+    order_list = OrdersListManagement(page)
     current_date = datetime.today().strftime("%m-%d-%Y")
     order_list.fill_date_range(start_date=current_date, end_date=current_date)
     order_list.search_order(order_no=framework_order_no)
@@ -901,10 +901,10 @@ def test_12_receiver_receives_marketplace_item(page):
     home_page.get_full_page_screenshot('full_page_screenshot_52')
     home_page.wait_for_timeout(2000)
 
-    order_list = OrderManagement(page)
+    order_list = OrdersListManagement(page)
     order_list.click_order_management_menu()
 
-    receivable_order_list_page = ReceivableOrderListPage(page)
+    receivable_order_list_page = ReceivableOrderList(page)
     receivable_order_list_page.goto_receivable_order_list()
     current_date = datetime.today().strftime("%m-%d-%Y")
     receivable_order_list_page.fill_date_range(start_date=current_date, end_date=current_date)
@@ -994,10 +994,10 @@ def test_13_order_initiator_receives_marketplace_item(page):
     home_page.get_full_page_screenshot('full_page_screenshot_59')
     home_page.wait_for_timeout(2000)
 
-    order_list = OrderManagement(page)
+    order_list = OrdersListManagement(page)
     order_list.click_order_management_menu()
 
-    receivable_order_list_page = ReceivableOrderListPage(page)
+    receivable_order_list_page = ReceivableOrderList(page)
     receivable_order_list_page.goto_receivable_order_list()
     current_date = datetime.today().strftime("%m-%d-%Y")
     receivable_order_list_page.fill_date_range(start_date=current_date, end_date=current_date)
@@ -1041,7 +1041,7 @@ def test_13_order_initiator_receives_marketplace_item(page):
     item_receive_list_page.wait_for_timeout(5000)
     item_receive_list_page.get_full_page_screenshot('full_page_screenshot_65')
 
-    receivable_order_list_page = ReceivableOrderListPage(page)
+    receivable_order_list_page = ReceivableOrderList(page)
     receivable_order_list_page.goto_receivable_order_list()
     current_date = datetime.today().strftime("%m-%d-%Y")
     receivable_order_list_page.fill_date_range(start_date=current_date, end_date=current_date)
@@ -1129,7 +1129,7 @@ def test_14_login_to_procurement_and_view_marketplace_item_receipt_details(page)
     proc_home_page.goto_item_receive_list()
     proc_home_page.get_full_page_screenshot('full_page_screenshot_73')
 
-    proc_item_receive_list_page = ProcItemReceiveListPage(page)
+    proc_item_receive_list_page = ItemReceiveList(page)
     proc_item_receive_list_page.search_item_receive_order(receivable_item=framework_order_no)
     proc_item_receive_list_page.get_full_page_screenshot('full_page_screenshot_74')
     proc_item_receive_list_page.item_receive_details_view()
@@ -1206,7 +1206,7 @@ def test_15_create_and_submit_bill_for_received_marketplace_item(page):
     create_vendor_bill.wait_for_timeout(5000)
     create_vendor_bill.get_full_page_screenshot('full_page_screenshot_84')
 
-    bill_list_page = BillList(page)
+    bill_list_page = VendorBillingList(page)
     bill_list_page.go_to_billing_list()
     bill_list_page.get_full_page_screenshot('full_page_screenshot_85')
     bill_list_page.search_bill(bill_num)
@@ -1242,10 +1242,10 @@ def test_16_first_recommender_approves_marketplace_bill(page, new_tab):
         8. Exit and log out from the procurement system, capturing a final screenshot.
     """
     print("Test 16: Vendor bill recommender1 approval...")
-    bill_list_page = BillList(page)
+    bill_list_page = VendorBillingList(page)
     new_page = new_tab(lambda p: bill_list_page.click_on_bill_num(bill_num))
 
-    bill_detail_page = BillDetails(new_page)
+    bill_detail_page = BillDetailsInformation(new_page)
     current_dir = os.getcwd()
     # print(f"Current directory: {current_dir}")
     document_location = os.path.join(current_dir, 'utils', 'upload_file.pdf')
@@ -1258,7 +1258,7 @@ def test_16_first_recommender_approves_marketplace_bill(page, new_tab):
     bill_detail_page.get_full_page_screenshot('full_page_screenshot_88')
     new_page.close()
 
-    bill_list_page = BillList(page)
+    bill_list_page = VendorBillingList(page)
     bill_list_page.search_bill(bill_num)
     global bill_recommender_2
     bill_recommender_2 = str(int(bill_list_page.find_approver_id(bill_num)))
@@ -1314,16 +1314,16 @@ def test_17_second_recommender_approves_marketplace_bill(page, new_tab):
     proc_home_page.goto_vendor_billing_list()
     proc_home_page.get_full_page_screenshot('full_page_screenshot_92')
 
-    bill_list_page = BillList(page)
+    bill_list_page = VendorBillingList(page)
     bill_list_page.search_bill(bill_num)
     new_page = new_tab(lambda p: bill_list_page.click_on_bill_num(bill_num))
 
-    bill_detail_page = BillDetails(new_page)
+    bill_detail_page = BillDetailsInformation(new_page)
     bill_detail_page.approve_bill()
     bill_detail_page.get_full_page_screenshot('full_page_screenshot_93')
     new_page.close()
 
-    bill_list_page = BillList(page)
+    bill_list_page = VendorBillingList(page)
     page.reload()
     # bill_list_page.wait_for_timeout(5000)
     #     bill_list_page.navigate_to_url(bill_payable_url)
@@ -1386,19 +1386,19 @@ def test_18_vendor_bill_approver_approval_process_in_procurement(page, new_tab):
     proc_home_page.goto_vendor_billing_list()
     proc_home_page.get_full_page_screenshot('full_page_screenshot_98')
 
-    bill_list_page = BillList(page)
+    bill_list_page = VendorBillingList(page)
     bill_list_page.search_bill(bill_num)
     bill_list_page.get_full_page_screenshot('full_page_screenshot_99')
     new_page = new_tab(lambda p: bill_list_page.click_on_bill_num(bill_num))
 
-    bill_detail_page = BillDetails(new_page)
+    bill_detail_page = BillDetailsInformation(new_page)
     bill_detail_page.wait_for_timeout(5000)
     bill_detail_page.get_full_page_screenshot('full_page_screenshot_100')
     bill_detail_page.approve_bill()
     bill_detail_page.get_full_page_screenshot('full_page_screenshot_101')
     new_page.close()
 
-    bill_list_page = BillList(page)
+    bill_list_page = VendorBillingList(page)
     page.reload()
     bill_list_page.wait_for_timeout(5000)
     bill_list_page.get_full_page_screenshot('full_page_screenshot_102')
