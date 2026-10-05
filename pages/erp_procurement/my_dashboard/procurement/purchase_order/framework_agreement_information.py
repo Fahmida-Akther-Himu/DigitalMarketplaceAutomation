@@ -1,3 +1,4 @@
+from playwright.sync_api import expect
 import re
 import os
 from utils.basic_actionsdm import BasicActionsDM
@@ -21,9 +22,10 @@ class FrameworkAgreementInformation(BasicActionsDM):
         self.month_selector = page.locator('#ui-datepicker-div select.ui-datepicker-month')
         self.year_selector = page.locator('#ui-datepicker-div select.ui-datepicker-year')
 
-        self.applicable_for_both = page.locator('#radio_both')
-        self.applicable_for_ho = page.locator('#radio_ho')
-        self.applicable_for_hcmp = page.locator('#radio_hcmp')
+        # Applicable For radio buttons (value 3 = Both, 1 = HO, 2 = HCMP)
+        self.applicable_for_both = page.locator("input[type='radio'][name='hubApplicableForId'][value='3']")
+        self.applicable_for_ho = page.locator("input[type='radio'][name='hubApplicableForId'][value='1']")
+        self.applicable_for_hcmp = page.locator("input[type='radio'][name='hubApplicableForId'][value='2']")
         # or,
         # self.applicable_for_both = page.locator("//input[@type='radio' and @name='hubApplicableForId' and @value='3']")
         # self.applicable_for_ho = page.locator("//input[@type='radio' and @name='hubApplicableForId' and @value='1']")
@@ -31,6 +33,7 @@ class FrameworkAgreementInformation(BasicActionsDM):
 
         self.upload_file_input = page.locator("input#faDocInput")
         self.upload_browse_button = page.locator("#selector-faDocInput span.ui-button")
+        self.uploaded_attachment_name = page.locator("#faDocUpload")
 
         self.upload_excel_input = page.locator("input#faExcelInput")
         self.upload_button = page.locator("#selector-faExcelInput span.ui-button")
@@ -62,6 +65,13 @@ class FrameworkAgreementInformation(BasicActionsDM):
             ".jGrowl-notification.success .message"
         )
         self.moq_entry = page.locator('[id^="quantity"]')
+        # Amendment edit page: page messages and the item Specification/TOR popup
+        self.page_messages = page.locator("#jGrowl .jGrowl-notification .message")
+        self.specification_popup_textarea = page.locator("#fancybox-content textarea").first
+        self.specification_popup_add_to_grid = page.locator("#fancybox-content").get_by_role(
+            "button", name="Add to Grid")
+        # Confirmation popup (Update & Next / Submit Confirmation)
+        self.confirmation_popup = page.locator(".ui-dialog:visible").last
 
     ##################### small helper so we can log easily #####################
     def _log(self, message: str):
@@ -390,3 +400,156 @@ class FrameworkAgreementInformation(BasicActionsDM):
             # self.logger.step(f"Recommender checkbox status after click: {new_status}")
             # print(f"Recommender checkbox status after click: {new_status}")
             self.logger.info(f"Recommender checkbox status after click: {new_status}")
+
+    def get_fwa_no(self):
+        # Edit page loaded (Update & Next >> shown): FWA No. is the read-only input holding the FA number
+        self.update_and_next_button.wait_for(state="visible", timeout=30000)
+        input_values = self.page.locator("input[type='text'], input:not([type])").evaluate_all(
+            "inputs => inputs.map(input => input.value.trim()).filter(value => /\\/FA-\\d+/.test(value))")
+        fwa_no = input_values[0] if input_values else ""
+        print(f"FWA No. on the amendment page: {fwa_no}")
+        return fwa_no
+
+    # ---------------- Amendment edit page: header and item updates ----------------
+
+    def pick_date(self, date_picker_icon, date_field, target_date):
+        # Date picker: select year, month and day. Returns the date shown in the field,
+        # or None when the day is disabled in the date picker.
+        date_picker_icon.click()
+        self.year_selector.select_option(str(target_date.year))
+        self.month_selector.select_option(str(target_date.month - 1))  # jQuery UI months start at 0
+        day_link = self.page.locator(
+            f"#ui-datepicker-div td:not(.ui-state-disabled) a:text-is('{target_date.day}')")
+        if not day_link.count():
+            self.page.keyboard.press("Escape")
+            return None
+        day_link.first.click()
+        self.wait_for_timeout(1500)
+        return date_field.input_value().strip()
+
+    def get_visible_message(self):
+        # Validation/notification message shown on the page (jGrowl), if any
+        messages = [text.strip() for text in self.page_messages.all_inner_texts() if text.strip()]
+        return messages[-1] if messages else ""
+
+    def get_selected_applicable_for(self):
+        for label, radio in (("Both", self.applicable_for_both), ("HO", self.applicable_for_ho),
+                             ("HCMP", self.applicable_for_hcmp)):
+            if radio.is_checked():
+                return label
+        return ""
+
+    def select_applicable_for_both(self):
+        self.applicable_for_both.check()
+        self.wait_for_timeout(1000)
+        return self.get_selected_applicable_for()
+
+    def upload_amendment_attachment(self, file_path):
+        # Add Attachment / Browse: select the file and confirm it is selected
+        self.upload_file_input.set_input_files(file_path)
+        # Uploaded file name saved by the system, e.g. 1791111020002.upload_file.pdf
+        expect(self.uploaded_attachment_name).not_to_have_value("", timeout=30000)
+        selected_file = self.uploaded_attachment_name.input_value().strip()
+        print(f"Amendment attachment selected: {selected_file}")
+        return selected_file
+
+    def get_item_row(self, item_code):
+        # Item row of the stored item (matched by its item code, e.g. [FWI044746])
+        item_row = self.rows.filter(has_text=item_code).first
+        item_row.wait_for(state="visible", timeout=30000)
+        return item_row
+
+    def update_item_specification(self, item_row, item_code, new_specification=None):
+        # Item/Sub-Category Name > Specification/TOR popup > (replace specification) > Add to Grid
+        item_row.locator("a", has_text=item_code).first.click()
+        self.specification_popup_textarea.wait_for(state="visible", timeout=15000)
+        if new_specification is not None:
+            self.specification_popup_textarea.fill("")
+            self.specification_popup_textarea.fill(new_specification)
+        final_specification = self.specification_popup_textarea.input_value().strip()
+        self.get_screen_shot('amendment_item_specification_popup')
+        self.specification_popup_add_to_grid.click()
+        self.specification_popup_textarea.wait_for(state="hidden", timeout=10000)
+        return final_specification
+
+    def get_item_price_fields(self, item_row):
+        # MRP Price and Discount(%) inputs (MRP pricing) or the Unit Price input (direct pricing)
+        mrp_discount_inputs = item_row.locator(
+            "input[type='text']:visible:not([id^='unitPrice']):not([id^='quantity'])")
+        unit_price_input = item_row.locator("input[id^='unitPrice']:visible")
+        if mrp_discount_inputs.count() >= 2:
+            return {"mode": "MRP + Discount", "mrp": mrp_discount_inputs.nth(0),
+                    "discount": mrp_discount_inputs.nth(1), "unit_price": None}
+        return {"mode": "Unit Price", "mrp": None, "discount": None, "unit_price": unit_price_input.first}
+
+    def set_input_value(self, input_field, value):
+        # Clear and type the value like a user (the item grid keeps only typed values)
+        input_field.click()
+        input_field.fill("")
+        input_field.press_sequentially(value, delay=100)
+        input_field.press("Tab")
+        self.wait_for_timeout(1500)
+
+    def get_item_unit_price(self, item_row, price_fields):
+        # Unit Price shown by the system (input for direct pricing, calculated cell for MRP pricing)
+        if price_fields["unit_price"] is not None:
+            return price_fields["unit_price"].input_value().strip()
+        return item_row.locator("td[aria-describedby$='_unitPrice']").inner_text().strip()
+
+    def get_item_moq_input(self, item_row):
+        return item_row.locator("input[id^='quantity']").first
+
+    # ---------------- Output Document: confirmation, Recommender, Approver, Submit ----------------
+
+    def confirm_visible_popup(self):
+        # Confirmation popup (jQuery UI dialog): returns its message after clicking the confirm button
+        if not self.confirmation_popup.count():
+            return ""
+        popup_message = self.confirmation_popup.locator(".ui-dialog-content").inner_text().strip()
+        self.confirmation_popup.locator(".ui-dialog-buttonpane button").first.click()
+        self.wait_for_timeout(2000)
+        return popup_message
+
+    def is_output_document_page_opened(self):
+        # Output Document page loaded: Approver field shown
+        try:
+            self.approver_textbox.wait_for(state="visible", timeout=60000)
+        except Exception:
+            return False
+        self.wait_for_timeout(2000)
+        return True
+
+    def ensure_recommender_checked(self):
+        # Select the Recommender checkbox only if it is not selected (clicking again would deselect it)
+        was_checked = self.recommender_checkbox.is_checked()
+        if not was_checked:
+            self.recommender_checkbox.check()
+            self.wait_for_timeout(1000)
+        print(f"Recommender checkbox: {'already selected' if was_checked else 'selected now'}")
+        return was_checked
+
+    def select_user_by_pin(self, user_textbox, user_pin):
+        # Clear the field, type the PIN and select the exact suggestion of this PIN
+        user_textbox.click()
+        user_textbox.fill("")
+        user_textbox.fill(user_pin[:-1])
+        user_textbox.press_sequentially(user_pin[-1])
+        user_suggestion = self.page.get_by_text(re.compile(rf"\[{re.escape(user_pin)}\]")).locator("visible=true").first
+        user_suggestion.wait_for(state="visible", timeout=15000)
+        user_suggestion.click()
+        self.wait_for_timeout(2000)
+        selected_user = user_textbox.input_value().strip()
+        print(f"Selected user for {user_pin}: {selected_user}")
+        return selected_user
+
+    def submit_with_confirmation(self):
+        # Submit > Submit Confirmation popup (message) > Submit > final notification
+        self.submit_button.click()
+        self.submit_confirmation_button.wait_for(state="visible", timeout=15000)
+        submit_confirmation_message = self.confirmation_popup.locator(".ui-dialog-content").inner_text().strip()
+        print(f"Submit confirmation message: {submit_confirmation_message}")
+        self.submit_confirmation_button.click()
+        self.agreement_status_message.wait_for(state="visible", timeout=30000)
+        final_submission_message = " ".join(self.agreement_status_message.last.inner_text().split())
+        print(f"Final submission message: {final_submission_message}")
+        return submit_confirmation_message, final_submission_message
