@@ -49,7 +49,8 @@ agreement_approval_comment = os.getenv("test_agreement_approval_comment")
 EXPECTED_FINAL_STATUS = "Approved"
 # Framework List legend for an agreement whose price review date is reached (Test case 12)
 PRICE_TO_BE_REVIEWED_LEGEND = "Price to be reviewed"
-UTILS_DIR = Path(__file__).resolve().parents[1] / "utils"
+# Project root is 3 levels up: testcases/Framework_agreement/<this file>
+UTILS_DIR = Path(__file__).resolve().parents[3] / "utils"
 
 from pages.erp_procurement.reset_hub_page import ResetHubPage
 from pages.erp_procurement.dashboard_page import DashboardPage
