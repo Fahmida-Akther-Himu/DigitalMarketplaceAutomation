@@ -464,6 +464,36 @@ class CreateRequisition(ProcurementHomePage, BasicActionsDM):
         print(f"Selected active framework item: {framework_item}")
         return framework_item
 
+    def select_active_framework_item_by_code(self, agreement_number, item_code):
+        # The item of the exact agreement with this item code, e.g. FWI044746 (page by page)
+        while True:
+            item_rows = self.get_active_framework_rows(agreement_number).filter(
+                has=self.page.locator(self.active_framework_item_code_cell,
+                                      has_text=re.compile(rf"^\s*{re.escape(item_code)}\s*$"))
+            )
+            if item_rows.count():
+                break
+            next_page_class = self.active_framework_next_page.get_attribute("class") or ""
+            if "ui-state-disabled" in next_page_class:
+                raise AssertionError(f"Item {item_code} of {agreement_number} not found")
+            self.click_on_btn(self.active_framework_next_page)
+            self.move_mouse_away()
+            self.wait_for_timeout(1000)
+            self.active_framework_grid_loading.wait_for(state="hidden", timeout=30000)
+
+        item_row = item_rows.first
+        framework_item = {
+            "fa_no": (item_row.locator(self.active_framework_fa_no_cell).text_content() or "").strip(),
+            "item_name": (item_row.locator(self.active_framework_item_name_cell).text_content() or "").strip(),
+            "item_code": (item_row.locator(self.active_framework_item_code_cell).text_content() or "").strip(),
+            "unit_price": (item_row.locator(self.active_framework_unit_price_cell).text_content() or "").strip(),
+        }
+        self.highlight_element(item_row)
+        self.click_on_btn(item_row.locator(self.active_framework_item_name_cell))
+        self.move_mouse_away()
+        print(f"Selected active framework item: {framework_item}")
+        return framework_item
+
     def verify_grid_row_count(self, expected_count):
         expect(self.requisition_detail_rows).to_have_count(expected_count)
         print(f"Requisition Detail Information List rows: {expected_count}")
