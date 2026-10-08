@@ -9,6 +9,7 @@ import allure
 load_dotenv()
 
 # Page models for procurement
+from utils.test_data_store import save_result
 from pages.erp_procurement.reset_hub_page import ResetHubPage
 from pages.erp_procurement.dashboard_page import DashboardPage
 from pages.erp_procurement.procurement_home_page import ProcurementHomePage
@@ -73,6 +74,8 @@ second_layer_req_status = ''
 approved_req_status = ''
 verified_requisition_details = ''
 order_vendor = ''
+# Requisition result for order_creation/single_whitelisted_agreement_item_order.py
+requisition_result = {}
 
 # Marketplace global variable
 active_requisition_found = False
@@ -569,8 +572,9 @@ def test_7_requisition_initiator_gets_approval_status(page, new_tab):
         4. Open the FA No link in a new tab and verify the vendor is the same as the
            whitelisted item vendor (Test case 1); store it in 'order_vendor'.
         5. Close the tabs, exit and log out.
+        6. Save the requisition result for single_whitelisted_agreement_item_order.py.
     """
-    global approved_req_status, verified_requisition_details, order_vendor
+    global approved_req_status, verified_requisition_details, order_vendor, requisition_result
     assert req_num, "Test case 2 must pass first: no requisition number available"
     assert whitelisted_item, "Test case 1 must pass first: requisition item not available"
 
@@ -646,6 +650,34 @@ def test_7_requisition_initiator_gets_approval_status(page, new_tab):
         details_tab.close()
         page.bring_to_front()
         erp_logout(page, 'requisition_initiator_final_logout')
+
+    # Step 6: Save the requisition result for the order test file
+    with allure.step("Step 6: Save the requisition result for single_whitelisted_agreement_item_order.py"):
+        requisition_result = {
+            "requisition_number": req_num,
+            "requisition_status": approved_req_status,
+            "agreement_number": whitelisted_agreement_number,
+            "agreement_version": whitelisted_item["fa_no"],
+            "applicable_for": whitelisted_item_applicable_for,
+            "vendor": order_vendor,
+            "final_approver": approver_id_2,
+            "attachment_name": requisition_attachment_name,
+            "item": {
+                "item_code": whitelisted_item["item_code"],
+                "item_name": whitelisted_item["item_name"],
+                "master_item_code": master_item_1_code,
+                "specification": whitelisted_item["specification"],
+                "quantity": str(requisition_item_quantity),
+                "unit_price": whitelisted_item["unit_price"],
+            },
+        }
+        save_result("single_whitelisted_requisition_result", requisition_result)
+        print("REQUISITION RESULT:", requisition_result)
+        allure.attach(
+            "\n".join(f"{key}: {value}" for key, value in requisition_result.items()),
+            name="Saved requisition result",
+            attachment_type=allure.attachment_type.TEXT
+        )
 
 
 @allure.suite("Public Side")
