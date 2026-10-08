@@ -494,6 +494,23 @@ class CreateRequisition(ProcurementHomePage, BasicActionsDM):
         print(f"Selected active framework item: {framework_item}")
         return framework_item
 
+    def select_first_active_framework_item(self, agreement_number):
+        # First item of the exact agreement (rows are found by search_active_framework)
+        item_row = self.get_active_framework_rows(agreement_number).first
+        framework_item = {
+            "fa_no": (item_row.locator(self.active_framework_fa_no_cell).text_content() or "").strip(),
+            "vendor_name": (item_row.locator(self.active_framework_vendor_cell).text_content() or "").strip(),
+            "item_name": (item_row.locator(self.active_framework_item_name_cell).text_content() or "").strip(),
+            "item_code": (item_row.locator(self.active_framework_item_code_cell).text_content() or "").strip(),
+            "specification": (item_row.locator(self.active_framework_specification_cell).text_content() or "").strip(),
+            "unit_price": (item_row.locator(self.active_framework_unit_price_cell).text_content() or "").strip(),
+        }
+        self.highlight_element(item_row)
+        self.click_on_btn(item_row.locator(self.active_framework_item_name_cell))
+        self.move_mouse_away()
+        print(f"Selected active framework item: {framework_item}")
+        return framework_item
+
     def verify_grid_row_count(self, expected_count):
         expect(self.requisition_detail_rows).to_have_count(expected_count)
         print(f"Requisition Detail Information List rows: {expected_count}")

@@ -13,6 +13,8 @@ class RequisitionDetailsInformation(BasicActionsDM):
         self.page = page
         self.logger = logger
         self.fa_no_hyperlink = page.locator('a[style="text-decoration: underline;"][onclick^="showFrameworkDetails("]')
+        # FA No hyperlink matched by its onclick only: stable across highlight/style changes, reusable by any test
+        self.fa_no_framework_link = page.locator('a[onclick^="showFrameworkDetails("]')
         # Requisition information (REQ. No, Status, ...)
         self.details_content = page.locator("body")
 
@@ -23,6 +25,12 @@ class RequisitionDetailsInformation(BasicActionsDM):
 
     def open_framework_details(self):
         self.click_on_btn(self.fa_no_hyperlink.first)
+        self.move_mouse_away()
+
+    def open_framework_details_by_fa_no(self, fa_no):
+        # Exact FA No, e.g. BPD/2026/FA-5 matches "BPD/2026/FA-5 (Both)" but not BPD/2026/FA-50
+        fa_no_link = self.fa_no_framework_link.filter(has_text=re.compile(rf"^\s*{re.escape(fa_no)}(\s|$|/)"))
+        self.click_on_btn(fa_no_link.first)
         self.move_mouse_away()
 
     @staticmethod
