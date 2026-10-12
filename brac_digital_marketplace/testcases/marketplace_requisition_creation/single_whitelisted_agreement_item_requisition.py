@@ -3,6 +3,7 @@ import os
 import re
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
+from urllib.parse import urlparse
 import pytest
 import allure
 
@@ -28,10 +29,13 @@ from pages.digital_marketplace.public_side.my_account.active_requisition_list im
 from pages.digital_marketplace.public_side.my_account.active_requisition_product_list import \
     ActiveRequisitionProductList
 from pages.digital_marketplace.main_navigation_menu import MainNavigationMenu
+from pages.digital_marketplace.public_side.my_account.product_switch_history import ProductSwitchHistory
 
 # Procurement information
 proj_env = os.getenv("test_env")
 proj_user = os.getenv("test_user_name")
+# ERP staging address: a FwA attachment that is not available opens an ERP page with a message
+erp_url = os.getenv("test_url")
 
 # Marketplace information
 marketplace_url_qa = os.getenv("test_marketplace_url_qa")
@@ -79,6 +83,12 @@ requisition_result = {}
 
 # Marketplace global variable
 active_requisition_found = False
+# Active Requisition Product List rows/links and Product Switch History
+# ERP requisition details opened from the ERP View button
+erp_requisition_information = {}
+product_list_tab = None
+active_product_links = []
+product_switch_history = []
 
 
 def env_decimal(env_name, value):
@@ -87,6 +97,11 @@ def env_decimal(env_name, value):
         return Decimal(value).quantize(Decimal("0.01"))
     except (InvalidOperation, TypeError):
         raise AssertionError(f"{env_name} in .env is not a valid number: {value!r}")
+
+
+def without_spaces(text):
+    # ERP shows "[H10]- Construction" for "[H10] - Construction": compare without spaces, case-insensitive
+    return "".join(str(text).split()).lower()
 
 
 def erp_login(page, user_name):
@@ -625,28 +640,27 @@ def test_7_requisition_initiator_gets_approval_status(page, new_tab):
         )
         requisition_details_page.get_full_page_screenshot('requisition_details_verified')
 
-    # Step 4: Open the FA No link and verify the vendor is the same as the whitelisted item vendor
-    with allure.step(f"Step 4: Verify vendor of {whitelisted_agreement_number} is {whitelisted_item['vendor_name']}"):
-        framework_tab = new_tab(
-            lambda p: requisition_details_page.open_framework_details_by_fa_no(whitelisted_agreement_number))
-        framework_info_page = FrameworkInformation(framework_tab)
-        order_vendor = framework_info_page.get_vendor_info()
+    # Step 4: Get the vendor of each agreement in the requisition (one agreement: first FA No link only)
+    with allure.step("Step 4: Get the agreement vendor from the FA No link and verify it"):
+        agreement_vendors = requisition_details_page.get_agreement_vendors()
+        print("AGREEMENT VENDORS:", agreement_vendors)
+        assert list(agreement_vendors) == [whitelisted_agreement_number], \
+            f"Expected only agreement {whitelisted_agreement_number} in the requisition, found {list(agreement_vendors)}"
+        order_vendor = agreement_vendors[whitelisted_agreement_number]
         print("ORDER VENDOR:", order_vendor)
-        # Grid vendor has the vendor code, e.g. "[SU000723]- Walton Hi-Tech Industries PLC"
-        assert order_vendor.lower() in whitelisted_item["vendor_name"].lower(), \
-            f"Requisition vendor '{order_vendor}' is not the same as the whitelisted item vendor " \
-            f"'{whitelisted_item['vendor_name']}'"
         allure.attach(
-            f"Whitelisted item vendor (Test case 1): {whitelisted_item['vendor_name']}\n"
+            f"Whitelisted item (Test case 1) vendor: {whitelisted_item['vendor_name']}\n"
             f"Requisition vendor (FA No link): {order_vendor}",
             name="Verified vendor",
             attachment_type=allure.attachment_type.TEXT
         )
-        framework_info_page.get_full_page_screenshot('requisition_vendor_verified')
+        # Grid vendor has the vendor code, e.g. "[SU000723]- Walton Hi-Tech Industries PLC"
+        assert order_vendor.lower() in whitelisted_item["vendor_name"].lower(), \
+            f"Requisition vendor '{order_vendor}' is not the same as the whitelisted item vendor " \
+            f"'{whitelisted_item['vendor_name']}'"
 
     # Step 5: Close the tabs, exit and log out
     with allure.step("Step 5: Close requisition details tabs, exit and log out from ERP"):
-        framework_tab.close()
         details_tab.close()
         page.bring_to_front()
         erp_logout(page, 'requisition_initiator_final_logout')
@@ -682,29 +696,38 @@ def test_7_requisition_initiator_gets_approval_status(page, new_tab):
 
 @allure.suite("Public Side")
 @allure.feature("Active Requisition List")
-@allure.story("Active Requisition Product List")
-@allure.title("Test_case_8: Verify requisition sync to marketplace")
-@allure.description("Test case 8: Verify the approved requisition is synchronized to the Digital Marketplace and "
-                    "visible in the Active Requisition List with its product list and product switch history.")
+@allure.story("Requisition Sync")
+@allure.title("Test_case_8: Verify requisition sync to marketplace and ERP view")
+@allure.description("Test case 8: Verify the approved requisition is synchronized to the Digital Marketplace, the "
+                    "ERP View button opens the same requisition details in ERP staging, and store the Active "
+                    "Requisition Product List rows.")
 @pytest.mark.order(8)
 def test_8_verify_requisition_sync_to_marketplace(page, new_tab):
     """
-    Test Case 8: Verify Requisition Synchronization to Marketplace.
+    Test Case 8: Verify Requisition Synchronization to Marketplace and the ERP View.
 
     Steps:
         1. Log in to the Digital Marketplace as 'proj_user' using SSO and verify the welcome message.
         2. Go to the Active Requisition List and search the requisition ('req_num').
-        3. Open the Active Requisition Product List in a new tab and view the product switch history.
-        4. Close the product list tab and log out from the Digital Marketplace.
+        3. Click the ERP View button: a new tab opens the ERP staging server. If it shows the ERP login page,
+           log in as the same user (ResetHub link), close it and click ERP View again. Verify and match all
+           requisition information (REQ. No, Status, Project Name, Source of Fund, Remarks, FA No and both
+           item rows) with the created requisition and store it; close the ERP tab and go back to the
+           Active Requisition List.
+        4. Open the Active Requisition Product List in a new tab, verify 1 product(s) and store the product rows
+           (Sub-Category, Product, FwA No.).
+        No logout: Test case 9 and 11 continue on the Active Requisition Product List.
 
     All scenario values are read from .env.
     """
-    global active_requisition_found
+    global active_requisition_found, erp_requisition_information, product_list_tab, active_product_links
     assert req_num, "Test case 2 must pass first: no requisition number available"
 
     required_env_values = {
         "test_marketplace_url_qa": marketplace_url_qa,
         "test_marketplace_password": marketplace_password,
+        "test_url": erp_url,
+        "test_env": proj_env,
     }
     missing_env_values = [name for name, value in required_env_values.items() if not value]
     assert not missing_env_values, f"Missing in .env: {', '.join(missing_env_values)}"
@@ -712,6 +735,7 @@ def test_8_verify_requisition_sync_to_marketplace(page, new_tab):
     login_page = LoginPage(page)
     home_page = HomePage(page)
     active_requisition_list = ActiveRequisitionListPage(page)
+    active_product_links = []
 
     # Step 1: Log in to the Digital Marketplace
     with allure.step(f"Step 1: Log in to the Digital Marketplace as {proj_user}"):
@@ -734,17 +758,266 @@ def test_8_verify_requisition_sync_to_marketplace(page, new_tab):
         )
         active_requisition_list.get_full_page_screenshot('marketplace_active_requisition_search')
 
-    # Step 3: Active Requisition Product List and product switch history
-    with allure.step(f"Step 3: Open product list of {req_num} and view product switch history"):
+    # Step 3: ERP View: ERP staging requisition details (log in as the same user when the ERP login page is shown)
+    with allure.step(f"Step 3: Click ERP View of {req_num}, match the ERP requisition details and go back"):
+        erp_tab = active_requisition_list.open_erp_view(requisition_number=req_num)
+        erp_tab.wait_for_url(lambda url: urlparse(url).netloc == urlparse(erp_url).netloc, timeout=60000)
+        erp_details_page = RequisitionDetailsInformation(erp_tab)
+        if erp_details_page.is_erp_login_page():
+            print(f"ERP login page shown: logging in as {proj_user} with the ResetHub link")
+            erp_details_page.get_full_page_screenshot('marketplace_erp_view_login_page')
+            reset_page = ResetHubPage(erp_tab)
+            link = reset_page.generate_reset_link(env=proj_env, username=proj_user)
+            reset_page.open_generated_link(link)
+            assert isinstance(link, str) and link.startswith("http")
+            erp_tab.close()
+            page.bring_to_front()
+            erp_tab = active_requisition_list.open_erp_view(requisition_number=req_num)
+            erp_tab.wait_for_url(lambda url: urlparse(url).netloc == urlparse(erp_url).netloc, timeout=60000)
+            erp_details_page = RequisitionDetailsInformation(erp_tab)
+            assert not erp_details_page.is_erp_login_page(), \
+                f"ERP View still shows the ERP login page after logging in as {proj_user}"
+        erp_requisition_information = erp_details_page.get_requisition_information()
+        erp_requisition_information["erp_url"] = erp_tab.url
+        print("ERP REQUISITION INFORMATION:", erp_requisition_information)
+        erp_details_page.get_full_page_screenshot('marketplace_erp_view_requisition_details')
+
+        # The ERP requisition must match the created requisition (Test case 1-7)
+        master_item_1_code = re.search(r"\[[^\]]+\]", master_item_1_full_path).group(0)
+        erp_checks = [
+            ("REQ. No", req_num, erp_requisition_information["req_no"],
+             erp_requisition_information["req_no"] == req_num),
+            ("Status", "Approved", erp_requisition_information["status"],
+             "approved" in erp_requisition_information["status"].lower()),
+            ("Project Name", requisition_project_name, erp_requisition_information["project_name"],
+             without_spaces(requisition_project_name) in without_spaces(erp_requisition_information["project_name"])),
+            ("Source of Fund", requisition_funding_source, erp_requisition_information["source_of_fund"],
+             without_spaces(requisition_funding_source) in without_spaces(erp_requisition_information["source_of_fund"])),
+            ("Remarks", requisition_funding_remarks, erp_requisition_information["remarks"],
+             erp_requisition_information["remarks"] == " ".join(requisition_funding_remarks.split())),
+            ("FA No", whitelisted_agreement_number, erp_requisition_information["agreement_numbers"],
+             erp_requisition_information["agreement_numbers"] == [whitelisted_agreement_number]),
+        ]
+        erp_details_page.verify_requisition_item_count(fa_no=whitelisted_agreement_number, expected_count=1)
+        erp_requisition_information["items"] = [
+            erp_details_page.verify_requisition_item(
+                requisition_number=req_num, fa_no=whitelisted_agreement_number, item_code=master_item_1_code,
+                quantity=requisition_item_quantity, unit_price=whitelisted_item["unit_price"]),
+        ]
+        erp_checks.append(("Requisition Details rows", 1, len(erp_requisition_information["items"]), True))
+        allure.attach(
+            "\n".join(f"{check}: expected {expected} | actual {actual} | {'PASS' if passed else 'FAIL'}"
+                      for check, expected, actual, passed in erp_checks)
+            + "\n" + "\n".join(f"Item {index + 1}: {row}" for index, row in enumerate(erp_requisition_information["items"])),
+            name="ERP requisition details (ERP View) vs created requisition",
+            attachment_type=allure.attachment_type.TEXT
+        )
+        failed_checks = [f"{check}: expected {expected}, found {actual}"
+                         for check, expected, actual, passed in erp_checks if not passed]
+        assert not failed_checks, "ERP requisition details do not match the created requisition:\n" + "\n".join(failed_checks)
+
+        # Close the ERP tab and go back to the Active Requisition List
+        erp_tab.close()
+        page.bring_to_front()
+        active_requisition_list.verify_requisition_in_list(requisition_number=req_num)
+        active_requisition_list.get_full_page_screenshot('marketplace_back_to_active_requisition_list')
+
+    # Step 4: Active Requisition Product List and its product rows (no product switch history here)
+    with allure.step(f"Step 4: Open product list of {req_num} and store the Active Requisition Product List rows"):
         product_list_tab = new_tab(lambda p: active_requisition_list.goto_active_requisition_product_list())
         active_requisition_product_list = ActiveRequisitionProductList(product_list_tab)
         active_requisition_product_list.get_full_page_screenshot('marketplace_active_requisition_product_list')
-        active_requisition_product_list.view_product_switch_history()
-        active_requisition_product_list.get_full_page_screenshot('marketplace_product_switch_history')
+        product_rows = active_requisition_product_list.get_product_rows()
+        print("ACTIVE REQUISITION PRODUCTS:", len(product_rows))
+        assert len(product_rows) == 1, f"Expected 1 product(s) in the Active Requisition Product List, found {len(product_rows)}"
+        for row in product_rows:
+            active_product_links.append({
+                "sub_category": active_requisition_product_list.cell_text(row["Sub-Category"]),
+                "product": active_requisition_product_list.cell_text(row["Product"]),
+                "fwa_no": active_requisition_product_list.cell_text(row["FwA No."]),
+            })
+        print("ACTIVE REQUISITION PRODUCT ROWS:", active_product_links)
+        allure.attach(
+            "\n".join(f"Product {index + 1}: Sub-Category {product['sub_category']} | Product {product['product']} | "
+                      f"FwA No. {product['fwa_no']}" for index, product in enumerate(active_product_links)),
+            name="Active Requisition Product List rows",
+            attachment_type=allure.attachment_type.TEXT
+        )
 
-    # Step 4: Close the product list tab and log out
-    with allure.step("Step 4: Close the product list tab and log out from the Digital Marketplace"):
+
+def check_fwa_attachment(attachment):
+    # Available: the attachment is shown/downloaded; not available: ERP staging page with a message
+    if not attachment["available"]:
+        assert urlparse(attachment["attachment_url"]).netloc == urlparse(erp_url).netloc, \
+            f"FwA {attachment['fwa_no']} did not open the ERP staging server: {attachment['attachment_url']}"
+        assert attachment["message"], f"FwA {attachment['fwa_no']}: no message shown on the ERP page"
+
+
+@allure.suite("Public Side")
+@allure.feature("Active Requisition Product List")
+@allure.story("Product List Links")
+@allure.title("Test_case_9: Verify Active Requisition Product List links")
+@allure.description("Test case 9: For every product of the requisition, open the Sub-Category and Product links and "
+                    "come back, and open the FwA No. attachment (or verify the ERP staging message when the "
+                    "attachment is not available); store the results.")
+@pytest.mark.order(9)
+def test_9_verify_active_requisition_product_list_links(page):
+    """
+    Test Case 9: Verify the Sub-Category, Product and FwA No. links of the Active Requisition Product List.
+    Continues on the Active Requisition Product List of Test case 8 (no new login).
+
+    Steps:
+        1. Sub-Category link of every product: open it, store the sub-category, go back to the list.
+        2. Product link of every product: open it, store the product name, go back to the list.
+        3. FwA No. link of every product: if the agreement attachment is available, open/download it;
+           if not, verify the new tab is the ERP staging server with a message, close it and come back.
+        No logout: Test case 10 continues on the Active Requisition Product List.
+
+    All scenario values are read from .env.
+    """
+    assert active_product_links and product_list_tab, \
+        "Test case 8 must pass first: Active Requisition Product List not available"
+    assert erp_url, "Missing in .env: test_url"
+
+    product_list_page = ActiveRequisitionProductList(product_list_tab)
+
+    # Step 1: Sub-Category link of every product
+    with allure.step("Step 1: Open the Sub-Category link of every product and come back"):
+        for index, product in enumerate(active_product_links):
+            with allure.step(f"Product {index + 1}: Sub-Category {product['sub_category']}"):
+                opened = product_list_page.open_link_and_back(
+                    product_list_page.get_product_rows()[index]["Sub-Category"],
+                    back_page_table=product_list_page.product_list_table,
+                    screenshot_name=f'product_links_sub_category_{index + 1}'
+                )
+                product["sub_category_url"] = opened["opened_url"]
+                print(f"SUB-CATEGORY {index + 1}:", product["sub_category"], opened["opened_url"])
+
+    # Step 2: Product link of every product
+    with allure.step("Step 2: Open the Product link of every product and come back"):
+        for index, product in enumerate(active_product_links):
+            with allure.step(f"Product {index + 1}: {product['product']}"):
+                opened = product_list_page.open_link_and_back(
+                    product_list_page.get_product_rows()[index]["Product"],
+                    back_page_table=product_list_page.product_list_table,
+                    screenshot_name=f'product_links_product_{index + 1}'
+                )
+                product["product_url"] = opened["opened_url"]
+                print(f"PRODUCT {index + 1}:", product["product"], opened["opened_url"])
+
+    # Step 3: FwA No. link of every product (attachment or ERP staging message)
+    with allure.step("Step 3: Open the FwA No. attachment of every product"):
+        for index, product in enumerate(active_product_links):
+            with allure.step(f"Product {index + 1}: FwA No. {product['fwa_no']}"):
+                attachment = product_list_page.open_fwa_attachment(
+                    product_list_page.get_product_rows()[index]["FwA No."],
+                    screenshot_name=f'product_links_fwa_{index + 1}'
+                )
+                check_fwa_attachment(attachment)
+                product["fwa_attachment"] = attachment
+                print(f"FWA {index + 1}:", attachment)
+        allure.attach(
+            "\n".join(f"Product {index + 1}: Sub-Category {product['sub_category']} | Product {product['product']} | "
+                      f"FwA No. {product['fwa_no']} | attachment "
+                      f"{'available: ' + product['fwa_attachment']['file_name'] if product['fwa_attachment']['available'] else 'not available: ' + product['fwa_attachment']['message']}"
+                      for index, product in enumerate(active_product_links)),
+            name="Active Requisition Product List links",
+            attachment_type=allure.attachment_type.TEXT
+        )
+        product_list_page.get_full_page_screenshot('product_links_done')
+
+
+@allure.suite("Public Side")
+@allure.feature("Product Switch History")
+@allure.story("Product Switch History Links")
+@allure.title("Test_case_10: Verify Product Switch History links")
+@allure.description("Test case 10: For every product, open its Product Switch History, verify the product name and "
+                    "FwA No. are the same as the Active Requisition Product List, open the Product Name link and the "
+                    "FwA No. attachment (or verify the ERP staging message), go back to the product list, then log "
+                    "out and save the requisition result with the marketplace data.")
+@pytest.mark.order(10)
+def test_10_verify_product_switch_history_links(page):
+    """
+    Test Case 10: Verify the Product Switch History of every product.
+    Continues on the Active Requisition Product List of Test case 8 and 10 (no new login).
+
+    Steps (for every product):
+        1. Click History; store the Product Switch History rows (Product Name, Specification, Unit Price,
+           FwA No., Vendor Name, Date) and verify the product name and FwA No. are the same as the
+           Active Requisition Product List.
+        2. Product Name link: open it and go back to the history.
+        3. FwA No. link: if the agreement attachment is available, open/download it; if not, verify the
+           new tab is the ERP staging server with a message, close it and come back.
+        4. Click Back to Requisition Product List.
+    Then close the product list tab, log out and save the requisition result with the marketplace data.
+
+    All scenario values are read from .env.
+    """
+    global product_switch_history, requisition_result
+    assert active_product_links and product_list_tab, \
+        "Test case 8 must pass first: Active Requisition Product List not available"
+    assert erp_url, "Missing in .env: test_url"
+
+    product_list_page = ActiveRequisitionProductList(product_list_tab)
+    history_page = ProductSwitchHistory(product_list_tab)
+    product_switch_history = []
+
+    for index, product in enumerate(active_product_links):
+        with allure.step(f"Step {index + 1}: Product Switch History of product {index + 1} ({product['product']})"):
+            # History of the product: rows, same product name and FwA No. as the product list
+            product_list_page.view_product_switch_history_by_index(index)
+            history_rows = history_page.get_history_rows()
+            history = [{title: history_page.cell_text(cell) for title, cell in row.items()} for row in history_rows]
+            print(f"PRODUCT SWITCH HISTORY {index + 1}:", history)
+            history_page.get_full_page_screenshot(f'product_switch_history_{index + 1}')
+            assert any(row["Product Name"] == product["product"] for row in history), \
+                f"Product '{product['product']}' not found in its Product Switch History: {history}"
+            assert any(row["FwA No."] == product["fwa_no"] for row in history), \
+                f"FwA No. '{product['fwa_no']}' not found in its Product Switch History: {history}"
+
+            # Product Name link of the history
+            opened = history_page.open_link_and_back(
+                history_page.get_history_rows()[0]["Product Name"],
+                back_page_table=history_page.history_table,
+                screenshot_name=f'product_switch_history_product_{index + 1}'
+            )
+            print(f"HISTORY PRODUCT {index + 1}:", opened)
+
+            # FwA No. link of the history (attachment or ERP staging message)
+            attachment = history_page.open_fwa_attachment(
+                history_page.get_history_rows()[0]["FwA No."],
+                screenshot_name=f'product_switch_history_fwa_{index + 1}'
+            )
+            check_fwa_attachment(attachment)
+
+            product_switch_history.append({
+                "product": product["product"],
+                "history": history,
+                "product_name_url": opened["opened_url"],
+                "fwa_attachment": attachment,
+            })
+            allure.attach(
+                "\n".join(" | ".join(f"{title}: {value}" for title, value in row.items()) for row in history)
+                + f"\nFwA attachment: {'available: ' + attachment['file_name'] if attachment['available'] else 'not available: ' + attachment['message']}",
+                name=f"Product Switch History {index + 1}",
+                attachment_type=allure.attachment_type.TEXT
+            )
+
+            # Back to Requisition Product List
+            product_list_page.go_to_product_history()
+            product_list_tab.wait_for_load_state("domcontentloaded")
+            assert len(product_list_page.get_product_rows()) == len(active_product_links), \
+                "Back to Requisition Product List did not show the product list"
+
+    # Close the product list tab, log out and save the marketplace data with the requisition result
+    with allure.step(f"Step {len(active_product_links) + 1}: Close the product list tab, log out and save the requisition result"):
         product_list_tab.close()
         page.bring_to_front()
         MainNavigationMenu(page).perform_logout()
-        home_page.get_full_page_screenshot('marketplace_logout')
+        HomePage(page).get_full_page_screenshot('marketplace_logout')
+        assert requisition_result, "Test case 7 must pass first: requisition result not available"
+        requisition_result["erp_view"] = erp_requisition_information
+        requisition_result["active_requisition_products"] = active_product_links
+        requisition_result["product_switch_history"] = product_switch_history
+        save_result("single_whitelisted_requisition_result", requisition_result)
+        print("REQUISITION RESULT (with marketplace data):", requisition_result)
