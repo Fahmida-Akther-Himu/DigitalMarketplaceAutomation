@@ -511,6 +511,36 @@ class CreateRequisition(ProcurementHomePage, BasicActionsDM):
         print(f"Selected active framework item: {framework_item}")
         return framework_item
 
+    def select_active_framework_item_by_row(self, agreement_number, row_number):
+        # Row N (1, 2, 3, ...) of the exact agreement items, page by page (rows are found by search_active_framework)
+        row_index = row_number - 1
+        item_rows = self.get_active_framework_rows(agreement_number)
+        while row_index >= item_rows.count():
+            row_index -= item_rows.count()
+            next_page_class = self.active_framework_next_page.get_attribute("class") or ""
+            if "ui-state-disabled" in next_page_class:
+                raise AssertionError(f"{agreement_number} has fewer than {row_number} items")
+            self.click_on_btn(self.active_framework_next_page)
+            self.move_mouse_away()
+            self.wait_for_timeout(1000)
+            self.active_framework_grid_loading.wait_for(state="hidden", timeout=30000)
+            item_rows = self.get_active_framework_rows(agreement_number)
+
+        item_row = item_rows.nth(row_index)
+        framework_item = {
+            "fa_no": (item_row.locator(self.active_framework_fa_no_cell).text_content() or "").strip(),
+            "vendor_name": (item_row.locator(self.active_framework_vendor_cell).text_content() or "").strip(),
+            "item_name": (item_row.locator(self.active_framework_item_name_cell).text_content() or "").strip(),
+            "item_code": (item_row.locator(self.active_framework_item_code_cell).text_content() or "").strip(),
+            "specification": (item_row.locator(self.active_framework_specification_cell).text_content() or "").strip(),
+            "unit_price": (item_row.locator(self.active_framework_unit_price_cell).text_content() or "").strip(),
+        }
+        self.highlight_element(item_row)
+        self.click_on_btn(item_row.locator(self.active_framework_item_name_cell))
+        self.move_mouse_away()
+        print(f"Selected active framework item (row {row_number}): {framework_item}")
+        return framework_item
+
     def verify_grid_row_count(self, expected_count):
         expect(self.requisition_detail_rows).to_have_count(expected_count)
         print(f"Requisition Detail Information List rows: {expected_count}")

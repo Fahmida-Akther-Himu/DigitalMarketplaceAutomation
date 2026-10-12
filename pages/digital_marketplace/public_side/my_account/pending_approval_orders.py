@@ -50,6 +50,16 @@ class PendingApprovalOrders(HomePage, BasicActionsDM):
         self.click_multiselect_approve = page.locator('button[id="pendingApprovalOrder-selected"]')
         self.pending_order_toggle_button = page.locator('button[class="toggle-button collapsed-button btn"]')
 
+        # Order information: "Order Date: ...", "Order Total: ...", "Order Status: ..." (list and details page)
+        self.order_status_text = page.locator("text=Order Status:")
+        # Approval confirmation message (top bar) and error messages
+        self.page_messages = page.locator(
+            "#bar-notification .content, .message-error, .validation-summary-errors, .field-validation-error")
+        # Order details tables, found by their section title
+        self.preferred_delivery_schedule_table = page.locator(
+            "xpath=//*[normalize-space()='Preferred Delivery Schedule']/following::table[1]")
+        self.action_history_table = page.locator("xpath=//*[normalize-space()='Action History']/following::table[1]")
+
     ##################### small helper so we can log easily #####################
     def _log(self, message: str):
         if self.logger:
@@ -228,3 +238,61 @@ class PendingApprovalOrders(HomePage, BasicActionsDM):
         # The searched order reference number is shown in the Pending Approval Orders list
         expect(self.page.get_by_text(reference_number).first).to_be_visible(timeout=15000)
         print(f"Order found in pending approval list: {reference_number}")
+
+    def get_order_field(self, label):
+        # Value of an order information line, e.g. get_order_field("Order Total") -> "BDT 255270.00"
+        field = self.page.locator(f"text={label}:").first
+        field_value = (field.text_content() or "").split(":", 1)[-1].strip()
+        if not field_value:
+            # Label and value in separate cells, e.g. "Vendor Name:" | "Walton Hi-Tech Industries PLC"
+            field_value = (field.locator("xpath=following-sibling::*[1]").text_content() or "").strip()
+        return field_value
+
+    def get_order_summary_from_list(self):
+        # Arrow icon of the searched order: Order Date and Order Total in the expanded order info
+        self.view_pending_order_info_toggle()
+        expect(self.page.locator("text=Order Total:").first).to_be_visible(timeout=15000)
+        order_summary = {
+            "order_date": self.get_order_field("Order Date"),
+            "order_total": self.get_order_field("Order Total"),
+        }
+        print(f"Order summary in pending approval list: {order_summary}")
+        return order_summary
+
+    def approve_order_with_result(self):
+        # Approve Order > Yes; returns the order status and the page messages (approval confirmation or error)
+        self.click_on_btn(self.approve_order_button)
+        self.click_on_btn(self.yes_button)
+        # Approval takes time (loading): wait until the status is no longer "Submitted for Approval"
+        try:
+            expect(self.order_status_text.first).not_to_contain_text("Submitted for Approval", timeout=60000)
+        except AssertionError:
+            print("Order status did not change within 60 seconds")
+        order_status = self.get_order_field("Order Status") if self.order_status_text.count() else ""
+        page_messages = [message.strip() for message in self.page_messages.all_inner_texts() if message.strip()]
+        print(f"Order status: {order_status}")
+        print(f"Page message: {page_messages}")
+        return order_status, page_messages
+
+    @staticmethod
+    def read_table_rows(table):
+        # Table rows as dictionaries: {column title: cell text}
+        expect(table).to_be_visible(timeout=15000)
+        rows = table.locator("tr")
+        headers = [text.strip() for text in rows.first.locator("th, td").all_inner_texts()]
+        table_rows = []
+        for index in range(1, rows.count()):
+            cells = [text.strip() for text in rows.nth(index).locator("td").all_inner_texts()]
+            if cells:
+                table_rows.append(dict(zip(headers, cells)))
+        return table_rows
+
+    def get_preferred_delivery_schedule(self):
+        schedule_rows = self.read_table_rows(self.preferred_delivery_schedule_table)
+        print(f"Preferred Delivery Schedule: {schedule_rows}")
+        return schedule_rows
+
+    def get_action_history(self):
+        action_history_rows = self.read_table_rows(self.action_history_table)
+        print(f"Action History: {action_history_rows}")
+        return action_history_rows

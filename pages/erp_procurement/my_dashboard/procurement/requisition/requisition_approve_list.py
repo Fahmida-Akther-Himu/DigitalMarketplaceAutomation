@@ -19,6 +19,8 @@ class RequisitionApproveList(ProcurementHomePage, BasicActionsDM):
         # self.final_approve_button = page.locator('//span[text()="Approve"]')
         self.final_approve_button = page.locator("//button/span[contains(text(),'Approve')]")
         self.requisition_details_page_approve = page.get_by_role("button", name=re.compile("Approve", re.IGNORECASE))
+        # Approval confirmation message (jGrowl notification after Approve)
+        self.approval_message = page.locator("#jGrowl .message")
 
     ##################### small helper so we can log easily #####################
     def _log(self, message: str):
@@ -58,6 +60,16 @@ class RequisitionApproveList(ProcurementHomePage, BasicActionsDM):
         # Verify the requisition number is displayed in the message
         # expect(self.page.locator('//div[@class="message"]')).to_contain_text(self.requisition_number)
         # self.page.wait_for_timeout(2000)
+
+    def approve_requisition_with_message(self):
+        # Same as approve_requisition(), also returns the approval confirmation message
+        self.approve_button.click()
+        self.page.wait_for_timeout(3000)
+        self.final_approve_button.click()
+        self.wait_to_load_element(self.approval_message.last)
+        message = (self.approval_message.last.text_content() or "").strip()
+        print(f"Approval message: {message}")
+        return message
 
     def confirmation_message_approve(self):
         # Click the confirmation message approve button

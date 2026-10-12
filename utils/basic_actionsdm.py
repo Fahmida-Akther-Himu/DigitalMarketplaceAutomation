@@ -5,6 +5,7 @@ import os
 import re
 from typing import Optional
 from pathlib import Path
+from urllib.parse import unquote
 
 
 def is_element_visible(elem):
@@ -20,7 +21,35 @@ class BasicActionsDM:
         self.page.screenshot(path=os.getcwd() + "/screenshots/" + name + ".png")
 
     def get_full_page_screenshot(self, name):
-        self.page.screenshot(path=os.getcwd() + "/screenshots_taken/" + name + ".png", full_page=True)
+        # Why: every test step saves a full page screenshot; the full page capture resizes the page for a moment and
+        # can leave it scrolled to the top, so the scroll position is restored afterwards, and a capture that does
+        # not finish in time (very long page) is saved as the visible part instead of failing the test.
+        # When: after each test step.
+        screenshot_path = os.getcwd() + "/screenshots_taken/" + name + ".png"
+        scroll_position = self._get_scroll_position()
+        try:
+            self.page.screenshot(path=screenshot_path, full_page=True, timeout=60000)
+        except Exception as error:
+            print(f"Full page screenshot '{name}' not taken ({type(error).__name__}): the visible part is saved")
+            self.page.screenshot(path=screenshot_path, timeout=30000)
+        finally:
+            self._restore_scroll_position(scroll_position)
+
+    def _get_scroll_position(self):
+        # Why: the page must stay where it was after a screenshot; When: before a full page screenshot
+        try:
+            return self.page.evaluate("() => [window.scrollX, window.scrollY]")
+        except Exception:
+            return None
+
+    def _restore_scroll_position(self, scroll_position):
+        # Why: the full page capture can leave the page scrolled to the top; When: after a full page screenshot
+        if scroll_position is None:
+            return
+        try:
+            self.page.evaluate("([x, y]) => window.scrollTo(x, y)", scroll_position)
+        except Exception:
+            pass  # the page navigated during the screenshot
 
     @staticmethod
     def highlight_element(elem, color="red", duration_ms=2000):
@@ -287,3 +316,81 @@ class BasicActionsDM:
         reset = "\033[0m"
 
         print(f"{highlight} 🔔 {toast_msg} 🔔 {reset}")
+
+    # ---------------- New tabs and attachments (links that open other pages or files) ----------------
+
+    def open_link_in_new_tabs(self, link, wait_after_ms=5000):
+        # Why: some links open 1 or 2 new tabs (e.g. the requisition link opens ERP twice); When: a link test must
+        # read the opened page and close every tab it opened; returns all new tabs
+        opened_tabs = []
+
+        def add_tab(new_tab):
+            # Why: keep every tab the link opens; When: the browser opens a new tab after the click
+            opened_tabs.append(new_tab)
+
+        self.page.context.on("page", add_tab)
+        try:
+            with self.page.context.expect_page():
+                link.click()
+            self.page.wait_for_timeout(wait_after_ms)
+        finally:
+            self.page.context.remove_listener("page", add_tab)
+        print(f"New tabs opened: {len(opened_tabs)}")
+        return opened_tabs
+
+    def close_opened_tabs(self, tabs):
+        # Why: tabs opened by a link must not stay open; When: after reading the opened page, before the next step
+        for tab in tabs:
+            if not tab.is_closed():
+                tab.close()
+        self.page.bring_to_front()
+
+    def save_attachment_from_icon(self, attachment_icon, save_folder):
+        # Why: the attachment icon opens an ERP file in a new tab, and the browser shows XLS/PPTX files as very long
+        # raw text that holds the page; the tab is stopped from showing the file and the file is downloaded directly.
+        # When: every attachment check (shopping cart, delivery schedule, confirm order, order details)
+        file_urls, opened_tabs, downloads = [], [], []
+
+        def stop_showing_file(route):
+            # Why: the browser must not show the file in the tab; When: the new tab opens the ERP file address
+            if route.request.is_navigation_request():
+                file_urls.append(route.request.url)
+                route.abort()
+            else:
+                route.continue_()
+
+        def add_tab(new_tab):
+            # Why: the opened tab is closed after the file address is known; When: the icon opens a new tab
+            opened_tabs.append(new_tab)
+
+        def add_download(download):
+            # Why: marketplace attachments are downloaded instead of opened; When: the icon starts a download
+            downloads.append(download)
+
+        self.page.context.route("**/fileStream/readFileStream**", stop_showing_file)
+        self.page.context.on("page", add_tab)
+        self.page.on("download", add_download)
+        try:
+            attachment_icon.click()
+            for _ in range(60):
+                if file_urls or downloads:
+                    break
+                self.page.wait_for_timeout(500)
+        finally:
+            self.page.context.unroute("**/fileStream/readFileStream**", stop_showing_file)
+            self.page.context.remove_listener("page", add_tab)
+            self.page.remove_listener("download", add_download)
+        assert file_urls or downloads, "The attachment icon did not open or download the attachment"
+
+        if downloads:
+            saved_file = Path(save_folder) / downloads[0].suggested_filename.split(";")[0].strip()
+            downloads[0].save_as(str(saved_file))
+            print(f"Attachment downloaded: {saved_file}")
+            return saved_file
+
+        self.close_opened_tabs(opened_tabs)
+        file_url = file_urls[0]
+        saved_file = Path(save_folder) / unquote(file_url).split("/")[-1].split("?")[0]
+        saved_file.write_bytes(self.page.context.request.get(file_url).body())
+        print(f"Attachment saved (not shown in the browser): {file_url} -> {saved_file}")
+        return saved_file

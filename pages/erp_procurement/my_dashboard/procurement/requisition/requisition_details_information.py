@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from playwright.sync_api import expect
 from utils.basic_actionsdm import BasicActionsDM
+from pages.erp_procurement.my_dashboard.procurement.purchase_order.framework_information import FrameworkInformation
 
 
 class RequisitionDetailsInformation(BasicActionsDM):
@@ -32,6 +33,73 @@ class RequisitionDetailsInformation(BasicActionsDM):
         fa_no_link = self.fa_no_framework_link.filter(has_text=re.compile(rf"^\s*{re.escape(fa_no)}(\s|$|/)"))
         self.click_on_btn(fa_no_link.first)
         self.move_mouse_away()
+
+    def is_erp_login_page(self):
+        # ERP "Sign in to BRAC ERP" page (OpenID Connect login) instead of the requisition details
+        return "/openid-connect/auth" in self.page.url
+
+    def wait_for_requisition_details(self, timeout=60000):
+        # Why: ERP staging can take more than 30 seconds to show the requisition details; When: before reading the
+        # requisition opened from a marketplace link. Returns True when "REQ. No" is shown, False after the timeout
+        req_no_label = self.page.locator("xpath=//div[contains(@class, 'label-new') and normalize-space()='REQ. No']").first
+        try:
+            req_no_label.wait_for(state="visible", timeout=timeout)
+            return True
+        except Exception:
+            return False
+
+    def get_requisition_field(self, label):
+        # Value next to a label of the Requisition Information, e.g. get_requisition_field("Status") -> "Approved"
+        # (label: div.label-new, value: the next div.content-new)
+        label_cell = self.page.locator(
+            f"xpath=//div[contains(@class, 'label-new') and normalize-space()='{label}']").first
+        expect(label_cell, f"'{label}' not found on the requisition details").to_be_visible(timeout=30000)
+        value_cell = label_cell.locator("xpath=following-sibling::div[contains(@class, 'content-new')][1]")
+        return " ".join((value_cell.inner_text() or "").split())
+
+    def get_requisition_information(self):
+        # REQ. No, Status, Requisition Date, Project Name, Source of Fund, Remarks and the FA Nos
+        requisition_information = {
+            "req_no": self.get_requisition_field("REQ. No"),
+            "status": self.get_requisition_field("Status"),
+            "requisition_date": self.get_requisition_field("Requisition Date"),
+            "project_name": self.get_requisition_field("Project Name"),
+            "source_of_fund": self.get_requisition_field("Source of Fund"),
+            "remarks": self.get_requisition_field("Remarks"),
+            "agreement_numbers": self.get_requisition_agreement_numbers(),
+        }
+        print(f"ERP requisition information: {requisition_information}")
+        return requisition_information
+
+    def get_requisition_agreement_numbers(self):
+        # FA No of every item row, e.g. "BPD/2026/FA-48 (Both)" or "BPD/2026/FA-48/V1" -> "BPD/2026/FA-48";
+        # unique, in page order
+        expect(self.fa_no_framework_link.first).to_be_visible(timeout=30000)
+        fa_numbers = []
+        for link_text in self.fa_no_framework_link.all_inner_texts():
+            fa_no = re.sub(r"/V\d+$", "", link_text.strip().split(" ")[0])
+            if fa_no and fa_no not in fa_numbers:
+                fa_numbers.append(fa_no)
+        print(f"Requisition agreement numbers: {fa_numbers}")
+        return fa_numbers
+
+    def get_agreement_vendors(self):
+        # Same agreement for all items: only the first FA No link is opened.
+        # Different agreements: the first FA No link of each different agreement is opened.
+        # Returns {FA No: vendor name}
+        agreement_vendors = {}
+        for fa_no in self.get_requisition_agreement_numbers():
+            with self.page.context.expect_page() as new_tab_info:
+                self.open_framework_details_by_fa_no(fa_no)
+            framework_tab = new_tab_info.value
+            framework_tab.wait_for_load_state("domcontentloaded")
+            framework_info_page = FrameworkInformation(framework_tab)
+            agreement_vendors[fa_no] = framework_info_page.get_vendor_info()
+            framework_info_page.get_full_page_screenshot(f"agreement_vendor_{fa_no.replace('/', '_')}")
+            framework_tab.close()
+            self.page.bring_to_front()
+        print(f"Agreement vendors: {agreement_vendors}")
+        return agreement_vendors
 
     @staticmethod
     def _row_numbers(item_row):
@@ -95,6 +163,26 @@ class RequisitionDetailsInformation(BasicActionsDM):
         self.highlight_element(item_row)
         details_text = " | ".join(text.strip() for text in item_row.locator("td").all_inner_texts() if text.strip())
         print(f"Requisition item verified: {details_text}")
+        return details_text
+
+    def verify_requisition_item_without_agreement(self, requisition_number, item_code, quantity, unit_price):
+        # Non-agreement item: the Requisition Details row with this item code, quantity and unit price
+        # and without a FA No. link (innermost table rows only)
+        expect(self.details_content).to_contain_text(requisition_number, timeout=30000)
+        matching_rows = []
+        for item_row in self.page.locator("tr").filter(has_text=str(item_code)).all():
+            if item_row.locator("tr").count() or item_row.locator('a[onclick^="showFrameworkDetails("]').count():
+                continue
+            row_numbers = self._row_numbers(item_row)
+            if Decimal(str(quantity)) in row_numbers and Decimal(str(unit_price)) in row_numbers:
+                matching_rows.append(item_row)
+        assert len(matching_rows) == 1, \
+            f"Expected 1 non-agreement row with item {item_code}, quantity {quantity} and unit price {unit_price}, " \
+            f"found {len(matching_rows)}"
+        item_row = matching_rows[0]
+        self.highlight_element(item_row)
+        details_text = " | ".join(text.strip() for text in item_row.locator("td").all_inner_texts() if text.strip())
+        print(f"Non-agreement requisition item verified: {details_text}")
         return details_text
 
     def verify_requisition_item_count(self, fa_no, expected_count):
