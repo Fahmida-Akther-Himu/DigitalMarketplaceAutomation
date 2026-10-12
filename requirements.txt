@@ -50,3 +50,4 @@ typing_extensions~=4.14.1
 attrs~=26.1.0
 allure-python-commons~=2.16.0
 typing_extensions~=4.14.1
+pypdf~=6.20.0

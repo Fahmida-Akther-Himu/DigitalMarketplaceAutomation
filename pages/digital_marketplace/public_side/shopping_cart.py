@@ -1,3 +1,4 @@
+from urllib.parse import unquote
 # import urllib2 from BeautifulSoup import BeautifulSoup soup = BeautifulSoup(urllib2.urlopen("https://www.google.com")) print soup.title.string;
 import re
 
@@ -44,6 +45,8 @@ class ShoppingCart(HomePage, BasicActionsDM):
         self.confirm_button = page.get_by_role("button", name="Confirm")
         self.cancel_button = page.get_by_role("button", name="Cancel")
         self.update_shopping_cart = page.locator('button[id="updatecart"]')
+        # "Yes" button of the attachment remove confirmation pop-up
+        self.attachment_remove_yes_button = page.get_by_role("button", name=re.compile(r"^\s*yes\s*$", re.IGNORECASE))
 
     ##################### small helper so we can log easily #####################
     def _log(self, message: str):
@@ -90,10 +93,18 @@ class ShoppingCart(HomePage, BasicActionsDM):
             return False
 
         print(f"Found vendor: {vendor_name}")
-        radio_button.check()
-        self.wait_for_timeout(2000)
-        # Shopping cart reloads for the selected vendor
+        # The cart page must be fully loaded first, otherwise the vendor selection is not handled by the page
         self.page.wait_for_load_state("load")
+        self.wait_for_timeout(3000)
+        if radio_button.first.is_checked():
+            # Vendor already selected when the cart opens: fire its change event to load the vendor's items
+            radio_button.first.dispatch_event("change")
+        else:
+            radio_button.check()
+        self.wait_for_timeout(2000)
+        # Shopping cart reloads for the selected vendor: wait until the item Qty. fields are shown
+        self.page.wait_for_load_state("load")
+        expect(self.visible_item_quantity.first).to_be_visible(timeout=60000)
         print(f"Selected radio button for vendor: {vendor_name}")
 
         # Find all checked requisitions
@@ -284,3 +295,213 @@ class ShoppingCart(HomePage, BasicActionsDM):
             self.wait_for_timeout(reload_every_seconds * 1000)
             waited_seconds += reload_every_seconds + 15
             self.page.reload(wait_until="load")
+
+    # ---------------- Cart item information (Item/Service name & Specification, UoM, Qty., Prices) ----------------
+
+    def get_cart_item_row(self, requisition_number, item_code):
+        # Cart row of this requisition and agreement item, e.g. REQ20260019046 and FWI044809
+        return self.page.locator("tr").filter(
+            has=self.page.locator("a.item-requisition-link", has_text=requisition_number)
+        ).filter(has_text=f"[{item_code}]").first
+
+    def read_cart_item(self, item_row):
+        # Columns: SL | Image | Item/Service name & Specification | UoM | Qty. | Unit Price | Total Price | Remove
+        cells = item_row.locator("td")
+        framework_link = item_row.locator("a.item-framework-link")
+        # Specification: the lines between "([item code] - product)" and "Remarks:"
+        item_lines = [line.strip() for line in cells.nth(2).inner_text().splitlines() if line.strip()]
+        start = next(index for index, line in enumerate(item_lines) if line.startswith("(["))
+        end = next((index for index, line in enumerate(item_lines) if line.startswith("Remarks")), len(item_lines))
+        quantity_input = cells.nth(4).locator("input:visible")
+        quantity = quantity_input.first.input_value() if quantity_input.count() else cells.nth(4).inner_text()
+        return {
+            "FA No.": framework_link.get_attribute("data-framework-number"),
+            "FA link text": framework_link.inner_text().strip(),
+            "Specification": " ".join(item_lines[start + 1:end]),
+            "UoM": cells.nth(3).inner_text().strip(),
+            "Qty.": quantity.strip(),
+            "Unit Price": cells.nth(5).inner_text().replace("BDT", "").strip(),
+            "Total Price": cells.nth(6).inner_text().replace("BDT", "").strip(),
+        }
+
+    def open_cart_item_framework_document(self, item_row):
+        # The FA link opens the Framework Agreement document in a new tab
+        with self.page.context.expect_page() as new_page_info:
+            item_row.locator("a.item-framework-link").click()
+        document_tab = new_page_info.value
+        document_tab.wait_for_load_state("domcontentloaded")
+        return document_tab
+
+    # ---------------- Cart item links, attachment and quantity (order creation journey) ----------------
+
+    def select_vendor_keep_only_requisition(self, vendor_name, requisition_number, max_attempts_per_requisition=3):
+        # Select the vendor and keep only this requisition ticked; works with any number of requisitions in the
+        # shopping cart (business data). Each untick reloads the cart, so the click does not wait for that reload.
+        radio_button = self.page.locator(
+            f"//div[starts-with(@id,'vendorContainer')]//label[contains(., '{vendor_name}')]"
+            f"/preceding-sibling::input[@type='radio']").first
+        expect(radio_button, f"Vendor '{vendor_name}' not found in the shopping cart").to_be_visible(timeout=60000)
+        expect(radio_button).to_be_enabled(timeout=60000)
+        self.page.wait_for_load_state("load")
+        if radio_button.is_checked():
+            # Vendor already selected when the cart opens: fire its change event to load the vendor's items
+            radio_button.dispatch_event("change")
+        else:
+            radio_button.check(no_wait_after=True)
+        self.page.wait_for_load_state("load", timeout=60000)
+        expect(self.visible_item_quantity.first).to_be_visible(timeout=60000)
+        print(f"Selected vendor: {vendor_name}")
+
+        requisition_checkboxes = self.page.locator(
+            "//input[@type='checkbox'][following-sibling::label/strong]")
+        attempts = {}
+        while True:
+            self.page.wait_for_load_state("load", timeout=60000)
+            ticked_others = []
+            for index in range(requisition_checkboxes.count()):
+                checkbox = requisition_checkboxes.nth(index)
+                number = " ".join(checkbox.locator("xpath=following-sibling::label/strong").first.inner_text().split())
+                if number != requisition_number and checkbox.is_checked():
+                    ticked_others.append(number)
+            if not ticked_others:
+                break
+            other_number = ticked_others[0]
+            attempts[other_number] = attempts.get(other_number, 0) + 1
+            assert attempts[other_number] <= max_attempts_per_requisition,                 f"Requisition {other_number} is still ticked after {max_attempts_per_requisition} attempts"
+            other_checkbox = self.page.locator(
+                f"//label[strong[normalize-space(text())='{other_number}']]/preceding-sibling::input[@type='checkbox']")
+            other_checkbox.click(no_wait_after=True)
+            try:
+                expect(other_checkbox).not_to_be_checked(timeout=30000)
+            except AssertionError:
+                print(f"Requisition {other_number} not unticked yet, checking again")
+            self.page.wait_for_load_state("load", timeout=60000)
+            print(f"Unticked requisition: {other_number}")
+
+        own_checkbox = self.page.locator(
+            f"//label[strong[normalize-space(text())='{requisition_number}']]/preceding-sibling::input[@type='checkbox']")
+        expect(own_checkbox, f"Requisition {requisition_number} must stay ticked").to_be_checked(timeout=30000)
+        expect(self.visible_item_quantity.first).to_be_visible(timeout=60000)
+        print(f"Only requisition {requisition_number} is ticked for vendor {vendor_name}")
+        return True
+
+    def get_requisition_cart_rows(self, requisition_number):
+        # Cart rows (items) of the requisition: innermost item rows only (the vendor's items can be inside
+        # an outer table row after the vendor selection)
+        rows = self.page.locator("tr:has(span.product-remarks):not(:has(tr))").filter(
+            has=self.page.locator("a.item-requisition-link", has_text=requisition_number))
+        expect(rows.first).to_be_visible(timeout=30000)
+        return [rows.nth(index) for index in range(rows.count())]
+
+    @staticmethod
+    def get_cart_item_id(item_row):
+        # Cart item id, e.g. 19566 from <span id="remarkSpan19566">
+        return re.sub(r"\D", "", item_row.locator("span.product-remarks").first.get_attribute("id") or "")
+
+    def get_cart_item_cell(self, item_row):
+        # Item/Service name & Specification cell: the td with the requisition link
+        # (found by content: the column position changes after the vendor selection)
+        return item_row.locator("td").filter(has=self.page.locator("a.item-requisition-link")).first
+
+    def read_cart_item_cell(self, item_row):
+        # Item/Service name & Specification cell, UoM, Qty. and prices of a cart row
+        cell = self.get_cart_item_cell(item_row)
+        heading = " ".join((cell.locator("span").first.inner_text() or "").split())
+        requisition_link = cell.locator("a.item-requisition-link")
+        agreement_item_link = cell.locator('a[target="_blank"]').first
+        attachment_icon = cell.locator("i.item-attachment-link")
+        item_lines = [line.strip() for line in cell.inner_text().splitlines() if line.strip()]
+        start = next(index for index, line in enumerate(item_lines) if line.startswith("(["))
+        end = next((index for index, line in enumerate(item_lines) if line.startswith("Remarks")), len(item_lines))
+        item_id = self.get_cart_item_id(item_row)
+        quantity_input = self.page.locator(f"#itemquantity{item_id}")
+        quantity = quantity_input.input_value() if quantity_input.is_visible() else \
+            self.page.locator(f"#quantitySpan{item_id}").inner_text()
+        cart_item = {
+            "Master item": heading.split(" - ")[0].strip(),
+            "Requisition": " ".join(requisition_link.inner_text().split()),
+            "Requisition ERP URL": requisition_link.get_attribute("data-url"),
+            "FA No.": cell.locator("a.item-framework-link").get_attribute("data-framework-number"),
+            "Agreement item code": (agreement_item_link.get_attribute("href") or "").strip("/"),
+            "Agreement item name": " ".join(agreement_item_link.inner_text().split()),
+            "Specification": " ".join(item_lines[start + 1:end]),
+            "Remarks": " ".join(cell.locator("span.product-remarks").inner_text().split()),
+            "Attachment path": attachment_icon.first.get_attribute("data-attachment-path") if attachment_icon.count() else "",
+            "UoM": " ".join(item_row.locator("span.sku").first.inner_text().split()),
+            "Qty.": quantity.strip(),
+            "Unit Price": item_row.locator("span.product-unit-price").inner_text().replace("BDT", "").strip(),
+            "Total Price": item_row.locator("span.product-subtotal").inner_text().replace("BDT", "").strip(),
+        }
+        print(f"Cart item: {cart_item}")
+        return cart_item
+
+    @staticmethod
+    def cart_requisition_link(item_row):
+        # Why: the requisition link of a cart item can open 1 or 2 ERP tabs; When: link checks that close every tab
+        return item_row.locator("a.item-requisition-link").first
+
+    def open_cart_requisition_link(self, item_row):
+        # Requisition number link: opens the ERP requisition details in a new tab
+        with self.page.context.expect_page() as new_tab_info:
+            self.click_on_btn(item_row.locator("a.item-requisition-link"))
+        requisition_tab = new_tab_info.value
+        requisition_tab.wait_for_load_state("domcontentloaded")
+        return requisition_tab
+
+    def open_cart_agreement_item(self, item_row):
+        # Agreement item name link: opens the item details page in a new tab
+        with self.page.context.expect_page() as new_tab_info:
+            self.click_on_btn(self.get_cart_item_cell(item_row).locator('a[target="_blank"]').first)
+        item_tab = new_tab_info.value
+        item_tab.wait_for_load_state("domcontentloaded")
+        return item_tab
+
+    def download_cart_attachment(self, item_row, save_folder):
+        # Why: check the cart item attachment without showing the file in the browser; When: cart attachment checks
+        return self.save_attachment_from_icon(item_row.locator("i.item-attachment-link").first, save_folder)
+
+    def remove_cart_attachment(self, item_row):
+        # Remove the item attachment: the remove link opens a confirmation pop-up;
+        # store its text, click Yes and return the confirmation text
+        item_id = self.get_cart_item_id(item_row)
+        self.click_on_btn(self.page.locator(f"#itemAttachmentRemove{item_id}"))
+        yes_button = self.attachment_remove_yes_button.first
+        expect(yes_button, "Attachment remove confirmation pop-up not shown").to_be_visible(timeout=15000)
+        confirmation_popup = yes_button.locator("xpath=ancestor::div[2]")
+        confirmation_text = " ".join(confirmation_popup.inner_text().split())
+        self.click_on_btn(yes_button)
+        # The attachment icon is hidden (not deleted) after the remove
+        expect(item_row.locator("i.item-attachment-link").first).to_be_hidden(timeout=15000)
+        print(f"Cart attachment removed: {confirmation_text}")
+        return confirmation_text
+
+    def upload_cart_item_attachment(self, item_row, file_path):
+        # Upload a new attachment for the cart item and confirm it
+        item_id = self.get_cart_item_id(item_row)
+        self.page.locator(f"#itemAttachment{item_id}").set_input_files(str(file_path))
+        self.click_on_btn(self.confirm_button.first)
+        expect(item_row.locator("i.item-attachment-link").first).to_be_visible(timeout=30000)
+        print(f"Cart attachment uploaded: {file_path}")
+
+    def update_cart_item_quantity(self, item_row, quantity):
+        # New Qty. of the cart item and Update shopping cart
+        item_id = self.get_cart_item_id(item_row)
+        quantity_input = self.page.locator(f"#itemquantity{item_id}")
+        quantity_input.fill("")
+        self.input_in_element(quantity_input, quantity)
+        self.click_on_btn(self.update_shopping_cart)
+        self.page.wait_for_load_state("load")
+        self.wait_for_timeout(3000)
+        print(f"Cart item {item_id} quantity updated to {quantity}")
+
+    def fill_cart_item_remarks(self, item_row, remarks):
+        # New remarks of the cart item (0 to 500 characters); saved with Update shopping cart
+        item_id = self.get_cart_item_id(item_row)
+        remarks_input = self.page.locator(f"#itemRemarks{item_id}")
+        remarks_input.fill(remarks)
+        print(f"Cart item {item_id} remarks: {remarks}")
+
+    def get_cart_item_remarks_input(self, item_row):
+        # Text in the remarks field of the cart item
+        item_id = self.get_cart_item_id(item_row)
+        return self.page.locator(f"#itemRemarks{item_id}").input_value()

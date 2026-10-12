@@ -68,7 +68,10 @@ class DashboardPage(BasicActionsDM):
         self.get_full_page_screenshot('add_bannar2')
 
     def goto_procurement(self) -> None:
-        self.click_on_btn(self.myDashboardItem_procurement)
+        # Procurement opens slowly on staging: click, then wait up to 90 seconds for the Procurement page
+        self.myDashboardItem_procurement.wait_for(state="visible", timeout=30000)
+        self.myDashboardItem_procurement.click(no_wait_after=True)
+        self.page.wait_for_url("**/procurementDashboard/**", timeout=90000)
 
     def menu_click_procurement_hyperlink(self):
         self.click_on_btn(self.click_procurement_hyperlink)

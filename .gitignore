@@ -18,3 +18,4 @@ __pychache__
 **/.idea
 **.idea
 **/.env.qa
+**/test_data/
