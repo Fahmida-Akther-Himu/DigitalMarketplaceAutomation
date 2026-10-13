@@ -285,8 +285,9 @@ class CheckoutPage(ShoppingCart, BasicActionsDM):
 
     @staticmethod
     def confirm_row_attachment_icon(item_row):
-        # Why: the attachment of one item row (no icon: no attachment); When: the attachment check of that row
-        return item_row.locator("i.fa-paperclip")
+        # Why: the attachment of one item row (business rule: an item without attachment shows no icon; the hidden
+        # icon of such a row is not counted); When: the attachment check of that row
+        return item_row.locator("i.fa-paperclip:visible")
 
     def confirm_header_framework_link(self, fa_no):
         # Why: the order header Framework Agreement link (the item rows have "FA: ..." links with the same FA No.);
