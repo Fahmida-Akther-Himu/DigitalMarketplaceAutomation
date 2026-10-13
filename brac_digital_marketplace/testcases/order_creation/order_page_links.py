@@ -182,7 +182,8 @@ def check_confirm_order_rows_links(page, requisition_number, agreement_numbers, 
                                    erp_user=None):
     # Why: the confirm order links are opened in page order (first in, first out) and every item row must link to
     # its own requisition, agreement, product page and attachment; When: confirm order link checks of orders with
-    # more items. items: [{"name", "agreement_number", "item_code", "product_name", "attachment_name" ("" = none)}].
+    # more items. items: [{"name", "agreement_number", "item_code", "product_name", "attachment_name" ("" = none),
+    # optional "master_item_code" (items with the same agreement item are told apart by their master item)}].
     # Order: order header Framework Agreement links, then every item row from the top: requisition, "FA:", product
     # page, attachment. A header FA No. that is not shown is only noted (the header is checked with the order
     # information). Returns (checks, links)
@@ -217,8 +218,8 @@ def check_confirm_order_rows_links(page, requisition_number, agreement_numbers, 
     items_not_found = list(items)
     for row_number, item_row in enumerate(item_rows, start=1):
         row_text = " ".join(item_row.inner_text().split())
-        item = next((item for item in items_not_found
-                     if item["agreement_number"] in row_text and item["item_code"] in row_text), None)
+        item = next((item for item in items_not_found if item["agreement_number"] in row_text
+                     and item["item_code"] in row_text and item.get("master_item_code", "") in row_text), None)
         add_check(f"Row {row_number} item", "an item of the order", item["name"] if item else row_text[:80], bool(item))
         if not item:
             continue
