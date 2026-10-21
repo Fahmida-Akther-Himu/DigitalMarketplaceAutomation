@@ -11,7 +11,8 @@ class MainNavigationBar(BasicActionsDM):
         # write down all the elements here with locator format
         self.exit_button = page.locator("a#btn_login.btn_user")
 
-        self.logout_button = self.page.locator('a:has-text("Logout")')
+        # ERP header has two Logout links (small and large screen menus): the visible one
+        self.logout_button = self.page.locator('a[href="/logout"]:visible').first
 
     ##################### small helper so we can log easily #####################
     def _log(self, message: str):
@@ -26,5 +27,12 @@ class MainNavigationBar(BasicActionsDM):
 
     def logout(self):
         self.logout_button.click()
+        self.page.context.clear_cookies()
+        self.page.context.clear_permissions()
+
+    def logout_visible(self):
+        # Why: some ERP pages have two Logout links (small and large screen menus), so only the visible one is
+        # clicked; When: ERP logout after the framework order check of the vendor acknowledgement test file
+        self.page.locator("a[href='/logout']:visible").first.click()
         self.page.context.clear_cookies()
         self.page.context.clear_permissions()

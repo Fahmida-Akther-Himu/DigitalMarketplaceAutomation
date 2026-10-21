@@ -29,7 +29,8 @@ class ProcurementLoginPage(BasicActionsDM):
         self.logoutBtn = page.locator('//input[@type="button" and @value="Logout"]')
 
         self.exit_button = page.locator("a#btn_login.btn_user")
-        self.logout_button = self.page.locator('a:has-text("Logout")')
+        # ERP header has two Logout links (small and large screen menus): the visible one
+        self.logout_button = self.page.locator('a[href="/logout"]:visible').first
 
     ##################### small helper so we can log easily #####################
     def _log(self, message: str):

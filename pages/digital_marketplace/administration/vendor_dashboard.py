@@ -77,3 +77,21 @@ class VendorDashboard(HomePage, BasicActionsDM):
         action_button.click()
         print(f"Clicked '{action}' button for order '{order_reference}'")
         return True
+
+    def pending_acknowledgement_row(self, order_reference):
+        # Why: the order is found by its reference in the Pending Acknowledgement Orders list; When: vendor dashboard
+        # path to the order details
+        return self.table.locator("tbody tr", has_text=order_reference).first
+
+    @staticmethod
+    def row_actions(row):
+        # Why: the vendor actions (View, Acknowledge, Send Back) shown in an order row; When: verifying the actions of
+        # a list row (nothing is clicked)
+        return [" ".join(text.split()) for text in row.locator("a:visible, button:visible").all_inner_texts()
+                if text.strip()]
+
+    def pending_acknowledgement_count(self):
+        # Why: the number of orders waiting for the vendor acknowledgement (rows with order cells, not the "no data"
+        # row); When: vendor dashboard before and after the acknowledgement
+        self.table.wait_for(state="visible", timeout=15000)
+        return len([row for row in self.table_rows.all() if row.locator("td").count() > 1])

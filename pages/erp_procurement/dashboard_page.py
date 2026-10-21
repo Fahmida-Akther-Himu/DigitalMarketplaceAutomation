@@ -34,7 +34,8 @@ class DashboardPage(BasicActionsDM):
         self.myDashboardItem_Brac_Inventory = page.locator('xpath=//*[contains(text(),"Brac Inventory")]')
         self.add_banner = page.locator('#modals')
         self.close_modal = page.locator('button[class="close-button"][data-close-button=""]')
-        self.click_procurement_hyperlink = page.locator('a[href="/procurementDashboard/myDashboard"]')
+        # ERP header has two Procurement links (small and large screen menus): the visible one
+        self.click_procurement_hyperlink = page.locator('a[href="/procurementDashboard/myDashboard"]:visible').first
         # Table of Authority menu
         self.table_of_authority = page.locator(
             '//div[normalize-space()="Table Of Authority"]'

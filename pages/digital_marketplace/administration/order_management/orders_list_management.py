@@ -25,6 +25,8 @@ class OrdersListManagement(HomePage, BasicActionsDM):
         self.order_number_suggestions = page.locator(
             "ul.ui-autocomplete:visible li, .tt-menu:visible .tt-suggestion, .k-list-container:visible li")
         self.order_rows = page.locator("table tbody tr")
+        # Sidebar Orders link (also matches when it is the active menu item)
+        self.orders_nav_link = page.locator('a.nav-link[href="/Admin/Order/List"]').first
         # self.order = page.get_by_role("textbox", name="Order")
         # self.order_input = page.locator("#OrderNo")
 
@@ -123,3 +125,40 @@ class OrdersListManagement(HomePage, BasicActionsDM):
         # The searched order is shown in the orders grid
         expect(self.order_rows.filter(has_text=order_no).first).to_be_visible(timeout=15000)
         print(f"Order found in orders list: {order_no}")
+
+    def goto_orders_list(self):
+        # Why: the Order Management menu toggles, so it is clicked only when Orders is hidden; When: opening the
+        # Orders list from any administration page (vendor Orders list path)
+        self.open_order_management_menu_if_collapsed(self.orders_nav_link)
+        self.click_on_btn(self.orders_nav_link)
+        self.page.wait_for_load_state("domcontentloaded")
+        self.wait_for_timeout(2000)
+
+    def order_list_row(self, order_no):
+        # Why: the row of an order in the Orders grid (order reference or framework order number); When: Orders list
+        # path to the order details
+        return self.order_rows.filter(has_text=order_no).first
+
+    def show_all_orders(self):
+        # Why: the Order field may not find an order by its reference, so the list is shown without filters;
+        # When: Orders list path when the searched order is not in the grid
+        self.order_input.fill("")
+        self.click_on_btn(self.order_search_button)
+        self.wait_for_timeout(3000)
+
+    def open_order_from_list(self, order_no):
+        # Why: View of the order row opens its order details; When: Orders list path to the order details
+        self.click_on_btn(self.order_list_row(order_no).locator("a, button").filter(has_text="View").first)
+        self.page.wait_for_load_state("domcontentloaded")
+        self.wait_for_timeout(3000)
+
+    def read_order_list_row(self, order_no):
+        # Why: the Orders grid columns (Framework Order No, Reference #, Order status, Shipping status, ...) of an
+        # order row, read by their header titles; When: Shipping status before and after the vendor acknowledgement
+        row = self.order_list_row(order_no)
+        headers = [" ".join(text.split()) for text in row.locator("xpath=ancestor::table[1]//th").all_inner_texts()]
+        cells = row.locator("td")
+        values = {title: " ".join(cells.nth(index).inner_text().split())
+                  for index, title in enumerate(headers) if title and index < cells.count()}
+        print(f"Orders list row {order_no}: {values}")
+        return values
