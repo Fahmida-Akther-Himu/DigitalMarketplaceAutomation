@@ -25,6 +25,8 @@ class Customers(BasicActionsDM):
         self.user_group = page.locator('.k-multiselect-wrap')
 
         self.customer_search_button = page.locator('button[id="search-customers"]')
+        # Customers grid rows: checkbox | Username | User Info. | User Group | Active | Edit
+        self.customer_rows = page.locator("table tbody tr")
 
     ##################### small helper so we can log easily #####################
     def _log(self, message: str):
@@ -49,3 +51,23 @@ class Customers(BasicActionsDM):
 
         print(username)
         return username
+
+    def search_customer_by_first_name(self, first_name):
+        # Why: the vendor is searched by its name in the First name field (same as the sanity Test case 19);
+        # When: retrieving the vendor username before the vendor login
+        self.search_vendor(customer_name=first_name)
+        self.click_on_btn(self.customer_search_button)
+        self.wait_for_timeout(5000)
+
+    def get_customer_rows(self, name):
+        # Why: the search can show more customers than the vendor, so every row with the name is read and checked;
+        # When: after search_customer_by_first_name. Returns [{"Username", "User Info", "User Group"}]
+        rows = self.customer_rows.filter(has_text=name)
+        return [self.read_customer_row(rows.nth(index)) for index in range(rows.count())]
+
+    @staticmethod
+    def read_customer_row(row):
+        # Why: Username, User Info. and User Group of one customers grid row; When: get_customer_rows
+        cells = row.locator("td")
+        return {title: " ".join(cells.nth(index).inner_text().split())
+                for index, title in ((1, "Username"), (2, "User Info"), (3, "User Group"))}
