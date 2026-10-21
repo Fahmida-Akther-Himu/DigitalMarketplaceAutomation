@@ -210,3 +210,14 @@ class OrderDetailsAdministration(VendorDashboard, OrdersListManagement, BasicAct
         # Why: the Framework Agreement Number link of the agreement information section; When: agreement number check
         # of the vendor order details
         return self.order_info_value("Framework Agreement Number").locator("a").first
+
+    def expand_collapsed_cards(self):
+        # Why: Administration remembers collapsed cards per user (e.g. a vendor with the Info card closed), so the order
+        # information is hidden; When: right after the vendor order details are opened, before they are read
+        collapsed_cards = self.page.locator(".card.collapsed-card")
+        for _ in range(collapsed_cards.count()):
+            card = collapsed_cards.first
+            expand_button = card.locator("[data-card-widget='collapse'], .btn-tool").first
+            (expand_button if expand_button.count() else card.locator(".card-header").first).click()
+            self.wait_for_timeout(1000)
+        print(f"Collapsed cards expanded, still collapsed: {collapsed_cards.count()}")
