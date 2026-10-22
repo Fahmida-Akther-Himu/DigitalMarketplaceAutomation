@@ -112,7 +112,8 @@ def check_checkout_page_links(page, requisition_number, agreement_numbers, produ
     # - product details: every product link, the agreement item page of each item
     #   (products: {product name: [item codes of the items with this product name]})
     # links_required: a missing link fails the check (Confirm order); otherwise it is noted in the report
-    # requisition_product_name: the product name is verified on the page instead of opening the product links
+    # requisition_product_name: the product name (or a list of names) is verified on the page instead of opening the
+    # product links
     # Returns (checks, links); checks are (check, expected, actual, "PASS"/"FAIL")
     checkout_page = CheckoutPage(page)
     checks, links = [], {}
@@ -166,7 +167,9 @@ def check_checkout_page_links(page, requisition_number, agreement_numbers, produ
     # one link each, opened by position); together they must open the page of every item. With the requisition
     # product name: the name is verified on the page and the product links are not clicked
     if requisition_product_name:
-        checks.extend(requisition_product_name_checks(page.locator("body"), requisition_product_name, label))
+        names = [requisition_product_name] if isinstance(requisition_product_name, str) else requisition_product_name
+        for name in names:
+            checks.extend(requisition_product_name_checks(page.locator("body"), name, label))
         products = {}
     for product_name, item_codes in products.items():
         if not checkout_page.has_checkout_link(product_name):
@@ -197,7 +200,8 @@ def check_confirm_order_rows_links(page, requisition_number, agreement_numbers, 
     # Why: the confirm order links are opened in page order (first in, first out) and every item row must link to
     # its own requisition, agreement, product page and attachment; When: confirm order link checks of orders with
     # more items. items: [{"name", "agreement_number", "item_code", "product_name", "attachment_name" ("" = none),
-    # optional "master_item_code" (items with the same agreement item are told apart by their master item)}].
+    # optional "master_item_code" (items with the same agreement item are told apart by their master item), optional
+    # "requisition_product_name" (the product name is verified in the row instead of opening the product page)}].
     # Order: order header Framework Agreement links, then every item row from the top: requisition, "FA:", product
     # page, attachment. A header FA No. that is not shown is only noted (the header is checked with the order
     # information). Returns (checks, links)
@@ -252,14 +256,17 @@ def check_confirm_order_rows_links(page, requisition_number, agreement_numbers, 
 
         open_framework(f"{name} FA link {item['agreement_number']}", checkout_page.confirm_row_link(item_row, "FA:"))
 
-        product_tabs = checkout_page.open_link_in_new_tabs(checkout_page.confirm_row_link(item_row, item["product_name"]))
-        product_tabs[0].wait_for_load_state("domcontentloaded")
-        product_url = product_tabs[0].url
-        HomePage(product_tabs[0]).get_full_page_screenshot(f'{label}_row_{row_number}_product')
-        close_tabs(product_tabs, page)
-        links[f"{name} product page"] = product_url
-        add_check(f"{name} product page link", item["item_code"], product_url,
-                  item["item_code"].lower() in product_url.lower())
+        if item.get("requisition_product_name"):
+            checks.extend(requisition_product_name_checks(item_row, item["requisition_product_name"], name))
+        else:
+            product_tabs = checkout_page.open_link_in_new_tabs(checkout_page.confirm_row_link(item_row, item["product_name"]))
+            product_tabs[0].wait_for_load_state("domcontentloaded")
+            product_url = product_tabs[0].url
+            HomePage(product_tabs[0]).get_full_page_screenshot(f'{label}_row_{row_number}_product')
+            close_tabs(product_tabs, page)
+            links[f"{name} product page"] = product_url
+            add_check(f"{name} product page link", item["item_code"], product_url,
+                      item["item_code"].lower() in product_url.lower())
 
         attachment_icon = checkout_page.confirm_row_attachment_icon(item_row)
         if item["attachment_name"]:
@@ -450,7 +457,8 @@ def check_order_details_all_products_links(page, requisition_number, agreement_n
                                            erp_user=None):
     # Why: an order with more items must link every product to its agreement attachment, product page and item
     # attachment; When: order details checks of multi-item orders (initiator or approver).
-    # items: [{"item_code", "master_item_code", "attachment_name" ("" = no attachment)}]. The order information
+    # items: [{"item_code", "master_item_code", "attachment_name" ("" = no attachment), optional
+    # "requisition_product_name" (verified in the product row instead of opening the product page)}]. The order information
     # Framework Agreement link of each FA is checked first ("shown" checks are named "Order information Framework
     # Agreement ... shown", so a test can check them last). Returns (checks, links)
     order_details_page = OrderDetails(page)
@@ -505,12 +513,16 @@ def check_order_details_all_products_links(page, requisition_number, agreement_n
     for number, item, product_row, product in in_page_order(found_products, lambda found: next(iter(found[2].values()))):
         open_framework(f"Item {number} product FA link",
                        lambda: order_details_page.open_product_link(product_row, "FA:"))
-        product_tab = order_details_page.open_product_link(product_row, product_name_of(product))
-        links[f"Item {number} product page"] = product_tab.url
-        HomePage(product_tab).get_full_page_screenshot(f'{label}_item_{number}_product_page')
-        close_tabs([product_tab], page)
-        add_check(f"Item {number} product page link", item["item_code"], links[f"Item {number} product page"],
-                  item["item_code"].lower() in links[f"Item {number} product page"].lower())
+        if item.get("requisition_product_name"):
+            item_cell = next(cell for title, cell in product_row.items() if title.startswith("Item/Service"))
+            checks.extend(requisition_product_name_checks(item_cell, item["requisition_product_name"], f"Item {number}"))
+        else:
+            product_tab = order_details_page.open_product_link(product_row, product_name_of(product))
+            links[f"Item {number} product page"] = product_tab.url
+            HomePage(product_tab).get_full_page_screenshot(f'{label}_item_{number}_product_page')
+            close_tabs([product_tab], page)
+            add_check(f"Item {number} product page link", item["item_code"], links[f"Item {number} product page"],
+                      item["item_code"].lower() in links[f"Item {number} product page"].lower())
         if item["attachment_name"]:
             downloaded_file = order_details_page.download_product_row_attachment(product_row, save_folder)
             links[f"Item {number} attachment"] = downloaded_file.name

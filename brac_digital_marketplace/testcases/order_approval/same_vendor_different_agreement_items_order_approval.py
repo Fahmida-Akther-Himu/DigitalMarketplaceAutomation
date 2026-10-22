@@ -27,7 +27,8 @@ from pages.digital_marketplace.main_navigation_menu import MainNavigationMenu
 from pages.digital_marketplace.public_side.my_account.pending_approval_orders import PendingApprovalOrders
 from pages.digital_marketplace.public_side.my_account.order_details import OrderDetails
 from brac_digital_marketplace.testcases.order_creation.order_page_links import \
-    check_order_details_all_products_links, read_requisition_from_link, find_product_row
+    check_order_details_all_products_links, read_requisition_from_link, find_product_row, \
+    requisition_product_name_checks
 from brac_digital_marketplace.testcases.order_creation.order_details_checks import ORDER_INFORMATION_FIELDS, \
     check_delivery_schedules, check_action_history, open_preview_tab, to_amount, numbers_in_text, new_check, \
     without_spaces, receiver_of
@@ -481,6 +482,7 @@ def test_3_verify_pending_approval_order_details_links(page):
         link_checks, order_details_links = check_order_details_all_products_links(
             page, order["requisition_number"], agreement_numbers(),
             [{"item_code": item["item_code"], "master_item_code": item["master_item_code"],
+              "requisition_product_name": item["requisition_product_name"],
               "attachment_name": item["attachment"]} for item in order["items"]],
             'pending_approval_order_details', DOWNLOAD_DIR, erp_user=order_approver)
         # The order information shows one FA for a multi FA order (confirmed app issue): asserted at the end of
@@ -491,26 +493,13 @@ def test_3_verify_pending_approval_order_details_links(page):
         attach_and_assert_checks([check for check in link_checks if check not in issue_checks],
                                  "Pending approval order details links and item attachments")
 
-    # Step 4: Preferred Delivery Schedule product links (top link first)
-    with allure.step("Step 4: Open the 2 Preferred Delivery Schedule product links (product details pages)"):
+    # Step 4: Preferred Delivery Schedule product names (not clicked)
+    with allure.step("Step 4: Verify the Preferred Delivery Schedule product names of the items (not clicked)"):
         checks = []
-        schedule_item_urls = []
-        item_codes_not_opened = [item["item_code"] for item in order["items"]]
-        for index in range(len(order["items"])):
-            schedule_item_tab = order_details_page.open_delivery_schedule_product_link_by_index(index)
-            schedule_item_urls.append(schedule_item_tab.url)
-            HomePage(schedule_item_tab).get_full_page_screenshot(f'pending_approval_schedule_product_{index + 1}_page')
-            order_details_page.close_opened_tabs([schedule_item_tab])
-            opened_code = next((code for code in item_codes_not_opened
-                                if code.lower() in schedule_item_urls[-1].lower()), "")
-            checks.append(new_check(f"Preferred Delivery Schedule product link {index + 1}", "a page of an order item",
-                                    schedule_item_urls[-1], bool(opened_code)))
-            if opened_code:
-                item_codes_not_opened.remove(opened_code)
-        checks.append(new_check("Preferred Delivery Schedule product links of all items", "none missing",
-                                ", ".join(item_codes_not_opened) or "none missing", not item_codes_not_opened))
-        order_details_links["Delivery schedule product pages"] = schedule_item_urls
-        attach_and_assert_checks(checks, "Pending approval Preferred Delivery Schedule product links")
+        for item in order["items"]:
+            checks += requisition_product_name_checks(page.locator("body"), item["requisition_product_name"],
+                                                      "Preferred Delivery Schedule")
+        attach_and_assert_checks(checks, "Pending approval Preferred Delivery Schedule product names")
 
     # Step 5: Preferred Delivery Schedule requisition link
     with allure.step(f"Step 5: Open the Preferred Delivery Schedule requisition link {order['requisition_number']} (ERP)"):
