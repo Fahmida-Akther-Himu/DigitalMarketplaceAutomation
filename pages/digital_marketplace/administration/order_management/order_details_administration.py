@@ -221,3 +221,29 @@ class OrderDetailsAdministration(VendorDashboard, OrdersListManagement, BasicAct
             (expand_button if expand_button.count() else card.locator(".card-header").first).click()
             self.wait_for_timeout(1000)
         print(f"Collapsed cards expanded, still collapsed: {collapsed_cards.count()}")
+
+    def open_print_document(self):
+        # Why: Print opens the order document (ERP) in a new tab, directly as a PDF or through a viewer page that loads
+        # the PDF; the PDF response is caught; When: order document of the order details (receive checks).
+        # Returns (print tab, PDF address; "" when no PDF was loaded in 30 seconds)
+        pdf_urls = []
+
+        def keep_pdf(response):
+            # Why: the order document is a PDF response; When: every response after Print
+            if "application/pdf" in response.headers.get("content-type", ""):
+                pdf_urls.append(response.url)
+
+        self.page.context.on("response", keep_pdf)
+        try:
+            with self.page.context.expect_page() as new_tab_info:
+                self.click_on_btn(self.print_button)
+            print_tab = new_tab_info.value
+            print_tab.wait_for_url(lambda url: url.startswith("http"), timeout=60000, wait_until="commit")
+            for _ in range(60):
+                if pdf_urls:
+                    break
+                print_tab.wait_for_timeout(500)
+        finally:
+            self.page.context.remove_listener("response", keep_pdf)
+        print(f"Print opened: {print_tab.url} | PDF: {pdf_urls[0] if pdf_urls else 'not loaded'}")
+        return print_tab, (pdf_urls[0] if pdf_urls else "")

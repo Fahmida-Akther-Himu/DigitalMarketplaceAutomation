@@ -162,3 +162,46 @@ class OrdersListManagement(HomePage, BasicActionsDM):
                   for index, title in enumerate(headers) if title and index < cells.count()}
         print(f"Orders list row {order_no}: {values}")
         return values
+
+    @staticmethod
+    def read_table_rows(table):
+        # Why: the rows of a table as {header title: cell text} (cell lines kept with "\n"), read by the header
+        # titles, not by position; When: receive page, receive popup and item receive details tables
+        headers = [" ".join(text.split()) for text in table.locator("th").all_inner_texts()]
+        rows = []
+        for row in table.locator("tbody tr").all():
+            cells = row.locator("td")
+            if cells.count() < 2:
+                continue
+            texts = ["\n".join(" ".join(line.split()) for line in cell.splitlines() if line.strip())
+                     for cell in cells.all_inner_texts()]
+            # Cells by position of their header title (a checkbox column has an empty title and is left out)
+            rows.append({title: texts[index] for index, title in enumerate(headers) if title and index < len(texts)})
+        return rows
+
+    @staticmethod
+    def parse_item_cell(cell_text):
+        # Why: the "Item/Service name & Specification" cell is "[master] name - REQ.. / FA: .. / Specification:
+        # ([FWI..] - product name - location ) specification / Remarks: .. / Attachment:"; When: receive pages.
+        # Returns {"Master item", "Requisition", "FA No.", "Agreement item", "Product name", "Specification", "Remarks"}
+        lines = [line.strip() for line in cell_text.splitlines() if line.strip()]
+        title = lines[0] if lines else ""
+        agreement_index = next((i for i, line in enumerate(lines) if line.startswith("([")), None)
+        agreement = re.match(r"^\(\s*\[(\w+)\]\s*-\s*(.*?)\s*\)$", lines[agreement_index]) \
+            if agreement_index is not None else None
+        remarks_index = next((i for i, line in enumerate(lines) if line.startswith("Remarks")), len(lines))
+        attachment_index = next((i for i, line in enumerate(lines) if line.startswith("Attachment")), len(lines))
+        specification_start = agreement_index + 1 if agreement_index is not None else remarks_index
+        remarks_lines = [lines[remarks_index].split(":", 1)[-1]] + lines[remarks_index + 1:attachment_index] \
+            if remarks_index < len(lines) else []
+        master_item = re.match(r"^(\[\w+\])", title)
+        requisition = re.search(r"REQ\d+", title)
+        return {
+            "Master item": master_item.group(1) if master_item else "",
+            "Requisition": requisition.group(0) if requisition else "",
+            "FA No.": next((line.split(":", 1)[1].strip() for line in lines if line.startswith("FA:")), ""),
+            "Agreement item": agreement.group(1) if agreement else "",
+            "Product name": agreement.group(2) if agreement else "",
+            "Specification": " ".join(lines[specification_start:remarks_index]),
+            "Remarks": " ".join(" ".join(remarks_lines).split()),
+        }
