@@ -57,6 +57,9 @@ details_after_approval = {}
 order_preview = {}
 # Order approval result for the next test file
 order_approval_result = {}
+# Order Date checks (app issue: Order Date one day ahead of the submission date): reported in Test case 2 and 6 and
+# asserted at the end of Test case 7, so the order is still approved and its result saved
+order_date_checks_of_file = []
 
 
 def attach_and_assert_checks(checks, title):
@@ -159,6 +162,15 @@ def check_products(page):
     return checks, products
 
 
+def keep_order_date_checks(checks, label):
+    # Why: the Order Date checks (app issue) must not stop the approval; they are reported now and asserted at the
+    # end of Test case 7; When: order information and Action History checks. Returns the other checks
+    date_checks = [check for check in checks if check[0].startswith("Order Date")]
+    order_date_checks_of_file.extend((f"{check} ({label})", expected, actual, result)
+                                     for check, expected, actual, result in date_checks)
+    return [check for check in checks if check not in date_checks]
+
+
 def verify_order_details(page, order_status, label):
     # Why: the order details must be the order that was created (information, 2 products, Preferred Delivery
     # Schedule and Action History); When: before and after the approval. Returns the order details
@@ -166,6 +178,7 @@ def verify_order_details(page, order_status, label):
     approved = "approved" in order_status.lower()
     with allure.step(f"Verify the order information ({label})"):
         checks, details["information"] = check_information(page, order_status)
+        checks = keep_order_date_checks(checks, label)
         PendingApprovalOrders(page).get_full_page_screenshot(f'{label}_order_information')
         attach_and_assert_checks(checks, f"Order information ({label})")
     with allure.step(f"Verify the 2 products and the Sub-Total ({label})"):
@@ -183,8 +196,9 @@ def verify_order_details(page, order_status, label):
             name=f"Action History ({label})",
             attachment_type=allure.attachment_type.TEXT
         )
+        checks = keep_order_date_checks(checks, label)
         PendingApprovalOrders(page).get_full_page_screenshot(f'{label}_action_history')
-        attach_and_assert_checks(checks, f"Action History and Order Date ({label})")
+        attach_and_assert_checks(checks, f"Action History ({label})")
     return details
 
 
@@ -617,6 +631,7 @@ def test_7_verify_approved_order_preview(page):
            remarks, UoM, quantity, prices), Grand Total, amount in words and the delivery schedules.
         2. Log out from the Digital Marketplace.
         3. Save the order approval result (same_agreement_item_and_different_master_items_order_approval_result.json).
+        4. Assert the Order Date checks of Test case 2 and 6 (app issue: Order Date one day ahead).
     """
     global order_preview, order_approval_result
     assert details_after_approval, "Test case 6 must pass first: approved order details are not verified"
@@ -652,3 +667,7 @@ def test_7_verify_approved_order_preview(page):
             name="Saved order approval result",
             attachment_type=allure.attachment_type.TEXT
         )
+
+    # Step 4: Order Date checks of Test case 2 and 6 (app issue)
+    with allure.step("Step 4: Assert the Order Date checks of Test case 2 and 6"):
+        attach_and_assert_checks(order_date_checks_of_file, "Order Date (Test case 2 and 6)")
