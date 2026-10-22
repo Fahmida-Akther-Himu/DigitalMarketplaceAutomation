@@ -105,11 +105,9 @@ def vendor_order_reference():
 
 
 def saved_product_name():
-    # Why: the product name ("item name - delivery location") of the approved order, e.g. "([FWI049375] - BYA FR Skin
-    # Coated - Project Site )" -> "BYA FR Skin Coated - Project Site"; When: vendor product checks
-    agreement_item = vendor_order["details_after_approval"]["product"]["Agreement item"]
-    match = re.match(r"^\(\s*\[\w+\]\s*-\s*(.*?)\s*\)$", agreement_item)
-    return match.group(1) if match else agreement_item
+    # Why: the product name ("item name - delivery location") stored from the Active Requisition Product List and
+    # carried forward by the order and approval files; When: vendor product checks
+    return vendor_order["requisition_product_name"]
 
 
 def receiver_name(receiver_info):
