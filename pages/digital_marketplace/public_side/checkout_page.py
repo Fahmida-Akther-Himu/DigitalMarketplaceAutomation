@@ -247,10 +247,22 @@ class CheckoutPage(ShoppingCart, BasicActionsDM):
                 continue
             self.input_in_element(receiving_person, pin)
             self.page.keyboard.press('Enter')
-            self.page.wait_for_timeout(3000)
+            self.wait_for_resolved_receiving_person(receiving_person, pin)
             filled_rows += 1
         print(f"Auto generated schedule rows filled with receiving person {pin}: {filled_rows}")
         return filled_rows
+
+    def wait_for_resolved_receiving_person(self, receiving_person, pin):
+        # Why: the typed PIN becomes "(PIN) - name" only after the PIN lookup; when Enter is pressed before the lookup
+        # the PIN stays unresolved and the schedule does not match the order (Continue hidden); When: after a receiving
+        # person PIN is typed in an auto generated schedule row (Enter is pressed once more when it is not resolved)
+        resolved_value = re.compile(rf"\({re.escape(pin)}\)")
+        try:
+            expect(receiving_person).to_have_value(resolved_value, timeout=10000)
+        except AssertionError:
+            receiving_person.click()
+            self.page.keyboard.press('Enter')
+            expect(receiving_person).to_have_value(resolved_value, timeout=15000)
 
     def checkout_link(self, link_text, index=0):
         # Visible link of the checkout page by its text (requisition number, FA No., product name); index: the n-th

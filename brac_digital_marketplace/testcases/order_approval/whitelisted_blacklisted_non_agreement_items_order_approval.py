@@ -22,7 +22,7 @@ from pages.digital_marketplace.main_navigation_menu import MainNavigationMenu
 from pages.digital_marketplace.public_side.my_account.pending_approval_orders import PendingApprovalOrders
 from pages.digital_marketplace.public_side.my_account.order_details import OrderDetails
 from brac_digital_marketplace.testcases.order_creation.order_page_links import check_order_details_page_links, \
-    read_requisition_from_link
+    read_requisition_from_link, requisition_product_name_checks
 from brac_digital_marketplace.testcases.order_creation.order_details_checks import check_order_information, \
     check_product, check_delivery_schedules, check_action_history, check_order_preview, to_amount, new_check, \
     without_spaces, receiver_of
@@ -47,6 +47,9 @@ details_after_approval = {}
 order_preview = {}
 # Order approval result for the next test file
 order_approval_result = {}
+# Order Date checks (app issue: Order Date one day ahead of the submission date): reported in Test case 2 and 6 and
+# asserted at the end of Test case 7, so the order is still approved and its result saved
+order_date_checks_of_file = []
 
 
 def attach_and_assert_checks(checks, title):
@@ -75,6 +78,15 @@ def expected_order(order_status):
     }
 
 
+def keep_order_date_checks(checks, label):
+    # Why: the Order Date checks (app issue) must not stop the approval; they are reported now and asserted at the
+    # end of Test case 7; When: order information and Action History checks. Returns the other checks
+    date_checks = [check for check in checks if check[0].startswith("Order Date")]
+    order_date_checks_of_file.extend((f"{check} ({label})", expected, actual, result)
+                                     for check, expected, actual, result in date_checks)
+    return [check for check in checks if check not in date_checks]
+
+
 def verify_order_details(page, order_status, label):
     # Why: the order details must be the order that was created (information, product, Preferred Delivery Schedule
     # and Action History); When: before and after the approval. Returns the order details
@@ -93,6 +105,7 @@ def verify_order_details(page, order_status, label):
                       details["information"]["Order Total"],
                       to_amount(details["information"]["Order Total"]) == to_amount(list_order_total)),
         ]
+        checks = keep_order_date_checks(checks, label)
         PendingApprovalOrders(page).get_full_page_screenshot(f'{label}_order_information')
         attach_and_assert_checks(checks, f"Order information ({label})")
     with allure.step(f"Verify the product and the Sub-Total ({label})"):
@@ -109,8 +122,9 @@ def verify_order_details(page, order_status, label):
             name=f"Action History ({label})",
             attachment_type=allure.attachment_type.TEXT
         )
+        checks = keep_order_date_checks(checks, label)
         PendingApprovalOrders(page).get_full_page_screenshot(f'{label}_action_history')
-        attach_and_assert_checks(checks, f"Action History and Order Date ({label})")
+        attach_and_assert_checks(checks, f"Action History ({label})")
     return details
 
 
@@ -157,7 +171,7 @@ def test_1_verify_order_in_pending_approval_list(page):
     with allure.step("Step 1: Load the order result of whitelisted_blacklisted_non_agreement_items_order.py"):
         order = load_result("whitelisted_blacklisted_non_agreement_order_result", created_by="whitelisted_blacklisted_non_agreement_items_order.py")
         missing_order_values = [key for key in ("expected_schedules", "order_details", "uom", "cart_remarks",
-                                                "cart_attachment") if key not in order]
+                                                "cart_attachment", "requisition_product_name") if key not in order]
         assert not missing_order_values, \
             f"Run whitelisted_blacklisted_non_agreement_items_order.py first (order result has no {', '.join(missing_order_values)})"
         order_reference_number = order["order_reference_number"]
@@ -277,25 +291,22 @@ def test_3_verify_pending_approval_order_details_links(page):
                      "download the item attachment"):
         link_checks, order_details_links = check_order_details_page_links(
             page, order["requisition_number"], order["agreement_number"], order["item_code"], order["cart_attachment"],
-            'pending_approval_order_details', DOWNLOAD_DIR, erp_user=order_approver)
+            'pending_approval_order_details', DOWNLOAD_DIR, erp_user=order_approver,
+            requisition_product_name=order["requisition_product_name"])
         attach_and_assert_checks(link_checks, "Pending approval order details links and item attachment")
 
-    # Step 4: Preferred Delivery Schedule heading links (product details page and requisition)
-    with allure.step("Step 4: Open the Preferred Delivery Schedule product and requisition links"):
+    # Step 4: Preferred Delivery Schedule product name (not clicked) and requisition link
+    with allure.step("Step 4: Verify the Preferred Delivery Schedule product name and open the requisition link"):
         order_details_page = OrderDetails(page)
-        schedule_item_tab = order_details_page.open_delivery_schedule_product_link_by_index(0)
-        schedule_item_url = schedule_item_tab.url
-        HomePage(schedule_item_tab).get_full_page_screenshot('pending_approval_schedule_product_page')
-        order_details_page.close_opened_tabs([schedule_item_tab])
         schedule_requisition, opened_tabs = read_requisition_from_link(
             page, lambda: order_details_page.open_link_all_tabs(
                 order_details_page.delivery_schedule_requisition_link(order["requisition_number"])),
             'pending_approval_schedule_erp_requisition', erp_user=order_approver)
-        order_details_links["Delivery schedule product page"] = schedule_item_url
         order_details_links["Delivery schedule requisition"] = schedule_requisition["req_no"]
-        checks = [
-            new_check("Preferred Delivery Schedule product link", order["item_code"], schedule_item_url,
-                      order["item_code"].lower() in schedule_item_url.lower()),
+        checks = requisition_product_name_checks(page.locator("body"), order["requisition_product_name"],
+                                                 "Preferred Delivery Schedule")
+        checks += [
+
             new_check("Preferred Delivery Schedule requisition link (ERP REQ. No)", order["requisition_number"],
                       schedule_requisition["req_no"], schedule_requisition["req_no"] == order["requisition_number"]),
             new_check("Requisition link tabs closed", "all", f"{opened_tabs} tab(s) closed", len(page.context.pages) == 1),
@@ -453,6 +464,7 @@ def test_7_verify_approved_order_preview(page):
            schedule.
         2. Log out from the Digital Marketplace.
         3. Save the order approval result (whitelisted_blacklisted_non_agreement_order_approval_result.json).
+        4. Assert the Order Date checks of Test case 2 and 6 (app issue: Order Date one day ahead).
     """
     global order_preview, order_approval_result
     assert details_after_approval, "Test case 6 must pass first: approved order details are not verified"
@@ -489,3 +501,7 @@ def test_7_verify_approved_order_preview(page):
             name="Saved order approval result",
             attachment_type=allure.attachment_type.TEXT
         )
+
+    # Step 4: Order Date checks of Test case 2 and 6 (app issue)
+    with allure.step("Step 4: Assert the Order Date checks of Test case 2 and 6"):
+        attach_and_assert_checks(order_date_checks_of_file, "Order Date (Test case 2 and 6)")

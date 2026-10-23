@@ -40,7 +40,8 @@ from pages.digital_marketplace.public_side.shopping_cart import ShoppingCart
 from pages.digital_marketplace.public_side.checkout_page import CheckoutPage
 from pages.digital_marketplace.public_side.my_account.order_details import OrderDetails
 from brac_digital_marketplace.testcases.order_creation.order_page_links import check_cart_item_links, \
-    check_checkout_page_links, check_checkout_attachment, check_order_details_page_links, read_requisition_from_link
+    check_checkout_page_links, check_checkout_attachment, check_order_details_page_links, read_requisition_from_link, \
+    requisition_product_name_checks
 from brac_digital_marketplace.testcases.order_creation.order_details_checks import check_order_information, \
     check_product, check_delivery_schedules, check_action_history, check_order_preview, to_amount, new_check
 
@@ -113,6 +114,12 @@ def expected_order():
     }
 
 
+def requisition_product_name():
+    # Why: the product name ("item name - delivery location") stored by the requisition test file from the Active
+    # Requisition Product List (one item); When: product name checks of every order page
+    return requisition["active_requisition_products"][0]["product"]
+
+
 def item_products():
     # Why: the product link text is the agreement item name of the cart item; When: checkout product link checks
     return {cart_item_after_vendor["Agreement item name"]: [whitelisted_item["item_code"]]}
@@ -142,7 +149,8 @@ def verify_cart_item(page, label):
                   to_amount(cart_item["Unit Price"]) == to_amount(whitelisted_item["unit_price"])),
     ]
     link_checks, page_links[label] = check_cart_item_links(
-        page, item_row, req_num, whitelisted_item["item_code"], requisition["attachment_name"], label, DOWNLOAD_DIR)
+        page, item_row, req_num, whitelisted_item["item_code"], requisition["attachment_name"], label, DOWNLOAD_DIR,
+        requisition_product_name=requisition_product_name())
     print(f"CART ITEM ({label}):", cart_item)
     cart_page.get_full_page_screenshot(f'order_{label}_links_checked')
     attach_and_assert_checks(checks + link_checks, f"Shopping cart item and links ({label})")
@@ -354,7 +362,7 @@ def test_4_verify_delivery_schedule_links(page):
     with allure.step("Step 1-2: Open the requisition details, agreement attachment, product details and item attachment"):
         link_checks, page_links["delivery_schedule"] = check_checkout_page_links(
             page, req_num, [agreement_number()], item_products(), 'order_schedule',
-            links_required=False, save_folder=DOWNLOAD_DIR)
+            links_required=False, save_folder=DOWNLOAD_DIR, requisition_product_name=requisition_product_name())
         attachment_checks, page_links["delivery_schedule"]["Attachment"] = check_checkout_attachment(
             page, cart_attachment_name, 'order_schedule', DOWNLOAD_DIR)
         CheckoutPage(page).get_full_page_screenshot('order_schedule_links_checked')
@@ -462,7 +470,8 @@ def test_6_verify_confirm_order_links(page):
     with allure.step("Step 1-2: Open the requisition details, agreement attachment, product details and item attachment"):
         checkout_page.wait_for_confirm_order_step()
         link_checks, page_links["confirm_order"] = check_checkout_page_links(
-            page, req_num, [agreement_number()], item_products(), 'order_confirm', save_folder=DOWNLOAD_DIR)
+            page, req_num, [agreement_number()], item_products(), 'order_confirm', save_folder=DOWNLOAD_DIR,
+            requisition_product_name=requisition_product_name())
         attachment_checks, page_links["confirm_order"]["Attachment"] = check_checkout_attachment(
             page, cart_attachment_name, 'order_confirm', DOWNLOAD_DIR)
         checkout_page.get_full_page_screenshot('order_confirm_links_checked')
@@ -588,24 +597,19 @@ def test_8_verify_order_details_links(page):
                      "download the item attachment"):
         link_checks, page_links["order_details"] = check_order_details_page_links(
             page, req_num, agreement_number(), whitelisted_item["item_code"], cart_attachment_name,
-            'order_details', DOWNLOAD_DIR)
+            'order_details', DOWNLOAD_DIR, requisition_product_name=requisition_product_name())
         attach_and_assert_checks(link_checks, "Order details links and item attachment")
 
-    # Step 3: Preferred Delivery Schedule product and requisition links
-    with allure.step("Step 3: Open the Preferred Delivery Schedule product and requisition links"):
-        schedule_item_tab = order_details_page.open_delivery_schedule_product_link_by_index(0)
-        schedule_item_url = schedule_item_tab.url
-        HomePage(schedule_item_tab).get_full_page_screenshot('order_details_schedule_product_page')
-        order_details_page.close_opened_tabs([schedule_item_tab])
+    # Step 3: Preferred Delivery Schedule product name (not clicked) and requisition link
+    with allure.step("Step 3: Verify the Preferred Delivery Schedule product name and open the requisition link"):
         schedule_requisition, opened_tabs = read_requisition_from_link(
             page, lambda: order_details_page.open_link_all_tabs(
                 order_details_page.delivery_schedule_requisition_link(req_num)),
             'order_details_schedule_erp_requisition')
-        page_links["order_details"]["Delivery schedule product page"] = schedule_item_url
         page_links["order_details"]["Delivery schedule requisition"] = schedule_requisition["req_no"]
         checks = [
-            new_check("Preferred Delivery Schedule product link", whitelisted_item["item_code"], schedule_item_url,
-                      whitelisted_item["item_code"].lower() in schedule_item_url.lower()),
+            *requisition_product_name_checks(page.locator("body"), requisition_product_name(),
+                                             "Preferred Delivery Schedule"),
             new_check("Preferred Delivery Schedule requisition link (ERP REQ. No)", req_num,
                       schedule_requisition["req_no"], schedule_requisition["req_no"] == req_num),
             new_check("Requisition link tabs closed", "all", f"{opened_tabs} tab(s) closed", len(page.context.pages) == 1),
@@ -714,6 +718,7 @@ def test_10_verify_order_preview(page):
             "vendor": order_vendor,
             "order_approver": requisition["final_approver"],
             "item_code": whitelisted_item["item_code"],
+            "requisition_product_name": requisition_product_name(),
             "master_item_code": whitelisted_item["master_item_code"],
             "specification": whitelisted_item["specification"],
             "cart_remarks": requisition_item_remarks,

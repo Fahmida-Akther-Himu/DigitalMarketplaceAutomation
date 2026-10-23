@@ -58,3 +58,11 @@ class ItemReceiveList(ProcurementHomePage, BasicActionsDM):
 
             # Switch back to the original list page
             self.page.bring_to_front()
+
+    def mrr_links(self):
+        # Why: the MRR No. links of the searched item receives (one per challan); When: ERP item receive check
+        return self.page.locator("//td[@title and starts-with(@title, 'MRR-')]/a")
+
+    def list_text(self):
+        # Why: the Item Receive List text (framework order, challans, quantities); When: ERP item receive check
+        return " ".join(self.page.locator("body").inner_text().split())

@@ -25,6 +25,9 @@ class FrameworkInformation(BasicActionsDM):
 
         self.comments = page.locator('textarea[id="comments"][placeholder="Max size of comments 300 characters"]')
         self.go_to_list_button = page.locator('input[type="button"][value="Go to List"]')
+        # Push to DM (pushes the agreement to the Digital Marketplace; the result is shown in a jGrowl notification)
+        self.push_to_dm_button = page.locator('input[type="button"][value="Push to DM"], button:has-text("Push to DM")')
+        self.notifications = page.locator("div#jGrowl div.jGrowl-notification")
         self.amendment_button = page.locator('input[type="button"][id="amendment"]')
         self.success_message = page.locator("div#jGrowl div.jGrowl-notification.success div.message")
         # Item details popup (Item Name link): fancybox with Lead Time, Brand Name and Delivery Location
@@ -222,3 +225,19 @@ class FrameworkInformation(BasicActionsDM):
         amendment_message = self.success_message.inner_text().strip()
         print("Amendment confirmation message:", amendment_message)
         return amendment_message
+
+
+    def push_to_dm_with_message(self, timeout_ms=30000):
+        # Why: Push to DM sends the agreement to the Digital Marketplace; the shown message (success / warning / error,
+        # header and text) tells the real result; When: External Connection check when the Proxy IP is missing.
+        # Returns {"type", "text"} ({"type": "", "text": ""} when no message is shown)
+        self.push_to_dm_button.first.scroll_into_view_if_needed()
+        self.push_to_dm_button.first.click()
+        for _ in range(timeout_ms // 500):
+            if self.notifications.count():
+                notification = self.notifications.last
+                classes = notification.get_attribute("class") or ""
+                kind = next((name for name in ("success", "error", "warning", "info") if name in classes), "")
+                return {"type": kind, "text": " ".join(notification.inner_text().replace("×", " ").split())}
+            self.page.wait_for_timeout(500)
+        return {"type": "", "text": ""}

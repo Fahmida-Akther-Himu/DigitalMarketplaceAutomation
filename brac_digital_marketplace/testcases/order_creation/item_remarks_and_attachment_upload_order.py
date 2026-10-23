@@ -28,7 +28,8 @@ DOWNLOAD_DIR = PROJECT_ROOT / "artifacts" / "downloads"
 
 from utils.test_data_store import load_result, save_result
 from brac_digital_marketplace.testcases.order_creation.order_page_links import check_checkout_page_links, \
-    check_cart_item_links, check_order_details_all_products_links, in_page_order, check_confirm_order_rows_links
+    check_cart_item_links, check_order_details_all_products_links, in_page_order, check_confirm_order_rows_links, \
+    requisition_product_name_checks
 from utils.attachment_rules import same_file_type
 from utils.remarks_rules import check_remarks_length, expected_remarks_display, same_remarks
 from pages.erp_procurement.reset_hub_page import ResetHubPage
@@ -207,12 +208,20 @@ def confirm_order_items():
     # Why: the confirm order links are checked row by row with the expected values of each item; When: Test case 6
     return [{"name": f"item {item['number']}", "agreement_number": agreement_number, "item_code": item["item_code"],
              "product_name": cart_items_after_vendor[item["item_code"]]["Agreement item name"],
+             "requisition_product_name": requisition_product_name(item),
              "attachment_name": item["attachment_name"]} for item in requisition_items]
 
 
 def same_date(first_date, second_date):
     # Why: ERP shows "10-10-2026" and the marketplace "10/10/2026"; When: requisition date checks
     return bool(first_date) and re.findall(r"\d+", first_date) == re.findall(r"\d+", second_date)
+
+
+def requisition_product_name(item):
+    # Why: the product name ("item name - delivery location") of an item, stored by the requisition test file from the
+    # Active Requisition Product List; the list rows are in the requisition item order (items can have the same name);
+    # When: product name checks of every page
+    return requisition["active_requisition_products"][item["number"] - 1]["product"]
 
 
 def item_products():
@@ -257,7 +266,7 @@ def verify_cart_item(cart_page, item_row, item, label, check_erp_links):
     # tabs closed), agreement attachment download, product details page and item attachment download (same file type)
     link_checks, cart_link_results[label] = check_cart_item_links(
         cart_page.page, item_row, req_num, item["item_code"], item["attachment_name"], label, DOWNLOAD_DIR,
-        check_requisition=check_erp_links)
+        check_requisition=check_erp_links, requisition_product_name=requisition_product_name(item))
     checks += link_checks
     print(f"CART ITEM ({label}):", cart_item)
     attach_and_assert_checks(checks, f"Shopping cart item vs requisition ({label})")
@@ -467,7 +476,8 @@ def test_4_verify_delivery_schedule_links(page):
     # Step 1-2: Links and item attachments
     with allure.step("Step 1-2: Open the requisition details, agreement attachment, product details and item attachments"):
         link_checks, schedule_links = check_checkout_page_links(
-            page, req_num, [agreement_number], item_products(), 'order_schedule', links_required=False, save_folder=DOWNLOAD_DIR)
+            page, req_num, [agreement_number], item_products(), 'order_schedule', links_required=False, save_folder=DOWNLOAD_DIR,
+            requisition_product_name=list(dict.fromkeys(requisition_product_name(item) for item in requisition_items)))
         check_attachments(link_checks, lambda index: checkout_page.download_checkout_attachment(DOWNLOAD_DIR, index),
                           "Delivery schedule")
         checkout_page.get_full_page_screenshot('order_schedule_links_checked')
@@ -764,29 +774,17 @@ def test_8_verify_order_details_links(page):
         link_checks, order_details_links["products"] = check_order_details_all_products_links(
             page, req_num, [agreement_number],
             [{"item_code": item["item_code"], "master_item_code": item["master_item_code"],
+              "requisition_product_name": requisition_product_name(item),
               "attachment_name": item["attachment_name"]} for item in requisition_items],
             'order_details', DOWNLOAD_DIR)
         attach_and_assert_checks(link_checks, "Order details links and item attachments")
 
-    # Step 6: Preferred Delivery Schedule product links (products can have the same name: opened by position)
-    with allure.step("Step 6: Open the 8 Preferred Delivery Schedule product links (product details pages)"):
+    # Step 6: Preferred Delivery Schedule product names (not clicked)
+    with allure.step("Step 6: Verify the Preferred Delivery Schedule product names of the items (not clicked)"):
         checks = []
-        schedule_item_urls = []
-        expected_item_codes = {item["item_code"] for item in requisition_items}
-        for index in range(len(requisition_items)):
-            schedule_item_tab = order_details_page.open_delivery_schedule_product_link_by_index(index)
-            schedule_item_urls.append(schedule_item_tab.url)
-            HomePage(schedule_item_tab).get_full_page_screenshot(f'order_details_schedule_item_{index + 1}_page')
-            schedule_item_tab.close()
-            page.bring_to_front()
-            item_code = next((code for code in expected_item_codes if code.lower() in schedule_item_tab.url.lower()), "")
-            add_check(checks, f"Preferred Delivery Schedule product link {index + 1}", "a requisition item page",
-                      schedule_item_tab.url, bool(item_code))
-            expected_item_codes.discard(item_code)
-        add_check(checks, "Preferred Delivery Schedule product links of all items", "none missing",
-                  ", ".join(sorted(expected_item_codes)) or "none missing", not expected_item_codes)
-        order_details_links["delivery_schedule_item_urls"] = schedule_item_urls
-        attach_and_assert_checks(checks, "Order details Preferred Delivery Schedule product links")
+        for name in dict.fromkeys(requisition_product_name(item) for item in requisition_items):
+            checks += requisition_product_name_checks(page.locator("body"), name, "Preferred Delivery Schedule")
+        attach_and_assert_checks(checks, "Order details Preferred Delivery Schedule product names")
 
     # Step 7: Preferred Delivery Schedule requisition link
     with allure.step(f"Step 7: Open the Preferred Delivery Schedule requisition link {req_num} (ERP)"):
@@ -951,6 +949,7 @@ def test_9_verify_order_details_information(page):
             "order_remarks": order_remarks,
             "delivery_address": requisition["delivery_address"],
             "items": [{"number": item["number"], "agreement_version": item["agreement_version"],
+                       "requisition_product_name": requisition_product_name(item),
                        "item_code": item["item_code"], "master_item_code": item["master_item_code"],
                        "specification": " ".join(item["specification"].split()),
                        "uom": cart_items_after_vendor[item["item_code"]]["UoM"],

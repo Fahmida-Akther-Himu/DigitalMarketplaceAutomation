@@ -1,5 +1,6 @@
 # this is an object of samplePage to automate, which contains all elements
 # and actions could be performed, like input, verify etc.
+import os
 import re
 from utils.basic_actionsdm import BasicActionsDM
 
@@ -43,6 +44,14 @@ class LoginPage(BasicActionsDM):
         self.input_in_element(self.sso_user_name, user_name)
         self.input_in_element(self.sso_password, pass_word)
         self.click_on_btn(self.sign_in_button)
+
+    def perform_marketplace_login(self, user_name, pass_word):
+        # Why: Staging uses BRAC SSO and QA the Common Login (8-digit PIN); When: every marketplace login of the order
+        # journey files ('test_marketplace_login_type' in .env: sso (default) or common)
+        if os.getenv("test_marketplace_login_type", "sso").strip().lower() == "common":
+            self.perform_login_for_common_login(user_name=str(user_name).strip().zfill(8), pass_word=pass_word)
+        else:
+            self.perform_login_for_sso_login(user_name=user_name, pass_word=pass_word)
 
     def perform_vendor_login(self, user_name, pass_word):
         self.click_on_btn(self.vendor_login_btn)

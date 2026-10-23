@@ -24,7 +24,7 @@ from pages.digital_marketplace.main_navigation_menu import MainNavigationMenu
 from pages.digital_marketplace.public_side.my_account.pending_approval_orders import PendingApprovalOrders
 from pages.digital_marketplace.public_side.my_account.order_details import OrderDetails
 from brac_digital_marketplace.testcases.order_creation.order_page_links import check_order_details_page_links, \
-    read_requisition_from_link
+    read_requisition_from_link, requisition_product_name_checks
 from brac_digital_marketplace.testcases.order_creation.order_details_checks import check_order_information, \
     check_product, check_delivery_schedules, check_action_history, check_order_preview, to_amount, new_check, \
     without_spaces, receiver_of
@@ -159,7 +159,8 @@ def test_1_verify_order_in_pending_approval_list(page):
     # Step 1: Order from single_whitelisted_agreement_item_order.py
     with allure.step("Step 1: Load the order result of single_whitelisted_agreement_item_order.py"):
         order = load_result("single_whitelisted_order_result", created_by="single_whitelisted_agreement_item_order.py")
-        missing_order_values = [key for key in ("expected_schedules", "order_details", "uom", "cart_remarks")
+        missing_order_values = [key for key in ("expected_schedules", "order_details", "uom", "cart_remarks",
+                                                "requisition_product_name")
                                 if key not in order]
         assert not missing_order_values, \
             f"Run single_whitelisted_agreement_item_order.py first (order result has no {', '.join(missing_order_values)})"
@@ -280,25 +281,21 @@ def test_3_verify_pending_approval_order_details_links(page):
                      "download the item attachment"):
         link_checks, order_details_links = check_order_details_page_links(
             page, order["requisition_number"], order["agreement_number"], order["item_code"], order_attachment_file,
-            'pending_approval_order_details', DOWNLOAD_DIR, erp_user=order_approver)
+            'pending_approval_order_details', DOWNLOAD_DIR, erp_user=order_approver,
+            requisition_product_name=order["requisition_product_name"])
         attach_and_assert_checks(link_checks, "Pending approval order details links and item attachment")
 
     # Step 4: Preferred Delivery Schedule heading links (product details page and requisition)
-    with allure.step("Step 4: Open the Preferred Delivery Schedule product and requisition links"):
+    with allure.step("Step 4: Verify the Preferred Delivery Schedule product name and open the requisition link"):
         order_details_page = OrderDetails(page)
-        schedule_item_tab = order_details_page.open_delivery_schedule_product_link_by_index(0)
-        schedule_item_url = schedule_item_tab.url
-        HomePage(schedule_item_tab).get_full_page_screenshot('pending_approval_schedule_product_page')
-        order_details_page.close_opened_tabs([schedule_item_tab])
         schedule_requisition, opened_tabs = read_requisition_from_link(
             page, lambda: order_details_page.open_link_all_tabs(
                 order_details_page.delivery_schedule_requisition_link(order["requisition_number"])),
             'pending_approval_schedule_erp_requisition', erp_user=order_approver)
-        order_details_links["Delivery schedule product page"] = schedule_item_url
         order_details_links["Delivery schedule requisition"] = schedule_requisition["req_no"]
         checks = [
-            new_check("Preferred Delivery Schedule product link", order["item_code"], schedule_item_url,
-                      order["item_code"].lower() in schedule_item_url.lower()),
+            *requisition_product_name_checks(page.locator("body"), order["requisition_product_name"],
+                                             "Preferred Delivery Schedule"),
             new_check("Preferred Delivery Schedule requisition link (ERP REQ. No)", order["requisition_number"],
                       schedule_requisition["req_no"], schedule_requisition["req_no"] == order["requisition_number"]),
             new_check("Requisition link tabs closed", "all", f"{opened_tabs} tab(s) closed", len(page.context.pages) == 1),

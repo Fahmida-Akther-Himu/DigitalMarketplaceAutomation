@@ -69,8 +69,8 @@ VENDOR_ACKNOWLEDGED_STATUS = "Vendor Acknowledged"
 SHIPPING_STATUS_BEFORE_ACKNOWLEDGEMENT = "Not yet shipped"
 SHIPPING_STATUS_AFTER_ACKNOWLEDGEMENT = "Shipped"
 # Framework Order No. values that mean "not generated yet"
-# Defect checks (business rule not met on the server): reported, and asserted at the end of Test case 14 so the
-# journey continues
+# Shipping status check after the acknowledgement (Shipped, depends on the system cut-off date): reported in Test
+# case 11 and asserted at the end of Test case 14 so the journey continues
 known_issue_checks = []
 NOT_GENERATED_VALUES = ("", "-", "n/a", "null")
 
@@ -105,11 +105,9 @@ def vendor_order_reference():
 
 
 def saved_product_name():
-    # Why: the product name ("item name - delivery location") of the approved order, e.g. "([FWI049375] - BYA FR Skin
-    # Coated - Project Site )" -> "BYA FR Skin Coated - Project Site"; When: vendor product checks
-    agreement_item = vendor_order["details_after_approval"]["product"]["Agreement item"]
-    match = re.match(r"^\(\s*\[\w+\]\s*-\s*(.*?)\s*\)$", agreement_item)
-    return match.group(1) if match else agreement_item
+    # Why: the product name ("item name - delivery location") stored from the Active Requisition Product List and
+    # carried forward by the order and approval files; When: vendor product checks
+    return vendor_order["requisition_product_name"]
 
 
 def receiver_name(receiver_info):
@@ -236,11 +234,11 @@ def check_order_document_text(text, label):
 
 
 def attach_known_issue_checks(checks, title):
-    # Why: a check of a known defect must not stop the next tests; it is reported now and asserted at the end of the
+    # Why: the Shipping status check must not stop the next tests; it is reported now and asserted at the end of the
     # file; When: Shipping status after the acknowledgement (expected "Shipped")
     allure.attach("\n".join(f"{check}: expected {expected} | actual {actual} | {result}"
                             for check, expected, actual, result in checks),
-                  name=f"{title} (known issue check)", attachment_type=allure.attachment_type.TEXT)
+                  name=title, attachment_type=allure.attachment_type.TEXT)
     known_issue_checks.extend(check for check in checks if check[3] == "FAIL")
 
 
@@ -874,8 +872,8 @@ def test_11_verify_acknowledged_order_in_lists(page):
         print("SHIPPING STATUS AFTER ACKNOWLEDGEMENT:", shipping_status)
         checks.append(new_check("Order in Orders list (Framework Order No.)", framework_order_no,
                                 "found" if row_shown else "not found", row_shown))
-        # Business rule "Shipped" after the acknowledgement: staging shows "Not yet shipped" (defect), so the check
-        # is reported and asserted at the end of Test case 14
+        # Business rule "Shipped" after the acknowledgement (system cut-off date): the check is reported here and
+        # asserted at the end of Test case 14
         attach_known_issue_checks([new_check("Shipping status (after the acknowledgement)",
                                              SHIPPING_STATUS_AFTER_ACKNOWLEDGEMENT, shipping_status or "-",
                                              shipping_status.lower() == SHIPPING_STATUS_AFTER_ACKNOWLEDGEMENT.lower())],
@@ -1058,8 +1056,8 @@ def test_13_verify_framework_order_in_erp(page, new_tab):
 def test_14_save_vendor_acknowledgement_result(page):
     """
     Test case 14: Save the vendor acknowledgement result
-    (whitelisted_blacklisted_non_agreement_vendor_acknowledgement_result.json), then assert the known issue checks
-    (Shipping status "Shipped" after the acknowledgement).
+    (whitelisted_blacklisted_non_agreement_vendor_acknowledgement_result.json), then assert the Shipping status check
+    ("Shipped" after the acknowledgement).
     """
     global vendor_acknowledgement_result
     assert erp_framework_order, "Test case 13 must pass first: framework order not verified in ERP"
@@ -1084,7 +1082,7 @@ def test_14_save_vendor_acknowledgement_result(page):
         allure.attach("\n".join(f"{key}: {value}" for key, value in vendor_acknowledgement_result.items()),
                       name="Saved vendor acknowledgement result", attachment_type=allure.attachment_type.TEXT)
 
-    # Step 2: Known issue checks of this file (e.g. Shipping status after the acknowledgement)
-    with allure.step("Step 2: Assert the known issue checks"):
-        print("KNOWN ISSUE CHECKS:", known_issue_checks or "none")
-        attach_and_assert_checks(known_issue_checks, "Known issues (vendor acknowledgement)")
+    # Step 2: Shipping status check after the acknowledgement (Test case 11)
+    with allure.step("Step 2: Assert the Shipping status check"):
+        print("SHIPPING STATUS CHECK FAILURES:", known_issue_checks or "none")
+        attach_and_assert_checks(known_issue_checks, "Shipping status after the acknowledgement")

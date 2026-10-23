@@ -868,7 +868,8 @@ def test_9_verify_active_requisition_product_list_links(page):
 
     Steps:
         1. Sub-Category link of every product: open it, store the sub-category, go back to the list.
-        2. Product link of every product: open it, store the product name, go back to the list.
+        2. Product name of every product: stored ("item name - delivery location"), not clicked; it is verified on
+           the next pages (shopping cart, checkout, order details, approval, vendor and receive pages).
         3. FwA No. link of every product: if the agreement attachment is available, open/download it;
            if not, verify the new tab is the ERP staging server with a message, close it and come back.
         No logout: Test case 10 continues on the Active Requisition Product List.
@@ -893,17 +894,14 @@ def test_9_verify_active_requisition_product_list_links(page):
                 product["sub_category_url"] = opened["opened_url"]
                 print(f"SUB-CATEGORY {index + 1}:", product["sub_category"], opened["opened_url"])
 
-    # Step 2: Product link of every product
-    with allure.step("Step 2: Open the Product link of every product and come back"):
+    # Step 2: Product name of every product: stored, not clicked (user rule)
+    with allure.step("Step 2: Store the product name of every product (not clicked)"):
         for index, product in enumerate(active_product_links):
-            with allure.step(f"Product {index + 1}: {product['product']}"):
-                opened = product_list_page.open_link_and_back(
-                    product_list_page.get_product_rows()[index]["Product"],
-                    back_page_table=product_list_page.product_list_table,
-                    screenshot_name=f'product_links_product_{index + 1}'
-                )
-                product["product_url"] = opened["opened_url"]
-                print(f"PRODUCT {index + 1}:", product["product"], opened["opened_url"])
+            print(f"PRODUCT NAME {index + 1}:", product["product"])
+        allure.attach("\n".join(f"Product {index + 1}: {product['product']}"
+                                for index, product in enumerate(active_product_links)),
+                      name="Product names (item name - delivery location)", attachment_type=allure.attachment_type.TEXT)
+        assert all(product["product"] for product in active_product_links), "A product name is not shown"
 
     # Step 3: FwA No. link of every product (attachment or ERP staging message)
     with allure.step("Step 3: Open the FwA No. attachment of every product"):
@@ -932,7 +930,7 @@ def test_9_verify_active_requisition_product_list_links(page):
 @allure.story("Product Switch History Links")
 @allure.title("Test_case_10: Verify Product Switch History links")
 @allure.description("Test case 10: For every product, open its Product Switch History, verify the product name and "
-                    "FwA No. are the same as the Active Requisition Product List, open the Product Name link and the "
+                    "FwA No. are the same as the Active Requisition Product List (product name not clicked), open the "
                     "FwA No. attachment (or verify the ERP staging message), go back to the product list, then log "
                     "out and save the requisition result with the marketplace data.")
 @pytest.mark.order(10)
@@ -945,7 +943,7 @@ def test_10_verify_product_switch_history_links(page):
         1. Click History; store the Product Switch History rows (Product Name, Specification, Unit Price,
            FwA No., Vendor Name, Date) and verify the product name and FwA No. are the same as the
            Active Requisition Product List.
-        2. Product Name link: open it and go back to the history.
+        2. Product Name: verified as stored (not clicked).
         3. FwA No. link: if the agreement attachment is available, open/download it; if not, verify the
            new tab is the ERP staging server with a message, close it and come back.
         4. Click Back to Requisition Product List.
@@ -975,13 +973,8 @@ def test_10_verify_product_switch_history_links(page):
             assert any(row["FwA No."] == product["fwa_no"] for row in history), \
                 f"FwA No. '{product['fwa_no']}' not found in its Product Switch History: {history}"
 
-            # Product Name link of the history
-            opened = history_page.open_link_and_back(
-                history_page.get_history_rows()[0]["Product Name"],
-                back_page_table=history_page.history_table,
-                screenshot_name=f'product_switch_history_product_{index + 1}'
-            )
-            print(f"HISTORY PRODUCT {index + 1}:", opened)
+            # Product Name of the history: verified as stored, not clicked
+            opened = {"opened_url": ""}
 
             # FwA No. link of the history (attachment or ERP staging message)
             attachment = history_page.open_fwa_attachment(
