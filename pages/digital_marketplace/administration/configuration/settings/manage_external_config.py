@@ -144,6 +144,9 @@ class ManageExternalConfig(BasicActionsDM):
         screenshot_path = os.getcwd() + "/screenshots_taken/" + name + ".png"
         self.page.screenshot(path=screenshot_path, full_page=True, timeout=60000, style=self.HIDE_KEYS_STYLE)
 
-    # CSS used only during the screenshot: the key text is transparent
+    # CSS used only during the screenshot: the key text is transparent, and the fixed left menu is hidden (a full page
+    # screenshot of a long page draws it over the table), the content then uses the full width
     HIDE_KEYS_STYLE = ("#manage-grid td[data-columnname='Key'], #manage-grid td[data-columnname='Key'] input, #Keyword "
-                       "{ color: transparent !important; text-shadow: none !important; }")
+                       "{ color: transparent !important; text-shadow: none !important; } "
+                       ".main-sidebar { display: none !important; } "
+                       ".content-wrapper, .main-header, .main-footer { margin-left: 0 !important; }")
